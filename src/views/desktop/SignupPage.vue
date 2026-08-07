@@ -1,9 +1,11 @@
 <template>
     <div class="layout-wrapper">
         <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <h1 class="font-weight-medium leading-normal text-2xl">{{ tt('global.app.title') }}</h1>
+            <div class="auth-logo d-flex align-start">
+                <img alt="Bookkeeping" class="login-brand-logo"
+                     src="/img/bookkeeping-logo-light.svg" v-if="!isDarkMode"/>
+                <img alt="Bookkeeping" class="login-brand-logo"
+                     src="/img/bookkeeping-logo-dark.svg" v-else/>
             </div>
         </router-link>
         <v-row no-gutters class="auth-wrapper">
@@ -227,7 +229,6 @@ import { useRootStore } from '@/stores/index.ts';
 import type { TypeAndDisplayName } from '@/core/base.ts';
 import { type LocalizedPresetCategory } from '@/core/category.ts';
 import { ThemeType } from '@/core/theme.ts';
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 
 import { categorizedArrayToPlainArray } from '@/lib/common.ts';
 import { isUserLogined } from '@/lib/userstate.ts';

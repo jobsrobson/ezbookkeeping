@@ -1,16 +1,16 @@
 <template>
-    <v-dialog width="800" :persistent="isCategoryModified" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="management-dialog" width="800" max-width="calc(100vw - 24px)" :persistent="isCategoryModified" v-model="showState">
+        <v-card class="management-dialog__card">
             <template #title>
-                <div class="d-flex align-center">
-                    <h4 class="text-h4">{{ tt(title) }}</h4>
+                <div class="management-dialog__header">
+                    <h4>{{ tt(title) }}</h4>
                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="loading"></v-progress-circular>
                 </div>
             </template>
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto">
-                <v-form class="w-100 mt-2">
+            <v-card-text class="management-dialog__body">
+                <v-form class="management-dialog__form w-100">
                     <v-row>
-                        <v-col cols="12" md="12">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Category Name')" cols="12" md="12">
                             <v-text-field
                                 type="text"
                                 persistent-placeholder
@@ -20,7 +20,7 @@
                                 v-model="category.name"
                             />
                         </v-col>
-                        <v-col cols="12" md="12" v-if="editCategoryId && category.parentId && category.parentId !== '0'">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Primary Category')" cols="12" md="12" v-if="editCategoryId && category.parentId && category.parentId !== '0'">
                             <v-select
                                 item-title="name"
                                 item-value="id"
@@ -45,7 +45,7 @@
                                 </template>
                             </v-select>
                         </v-col>
-                        <v-col cols="12" md="6">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Category Icon')" cols="12" md="6">
                             <icon-select icon-type="category"
                                          :all-icon-infos="ALL_CATEGORY_ICONS"
                                           :label="tt('Category Icon')"
@@ -53,13 +53,13 @@
                                           :disabled="loading || submitting"
                                           v-model="category.icon" />
                         </v-col>
-                        <v-col cols="12" md="6">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Category Color')" cols="12" md="6">
                             <color-select :all-color-infos="ALL_CATEGORY_COLORS"
                                          :label="tt('Category Color')"
                                          :disabled="loading || submitting"
                                          v-model="category.color" />
                         </v-col>
-                        <v-col cols="12" md="12">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Description')" cols="12" md="12">
                             <v-textarea
                                 type="text"
                                 persistent-placeholder
@@ -70,26 +70,26 @@
                                 v-model="category.comment"
                             />
                         </v-col>
-                        <v-col class="py-0" cols="12" md="12" v-if="editCategoryId">
+                        <v-col class="management-dialog__field" :data-field-label="tt('Visible')" cols="12" md="12" v-if="editCategoryId">
                             <v-switch :disabled="loading || submitting"
                                       :label="tt('Visible')" v-model="category.visible"/>
                         </v-col>
                     </v-row>
                 </v-form>
             </v-card-text>
-            <v-card-text>
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
+            <v-card-text class="management-dialog__footer">
+                <div class="management-dialog__footer-actions">
                     <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
                         <template v-slot:activator="{ props }">
                             <div v-bind="props" class="d-inline-block">
-                                <v-btn :disabled="inputIsEmpty || loading || submitting" @click="save">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting" @click="save">
                                     {{ tt(saveButtonTitle) }}
                                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                                 </v-btn>
                             </div>
                         </template>
                     </v-tooltip>
-                    <v-btn color="secondary" variant="tonal"
+                    <v-btn color="default" variant="outlined"
                            :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 </div>
             </v-card-text>
@@ -261,3 +261,12 @@ defineExpose({
     open
 });
 </script>
+
+<style scoped>
+.management-dialog__footer {
+    flex: 0 0 auto;
+    padding: 12px 16px !important;
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+</style>

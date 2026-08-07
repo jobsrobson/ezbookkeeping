@@ -1,11 +1,17 @@
 <template>
-    <i class="item-icon" :class="classes" :style="style" v-if="!hiddenStatus">
+    <span class="item-icon item-icon-svg" :style="svgStyle" v-if="!hiddenStatus && accountIconInfo?.assetUrl">
+        <slot></slot>
+    </span>
+    <i class="item-icon" :class="classes" :style="style" v-else-if="!hiddenStatus">
         <slot></slot>
     </i>
     <v-badge class="right-bottom-icon" color="secondary" offset-y="4"
              :location="`bottom ${textDirection === TextDirection.LTR ? 'right' : 'left'}`"
              :icon="mdiEyeOffOutline" v-if="hiddenStatus">
-        <i class="item-icon" :class="classes" :style="style">
+        <span class="item-icon item-icon-svg" :style="svgStyle" v-if="accountIconInfo?.assetUrl">
+            <slot></slot>
+        </span>
+        <i class="item-icon" :class="classes" :style="style" v-else>
             <slot></slot>
         </i>
     </v-badge>
@@ -31,9 +37,15 @@ interface DesktopItemIconProps extends CommonIconProps {
 const props = defineProps<DesktopItemIconProps>();
 
 const { getCurrentLanguageTextDirection } = useI18n();
-const { style, getAccountIcon, getCategoryIcon } = useItemIconBase(props);
+const { style, getAccountIcon, getAccountIconInfo, getCategoryIcon } = useItemIconBase(props);
 
 const textDirection = computed<TextDirection>(() => getCurrentLanguageTextDirection());
+const accountIconInfo = computed(() => props.iconType === 'account' ? getAccountIconInfo(props.iconId) : undefined);
+const svgStyle = computed<Record<string, string | number | undefined>>(() => ({
+    ...style.value,
+    '--ebk-item-icon-svg': accountIconInfo.value?.assetUrl ? `url("${accountIconInfo.value.assetUrl}")` : undefined,
+    backgroundColor: accountIconInfo.value?.brandColor || style.value['color']
+}));
 
 const classes = computed<string>(() => {
     let allClasses = props.class ? (props.class + ' ') : '';
@@ -60,5 +72,13 @@ const classes = computed<string>(() => {
     background-repeat: no-repeat;
     font-style: normal;
     position: relative;
+}
+
+.item-icon-svg {
+    width: 1em;
+    height: 1em;
+    background-color: currentColor;
+    mask: var(--ebk-item-icon-svg) center / contain no-repeat;
+    -webkit-mask: var(--ebk-item-icon-svg) center / contain no-repeat;
 }
 </style>

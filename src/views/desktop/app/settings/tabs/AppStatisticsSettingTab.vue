@@ -6,11 +6,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Chart Data Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Chart Data Type')"
                                     :placeholder="tt('Default Chart Data Type')"
                                     :items="allChartDataTypes"
                                     v-model="defaultChartDataType"
@@ -18,11 +18,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Timezone Used for Date Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Timezone Used for Date Range')"
                                     :placeholder="tt('Timezone Used for Date Range')"
                                     :items="allTimezoneTypesUsedForStatistics"
                                     v-model="defaultTimezoneType"
@@ -30,11 +30,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Keyword Search Matching Mode') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Keyword Search Matching Mode')"
                                     :placeholder="tt('Default Keyword Search Matching Mode')"
                                     :items="allKeywordMatchModes"
                                     v-model="defaultKeywordMatchMode"
@@ -42,11 +42,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Sort Order') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Sort Order')"
                                     :placeholder="tt('Default Sort Order')"
                                     :items="allSortingTypes"
                                     v-model="defaultSortingType"
@@ -64,11 +64,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Chart Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Chart Type')"
                                     :placeholder="tt('Default Chart Type')"
                                     :items="allCategoricalChartTypes"
                                     v-model="defaultCategoricalChartType"
@@ -76,11 +76,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Date Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Date Range')"
                                     :placeholder="tt('Default Date Range')"
                                     :items="allCategoricalChartDateRanges"
                                     v-model="defaultCategoricalChartDateRange"
@@ -98,11 +98,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Chart Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Chart Type')"
                                     :placeholder="tt('Default Chart Type')"
                                     :items="allTrendChartTypes"
                                     v-model="defaultTrendChartType"
@@ -110,11 +110,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Date Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Date Range')"
                                     :placeholder="tt('Default Date Range')"
                                     :items="allTrendChartDateRanges"
                                     v-model="defaultTrendChartDateRange"
@@ -132,11 +132,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Chart Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Chart Type')"
                                     :placeholder="tt('Default Chart Type')"
                                     :items="allTrendChartTypes"
                                     v-model="defaultAssetTrendsChartType"
@@ -144,11 +144,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Date Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Date Range')"
                                     :placeholder="tt('Default Date Range')"
                                     :items="allAssetTrendsChartDateRanges"
                                     v-model="defaultAssetTrendsChartDateRange"
@@ -200,4 +200,3 @@ const {
     defaultAssetTrendsChartDateRange
 } = useStatisticsSettingPageBase();
 </script>
-

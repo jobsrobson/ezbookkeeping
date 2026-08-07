@@ -1,29 +1,33 @@
 <template>
-    <v-dialog :width="account.type === AccountType.MultiSubAccounts.type ? 1000 : 800" :persistent="isAccountModified" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="account-edit-dialog" :width="account.type === AccountType.MultiSubAccounts.type ? 1000 : 800"
+              max-width="calc(100vw - 24px)" :persistent="isAccountModified" v-model="showState">
+        <v-card class="account-edit-dialog__card">
             <template #title>
-                <div class="d-flex align-center justify-center">
-                    <div class="d-flex align-center">
-                        <h4 class="text-h4">{{ tt(title) }}</h4>
+                <div class="account-edit-dialog__header">
+                    <div class="account-edit-dialog__heading">
+                        <h4>{{ tt(title) }}</h4>
                         <v-progress-circular indeterminate size="22" class="ms-2" v-if="loading"></v-progress-circular>
                     </div>
                     <v-spacer/>
-                    <v-btn density="comfortable" color="default" variant="text" class="ms-2" :icon="true"
-                           :disabled="loading || submitting || account.type !== AccountType.MultiSubAccounts.type">
-                        <v-icon :icon="mdiDotsVertical" />
-                        <v-menu activator="parent">
-                            <v-list>
-                                <v-list-item :prepend-icon="mdiCreditCardPlusOutline"
-                                             :title="tt('Add Sub-account')"
-                                             @click="addSubAccount"></v-list-item>
-                            </v-list>
-                        </v-menu>
-                    </v-btn>
+                    <v-menu location="bottom end" v-if="account.type === AccountType.MultiSubAccounts.type">
+                        <template #activator="{ props }">
+                            <v-btn density="comfortable" color="default" variant="text" :icon="true"
+                                   :disabled="loading || submitting" v-bind="props">
+                                <v-icon :icon="mdiDotsVertical" />
+                                <v-tooltip activator="parent">{{ tt('More') }}</v-tooltip>
+                            </v-btn>
+                        </template>
+                        <v-list density="compact">
+                            <v-list-item :prepend-icon="mdiCreditCardPlusOutline"
+                                         :title="tt('Add Sub-account')"
+                                         @click="addSubAccount" />
+                        </v-list>
+                    </v-menu>
                 </div>
             </template>
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto">
-                <div class="mb-4" v-if="account.type === AccountType.MultiSubAccounts.type">
-                    <v-tabs direction="vertical" :disabled="loading || submitting" v-model="currentAccountIndex">
+            <v-card-text class="account-edit-dialog__body">
+                <aside class="account-edit-dialog__sidebar" v-if="account.type === AccountType.MultiSubAccounts.type">
+                    <v-tabs class="account-edit-dialog__tabs" direction="vertical" :disabled="loading || submitting" v-model="currentAccountIndex">
                         <v-tab :value="-1">
                             <span>{{ tt('Main Account') }}</span>
                         </v-tab>
@@ -36,15 +40,14 @@
                             </v-tab>
                         </template>
                     </v-tabs>
-                </div>
+                </aside>
 
-                <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container"
-                          :class="{ 'ms-md-5': account.type === AccountType.MultiSubAccounts.type }"
+                <v-window class="account-edit-dialog__content disable-tab-transition w-100-window-container"
                           v-model="activeTab">
                     <v-window-item value="account">
-                        <v-form class="mt-2">
+                        <v-form class="account-edit-dialog__form">
                             <v-row>
-                                <v-col cols="12" md="12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex < 0">
+                                <v-col class="account-field" :data-field-label="tt('Account Category')" cols="12" md="12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex < 0">
                                     <v-select
                                         item-title="displayName"
                                         item-value="type"
@@ -72,7 +75,7 @@
                                         </template>
                                     </v-select>
                                 </v-col>
-                                <v-col cols="12" md="12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex < 0">
+                                <v-col class="account-field" :data-field-label="tt('Account Type')" cols="12" md="12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex < 0">
                                     <v-select
                                         item-title="displayName"
                                         item-value="type"
@@ -85,7 +88,7 @@
                                         v-model="selectedAccount.type"
                                     />
                                 </v-col>
-                                <v-col cols="12" md="12">
+                                <v-col class="account-field" :data-field-label="currentAccountIndex < 0 ? tt('Account Name') : tt('Sub-account Name')" cols="12" md="12">
                                     <v-text-field
                                         type="text"
                                         persistent-placeholder
@@ -95,7 +98,7 @@
                                         v-model="selectedAccount.name"
                                     />
                                 </v-col>
-                                <v-col cols="12" md="6">
+                                <v-col class="account-field" :data-field-label="currentAccountIndex < 0 ? tt('Account Icon') : tt('Sub-account Icon')" cols="12" md="6">
                                     <icon-select icon-type="account"
                                                  :all-icon-infos="ALL_ACCOUNT_ICONS"
                                                  :label="currentAccountIndex < 0 ? tt('Account Icon') : tt('Sub-account Icon')"
@@ -103,33 +106,58 @@
                                                  :disabled="loading || submitting"
                                                  v-model="selectedAccount.icon" />
                                 </v-col>
-                                <v-col cols="12" md="6">
+                                <v-col class="account-field" :data-field-label="currentAccountIndex < 0 ? tt('Account Color') : tt('Sub-account Color')" cols="12" md="6">
                                     <color-select :all-color-infos="ALL_ACCOUNT_COLORS"
                                                   :label="currentAccountIndex < 0 ? tt('Account Color') : tt('Sub-account Color')"
                                                   :disabled="loading || submitting"
                                                   v-model="selectedAccount.color" />
                                 </v-col>
-                                <v-col cols="12" :md="currentAccountIndex < 0 && isAccountSupportCreditCardStatementDate ? 6 : 12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0">
+                                <v-col class="account-field" :data-field-label="tt('Currency')" cols="12" :md="currentAccountIndex < 0 && isAccountSupportCreditCardStatementDate ? 6 : 12" v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0">
                                     <currency-select :disabled="loading || submitting || (!!editAccountId && !isNewAccount(selectedAccount))"
                                                      :label="tt('Currency')"
                                                      :placeholder="tt('Currency')"
                                                      v-model="selectedAccount.currency" />
                                 </v-col>
-                                <v-col cols="12" :md="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0 ? 6 : 12" v-if="currentAccountIndex < 0 && isAccountSupportCreditCardStatementDate">
+                                <v-col class="account-field" :data-field-label="tt('Closing Date')" cols="12" :md="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0 ? 6 : 12" v-if="currentAccountIndex < 0 && isAccountSupportCreditCardStatementDate">
                                     <v-autocomplete
                                         item-title="displayName"
                                         item-value="type"
                                         auto-select-first
                                         persistent-placeholder
                                         :disabled="loading || submitting"
-                                        :label="tt('Statement Date')"
-                                        :placeholder="tt('Statement Date')"
+                                        :label="tt('Closing Date')"
+                                        :placeholder="tt('Closing Date')"
                                         :items="allAvailableMonthDays"
                                         :no-data-text="tt('No results')"
                                         v-model="account.creditCardStatementDate"
                                     ></v-autocomplete>
                                 </v-col>
-                                <v-col cols="12" :md="((canShowBalanceTime && selectedAccount.numericBalance) || canShowLastReconciledTime) ? 6 : 12"
+                                <template v-if="currentAccountIndex < 0 && isAccountSupportCreditCardStatementDate">
+                                    <v-col class="account-field" :data-field-label="tt('Due Date')" cols="12" md="6">
+                                        <v-autocomplete
+                                            item-title="displayName"
+                                            item-value="type"
+                                            auto-select-first
+                                            persistent-placeholder
+                                            :disabled="loading || submitting"
+                                            :label="tt('Due Date')"
+                                            :placeholder="tt('Due Date')"
+                                            :items="allAvailableMonthDays"
+                                            :no-data-text="tt('No results')"
+                                            v-model="account.creditCardDueDate"
+                                        />
+                                    </v-col>
+                                    <v-col class="account-field" :data-field-label="tt('Total Credit Limit')" cols="12" md="6">
+                                        <amount-input :disabled="loading || submitting"
+                                                      :persistent-placeholder="true"
+                                                      :currency="account.currency"
+                                                      :show-currency="true"
+                                                      :label="tt('Total Credit Limit')"
+                                                      :placeholder="tt('Total Credit Limit')"
+                                                      v-model="account.creditCardLimit"/>
+                                    </v-col>
+                                </template>
+                                <v-col class="account-field" :data-field-label="accountAmountTitle" cols="12" :md="((canShowBalanceTime && selectedAccount.numericBalance) || canShowLastReconciledTime) ? 6 : 12"
                                        v-if="account.type === AccountType.SingleAccount.type || currentAccountIndex >= 0">
                                     <amount-input :disabled="loading || submitting || (!!editAccountId && !isNewAccount(selectedAccount))"
                                                   :persistent-placeholder="true"
@@ -140,7 +168,7 @@
                                                   :placeholder="accountAmountTitle"
                                                   v-model="selectedAccount.numericBalance"/>
                                 </v-col>
-                                <v-col cols="12" md="6" v-show="selectedAccount.numericBalance" v-if="canShowBalanceTime">
+                                <v-col class="account-field" :data-field-label="tt('Balance Time')" cols="12" md="6" v-show="selectedAccount.numericBalance" v-if="canShowBalanceTime">
                                     <date-time-select
                                         :disabled="loading || submitting"
                                         :label="tt('Balance Time')"
@@ -149,7 +177,7 @@
                                         @update:model-value="updateAccountBalanceTime(selectedAccount, $event)"
                                         @error="onShowDateTimeError" />
                                 </v-col>
-                                <v-col cols="12" md="6" v-if="canShowLastReconciledTime">
+                                <v-col class="account-field" :data-field-label="tt('Last Reconciled Time')" cols="12" md="6" v-if="canShowLastReconciledTime">
                                     <date-time-select
                                         :disabled="loading || submitting"
                                         :clearable="true"
@@ -161,7 +189,7 @@
                                         @clear:model-value="selectedAccount.lastReconciledTime = undefined"
                                         @error="onShowDateTimeError" />
                                 </v-col>
-                                <v-col cols="12" md="12">
+                                <v-col class="account-field" :data-field-label="tt('Description')" cols="12" md="12">
                                     <v-textarea
                                         type="text"
                                         persistent-placeholder
@@ -172,7 +200,7 @@
                                         v-model="selectedAccount.comment"
                                     />
                                 </v-col>
-                                <v-col class="py-0" cols="12" md="12" v-if="editAccountId && !isNewAccount(selectedAccount)">
+                                <v-col class="account-field account-toggle-field" :data-field-label="tt('Visible')" cols="12" md="12" v-if="editAccountId && !isNewAccount(selectedAccount)">
                                     <v-switch :disabled="loading || submitting"
                                               :label="tt('Visible')" v-model="selectedAccount.visible"/>
                                 </v-col>
@@ -181,19 +209,19 @@
                     </v-window-item>
                 </v-window>
             </v-card-text>
-            <v-card-text>
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
+            <v-card-text class="account-edit-dialog__footer">
+                <div class="account-edit-dialog__footer-actions">
                     <v-tooltip :disabled="!inputIsEmpty" :text="inputEmptyProblemMessage ? tt(inputEmptyProblemMessage) : ''">
                         <template v-slot:activator="{ props }">
                             <div v-bind="props" class="d-inline-block">
-                                <v-btn :disabled="inputIsEmpty || loading || submitting" @click="save">
+                                <v-btn color="primary" variant="flat" :disabled="inputIsEmpty || loading || submitting" @click="save">
                                     {{ tt(saveButtonTitle) }}
                                     <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                                 </v-btn>
                             </div>
                         </template>
                     </v-tooltip>
-                    <v-btn color="secondary" variant="tonal"
+                    <v-btn color="default" variant="outlined"
                            :disabled="loading || submitting" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 </div>
             </v-card-text>
@@ -422,3 +450,291 @@ defineExpose({
     open
 });
 </script>
+
+<style>
+.account-edit-dialog .v-overlay__content {
+    max-height: calc(100vh - 20px) !important;
+}
+
+.account-edit-dialog__card {
+    display: flex;
+    max-height: calc(100vh - 20px);
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    border-radius: 10px !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+}
+
+.account-edit-dialog__card > .v-card-item {
+    min-height: auto;
+    padding: 0 !important;
+}
+
+.account-edit-dialog__card > .v-card-item .v-card-title {
+    width: 100%;
+    white-space: normal;
+}
+
+.account-edit-dialog__header {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.account-edit-dialog__heading {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+}
+
+.account-edit-dialog__heading h4 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: clamp(1.25rem, 2vw, 1.65rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+}
+
+.account-edit-dialog__header > .v-btn {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    border-radius: 5px !important;
+}
+
+.account-edit-dialog__body {
+    display: grid !important;
+    grid-template-columns: 170px minmax(0, 1fr);
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: rgb(var(--v-theme-background));
+}
+
+.account-edit-dialog__body:not(:has(.account-edit-dialog__sidebar)) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.account-edit-dialog__sidebar {
+    min-width: 0;
+    padding: 12px 10px;
+    overflow-y: auto;
+    border-right: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.account-edit-dialog__tabs .v-tab {
+    width: 100%;
+    min-height: 36px !important;
+    justify-content: flex-start;
+    padding-inline: 12px !important;
+    border-radius: 5px !important;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.72rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.account-edit-dialog__tabs .v-tab--selected {
+    color: rgb(var(--v-theme-on-surface)) !important;
+    background: rgb(var(--v-theme-verticalbutton-selected)) !important;
+    font-weight: 600;
+}
+
+.account-edit-dialog__content {
+    display: flex !important;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.account-edit-dialog__form {
+    width: 100%;
+    padding: 16px 18px 20px;
+}
+
+.account-edit-dialog__form > .v-row {
+    margin: -6px !important;
+}
+
+.account-edit-dialog__form > .v-row > .v-col {
+    padding: 6px !important;
+}
+
+.account-field {
+    position: relative;
+    padding-top: 25px !important;
+}
+
+.account-field::before {
+    position: absolute;
+    top: 7px;
+    right: 6px;
+    left: 12px;
+    overflow: hidden;
+    color: rgb(var(--v-theme-tertiary));
+    content: attr(data-field-label);
+    font-size: 0.64rem;
+    font-weight: 600;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-field .v-field-label,
+.account-field .v-label.v-field-label {
+    display: none !important;
+}
+
+.account-field .v-field__outline__notch,
+.account-field .v-field__outline__notch::before,
+.account-field .v-field__outline__notch::after {
+    border: 0 !important;
+}
+
+.account-edit-dialog__form .v-field {
+    min-height: 42px !important;
+    border: 1px solid rgb(var(--v-theme-border)) !important;
+    border-radius: 6px !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.account-edit-dialog__form .v-field:hover {
+    border-color: rgb(var(--v-theme-on-hover-border)) !important;
+}
+
+.account-edit-dialog__form .v-field--focused {
+    border-color: rgb(var(--v-theme-on-surface)) !important;
+    box-shadow: 0 0 0 1px rgb(var(--v-theme-on-surface)) !important;
+}
+
+.account-edit-dialog__form .v-field__outline,
+.account-edit-dialog__form .v-field__overlay {
+    display: none !important;
+}
+
+.account-edit-dialog__form .v-field__input {
+    min-height: 40px !important;
+    padding-block: 0 !important;
+    font-size: 0.78rem !important;
+}
+
+.account-edit-dialog__form .v-textarea .v-field,
+.account-edit-dialog__form .v-textarea .v-field__input {
+    min-height: 82px !important;
+}
+
+.account-edit-dialog__form .v-textarea .v-field__field {
+    align-self: stretch;
+}
+
+.account-edit-dialog__form .v-textarea .v-field__input {
+    padding-top: 11px !important;
+    padding-bottom: 11px !important;
+    line-height: 1.4 !important;
+}
+
+.account-toggle-field .v-switch {
+    min-height: 42px;
+    padding: 3px 10px;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 6px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.account-edit-dialog__footer {
+    flex: 0 0 auto;
+    padding: 16px 16px !important;
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.account-edit-dialog__footer-actions {
+    display: flex;
+    padding-top: 16px !important;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.account-edit-dialog__footer .v-btn {
+    min-height: 38px;
+    border-radius: 6px !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+@media (max-width: 900px) {
+    .account-edit-dialog__card {
+        max-height: calc(100vh - 12px);
+        border-radius: 8px !important;
+    }
+
+    .account-edit-dialog__body {
+        display: flex !important;
+        flex-direction: column;
+    }
+
+    .account-edit-dialog__sidebar {
+        flex: 0 0 auto;
+        padding: 8px 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        border-right: 0;
+        border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+    }
+
+    .account-edit-dialog__tabs .v-slide-group__content {
+        flex-direction: row !important;
+    }
+
+    .account-edit-dialog__tabs .v-tab {
+        width: auto;
+        min-width: max-content;
+    }
+}
+
+@media (max-width: 600px) {
+    .account-edit-dialog .v-overlay__content {
+        width: calc(100vw - 8px) !important;
+        max-width: calc(100vw - 8px) !important;
+        max-height: calc(100vh - 8px) !important;
+        margin: 4px !important;
+    }
+
+    .account-edit-dialog__card {
+        max-height: calc(100vh - 8px);
+        border-radius: 6px !important;
+    }
+
+    .account-edit-dialog__header {
+        padding: 13px 14px;
+    }
+
+    .account-edit-dialog__form {
+        padding: 12px 10px 16px;
+    }
+
+    .account-edit-dialog__footer {
+        padding: 10px 12px !important;
+    }
+
+    .account-edit-dialog__footer-actions .v-btn,
+    .account-edit-dialog__footer-actions > div {
+        flex: 1 1 auto;
+    }
+}
+</style>

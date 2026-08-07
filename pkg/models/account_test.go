@@ -18,6 +18,25 @@ func TestAccountToAccountInfoResponseBalance(t *testing.T) {
 	assert.Equal(t, "-9223372036854775808", response.Balance)
 }
 
+func TestCreditCardAccountToAccountInfoResponse(t *testing.T) {
+	statementDate := 5
+	dueDate := 12
+	limit := int64(250000)
+	account := &Account{
+		Category: ACCOUNT_CATEGORY_CREDIT_CARD,
+		Extend: &AccountExtend{
+			CreditCardStatementDate: &statementDate,
+			CreditCardDueDate:       &dueDate,
+			CreditCardLimit:         &limit,
+		},
+	}
+
+	response := account.ToAccountInfoResponse()
+	assert.Equal(t, &statementDate, response.CreditCardStatementDate)
+	assert.Equal(t, &dueDate, response.CreditCardDueDate)
+	assert.Equal(t, "250000", *response.CreditCardLimit)
+}
+
 func TestAccountInfoResponseSliceLess(t *testing.T) {
 	var accountRespSlice AccountInfoResponseSlice
 	accountRespSlice = append(accountRespSlice, &AccountInfoResponse{

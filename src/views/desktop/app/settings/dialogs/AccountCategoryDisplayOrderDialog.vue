@@ -1,11 +1,9 @@
 <template>
     <v-dialog width="600" :persistent="isDisplayOrderModified()" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+        <v-card class="settings-dialog-card">
             <template #title>
-                <div class="d-flex align-center justify-center">
-                    <div class="d-flex align-center">
-                        <h4 class="text-h4">{{ tt('Account Category Order') }}</h4>
-                    </div>
+                <div class="settings-dialog-header">
+                    <h4>{{ tt('Account Category Order') }}</h4>
                     <v-spacer/>
                     <v-btn density="comfortable" color="default" variant="text" class="ms-2" :icon="true">
                         <v-icon :icon="mdiDotsVertical" />
@@ -20,8 +18,8 @@
                 </div>
             </template>
 
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto">
-                <v-table hover density="comfortable" class="w-100 table-striped">
+            <v-card-text class="settings-dialog-body">
+                <v-table hover density="comfortable" class="settings-dialog-table w-100">
                     <draggable-list tag="tbody"
                                     item-key="id"
                                     handle=".drag-handle"
@@ -49,8 +47,8 @@
                 </v-table>
             </v-card-text>
 
-            <v-card-text class="overflow-y-visible">
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
+            <v-card-text class="settings-dialog-footer">
+                <div class="settings-dialog-footer__actions">
                     <v-btn :disabled="!isDisplayOrderModified()" @click="saveDisplayOrder">{{ tt('Save') }}</v-btn>
                     <v-btn color="secondary" variant="tonal" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 </div>
@@ -111,3 +109,60 @@ defineExpose({
     open
 });
 </script>
+
+<style>
+.settings-dialog-card {
+    overflow: hidden;
+    border: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    border-radius: 10px !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.settings-dialog-card > .v-card-item {
+    padding: 20px 22px !important;
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.settings-dialog-header {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-dialog-header h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.settings-dialog-body {
+    padding: 20px 22px !important;
+}
+
+.settings-dialog-table {
+    overflow: hidden;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 7px;
+}
+
+.settings-dialog-footer {
+    padding: 16px 22px !important;
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-background));
+}
+
+.settings-dialog-footer__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.settings-dialog-footer .v-btn {
+    min-height: 40px;
+    border-radius: 6px;
+    text-transform: none;
+}
+</style>

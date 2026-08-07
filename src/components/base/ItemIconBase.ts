@@ -5,6 +5,7 @@ import { ALL_ACCOUNT_ICONS, DEFAULT_ACCOUNT_ICON, ALL_CATEGORY_ICONS, DEFAULT_CA
 import { DEFAULT_ICON_COLOR, DEFAULT_ACCOUNT_COLOR, DEFAULT_CATEGORY_COLOR, DEFAULT_COLOR_STYLE_VARIABLE } from '@/consts/color.ts';
 
 import { isNumber } from '@/lib/common.ts';
+import type { IconInfo } from '@/core/icon.ts';
 
 type IconItemStyleName = string;
 type IconItemStyleValue = ColorValue | string | number | undefined;
@@ -38,6 +39,10 @@ export function useItemIconBase(props: CommonIconProps) {
     });
 
     function getAccountIcon(iconId: string | number): string {
+        return getAccountIconInfo(iconId).icon;
+    }
+
+    function getAccountIconInfo(iconId: string | number): IconInfo {
         if (isNumber(iconId)) {
             iconId = iconId.toString();
         }
@@ -45,10 +50,10 @@ export function useItemIconBase(props: CommonIconProps) {
         const iconInfo = ALL_ACCOUNT_ICONS[iconId];
 
         if (!iconInfo) {
-            return DEFAULT_ACCOUNT_ICON.icon;
+            return DEFAULT_ACCOUNT_ICON;
         }
 
-        return iconInfo.icon;
+        return iconInfo;
     }
 
     function getCategoryIcon(iconId: string | number): string {
@@ -134,6 +139,7 @@ export function useItemIconBase(props: CommonIconProps) {
     return {
         style,
         getAccountIcon,
+        getAccountIconInfo,
         getCategoryIcon
     }
 }

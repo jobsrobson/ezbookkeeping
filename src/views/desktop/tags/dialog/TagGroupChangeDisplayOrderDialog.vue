@@ -1,10 +1,10 @@
 <template>
-    <v-dialog width="800" :persistent="displayOrderModified" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="management-dialog" width="800" max-width="calc(100vw - 24px)" :persistent="displayOrderModified" v-model="showState">
+        <v-card class="management-dialog__card">
             <template #title>
-                <div class="d-flex align-center justify-center">
+                <div class="management-dialog__header">
                     <div class="d-flex align-center">
-                        <h4 class="text-h4">{{ tt('Change Group Display Order') }}</h4>
+                        <h4>{{ tt('Change Group Display Order') }}</h4>
                         <v-btn class="ms-3" color="primary" variant="tonal"
                                :disabled="loading || updating" @click="saveDisplayOrder"
                                v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
@@ -22,8 +22,8 @@
                 </div>
             </template>
 
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto">
-                <v-table hover density="comfortable" class="w-100 table-striped">
+            <v-card-text class="management-dialog__body">
+                <v-table hover density="comfortable" class="management-table w-100 table-striped">
                     <tbody v-if="loading && (!allTagGroups || allTagGroups.length < 1)">
                     <tr :key="itemIdx" v-for="itemIdx in [ 1, 2, 3, 4, 5, 6 ]">
                         <td class="px-0">
@@ -67,9 +67,9 @@
                 </v-table>
             </v-card-text>
 
-            <v-card-text class="overflow-y-visible">
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
-                    <v-btn color="secondary" variant="tonal"
+            <v-card-text class="management-dialog__footer">
+                <div class="management-dialog__footer-actions">
+                    <v-btn color="default" variant="outlined"
                            :disabled="loading || updating" @click="close">{{ tt('Close') }}</v-btn>
                 </div>
             </v-card-text>

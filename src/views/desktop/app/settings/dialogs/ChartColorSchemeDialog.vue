@@ -1,10 +1,10 @@
 <template>
     <v-dialog width="700" :persistent="chartColorsModified" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+        <v-card class="settings-dialog-card chart-color-dialog">
             <template #title>
-                <div class="d-flex align-center justify-center">
+                <div class="settings-dialog-header">
                     <div class="d-flex align-center">
-                        <h4 class="text-h4">{{ tt('Chart Color Scheme') }}</h4>
+                        <h4>{{ tt('Chart Color Scheme') }}</h4>
                         <v-btn class="ms-3" color="default" variant="outlined" density="comfortable"
                                @click="addNewColor()">{{ tt('Add') }}</v-btn>
                     </div>
@@ -30,8 +30,8 @@
                 </div>
             </template>
 
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto" style="height: 440px">
-                <v-table ref="colorSchemeTable" hover density="comfortable" class="w-100 table-striped" v-if="!showRawData">
+            <v-card-text class="settings-dialog-body chart-color-dialog__body">
+                <v-table ref="colorSchemeTable" hover density="comfortable" class="settings-dialog-table w-100" v-if="!showRawData">
                     <draggable-list tag="tbody"
                                     item-key="index"
                                     handle=".drag-handle"
@@ -78,8 +78,8 @@
                 </div>
             </v-card-text>
 
-            <v-card-text class="overflow-y-visible">
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
+            <v-card-text class="settings-dialog-footer">
+                <div class="settings-dialog-footer__actions">
                     <v-btn :disabled="!canSaveColorScheme" @click="saveChartColors">{{ tt('Save') }}</v-btn>
                     <v-btn color="secondary" variant="tonal" @click="cancel">{{ tt('Cancel') }}</v-btn>
                 </div>
@@ -165,6 +165,12 @@ defineExpose({
 </script>
 
 <style>
+.chart-color-dialog__body {
+    display: flex;
+    height: 440px;
+    overflow-y: auto;
+}
+
 .color-preview-wrapper {
     position: relative;
     width: 32px;

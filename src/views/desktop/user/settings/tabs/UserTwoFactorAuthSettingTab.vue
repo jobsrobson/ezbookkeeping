@@ -24,6 +24,7 @@
                     <v-img alt="qrcode" class="img-qrcode" :src="new2FAQRCode" />
                     <v-row class="mb-3">
                         <v-col cols="12" md="3">
+                            <label class="settings-field-label">{{ tt('Passcode') }}</label>
                             <v-text-field
                                 type="number"
                                 autocomplete="one-time-code"
@@ -40,6 +41,7 @@
                 <v-card-text class="pb-0" v-if="status === true">
                     <v-row class="mb-3">
                         <v-col cols="12" md="6">
+                            <label class="settings-field-label">{{ tt('Current Password') }}</label>
                             <v-text-field
                                 autocomplete="current-password"
                                 type="password"
@@ -92,6 +94,7 @@
                     <p class="text-body-1" v-if="status === true">
                         {{ tt('Please copy these backup codes to safe place, the following backup codes will be displayed only once. If these codes were lost, you can regenerate them at any time.') }}
                     </p>
+                    <label class="settings-field-label">{{ tt('Backup Code') }}</label>
                     <v-textarea class="backup-code" :readonly="true" :rows="10" :value="currentBackupCode"/>
                 </v-card-text>
             </v-card>

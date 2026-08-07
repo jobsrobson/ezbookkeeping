@@ -191,7 +191,7 @@ const chartOptions = computed<object>(() => {
                 max: heatMapData.value.maxValue.toDoubleNumber(),
                 calculable: true,
                 inRange: {
-                    color: isDarkMode.value ? [ '#1a1a1a', '#c67e48' ] : [ '#faf8f4', '#c67e48' ]
+                    color: isDarkMode.value ? [ '#26292c', '#fd621b' ] : [ '#f1f2f6', '#fd621b' ]
                 },
                 textStyle: {
                     color: isDarkMode.value ? '#888' : '#666'
@@ -222,7 +222,7 @@ const chartOptions = computed<object>(() => {
                 right: 20,
                 cellSize: ['auto', 20],
                 itemStyle: {
-                    color: isDarkMode.value ? '#060504' : '#ffffff',
+                    color: isDarkMode.value ? '#1b1e20' : '#ffffff',
                     borderColor: isDarkMode.value ? '#4f4f4f' : '#e1e6f2'
                 },
                 splitLine: {

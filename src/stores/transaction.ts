@@ -21,6 +21,7 @@ import { TRANSACTION_MIN_AMOUNT, TRANSACTION_MAX_AMOUNT } from '@/consts/transac
 import {
     type TransactionDraft,
     type TransactionCreateRequest,
+    type TransactionModifyRequest,
     type TransactionInfoResponse,
     type TransactionPageWrapper,
     type TransactionReconciliationStatementResponse,
@@ -1106,6 +1107,11 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
             if (!isEdit) {
                 promise = services.addTransaction(transaction.toCreateRequest(clientSessionId));
+            } else if (transaction.installmentGroupId && transaction.installmentSummary?.items.length) {
+                const request = transaction.toModifyRequest();
+                const currentInstallment = transaction.installmentSummary.items.find(item => item.transactionId === transaction.id);
+
+                promise = saveInstallmentGroup(request, transaction.installmentSummary.items, currentInstallment?.time ?? transaction.time, currentInstallment?.amount ?? transaction.sourceAmount);
             } else {
                 promise = services.modifyTransaction(transaction.toModifyRequest());
             }
@@ -1159,6 +1165,38 @@ export const useTransactionsStore = defineStore('transactions', () => {
                 }
             });
         });
+    }
+
+    async function saveInstallmentGroup(
+        request: TransactionModifyRequest,
+        installments: readonly { transactionId: string; time: number; amount: number }[],
+        originalTime: number,
+        originalAmount: number
+    ): ApiResponsePromise<TransactionInfoResponse> {
+        const timeDifference = request.time - originalTime;
+        let selectedResponse: Awaited<ApiResponsePromise<TransactionInfoResponse>> | undefined;
+        const orderedInstallments = [...installments].sort((a, b) =>
+            timeDifference > 0 ? b.time - a.time : a.time - b.time
+        );
+
+        for (const installment of orderedInstallments) {
+            const response = await services.modifyTransaction({
+                ...request,
+                id: installment.transactionId,
+                time: installment.time + timeDifference,
+                sourceAmount: request.sourceAmount + installment.amount - originalAmount
+            });
+
+            if (installment.transactionId === request.id) {
+                selectedResponse = response;
+            }
+        }
+
+        if (!selectedResponse) {
+            throw new Error('Modified installment was not found in its installment group');
+        }
+
+        return selectedResponse;
     }
 
     function batchUpdateTransactionCategories({ transactionIds, categoryId }: { transactionIds: string[], categoryId: string }): Promise<boolean> {

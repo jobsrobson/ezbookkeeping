@@ -3,17 +3,18 @@
         <v-col cols="12">
             <v-card :class="{ 'disabled': loadingDataStatistics }">
                 <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Data Management') }}</span>
-                        <v-btn density="compact" color="default" variant="text" size="24"
-                               class="ms-2" :icon="true" :loading="loadingDataStatistics" @click="reloadUserDataStatistics(true)">
-                            <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
-                            </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
-                            <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
-                        </v-btn>
-                    </div>
+                    <span>{{ tt('Data Management') }}</span>
+                </template>
+                <template #append>
+                    <v-btn density="comfortable" color="default" variant="text"
+                           class="settings-card-refresh" :icon="true"
+                           :loading="loadingDataStatistics" @click="reloadUserDataStatistics(true)">
+                        <template #loader>
+                            <v-progress-circular indeterminate size="20"/>
+                        </template>
+                        <v-icon :icon="mdiRefresh" size="20" />
+                        <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
+                    </v-btn>
                 </template>
 
                 <v-card-text>
@@ -88,53 +89,53 @@
         </v-col>
 
         <v-col cols="12" v-if="isDataExportingEnabled()">
-            <v-card :class="{ 'disabled': exportingData }" :title="tt('Export Data')">
+            <v-card class="settings-export-card" :class="{ 'disabled': exportingData }" :title="tt('Export Data')">
                 <v-card-text>
                     <span class="text-body-1">{{ tt('Export all transaction data to file.') }}&nbsp;{{ tt('It may take a long time, please wait for a few minutes.') }}</span>
                 </v-card-text>
 
-                <v-card-text class="d-flex flex-wrap gap-4">
-                    <v-btn-group variant="elevated" density="comfortable" color="primary">
-                        <v-btn :disabled="loadingDataStatistics || exportingData || !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0'">
-                            {{ tt('Export Data') }}
-                            <v-progress-circular indeterminate size="22" class="ms-2" v-if="exportingData"></v-progress-circular>
-                            <v-menu activator="parent">
-                                <v-list :disabled="loadingDataStatistics || exportingData || !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0'">
-                                    <v-list-item @click="exportData('csv')">
-                                        <v-list-item-title>{{ tt('CSV (Comma-separated values) File') }}</v-list-item-title>
-                                    </v-list-item>
-                                    <v-list-item @click="exportData('tsv')">
-                                        <v-list-item-title>{{ tt('TSV (Tab-separated values) File') }}</v-list-item-title>
-                                    </v-list-item>
-                                </v-list>
-                            </v-menu>
-                        </v-btn>
-                    </v-btn-group>
+                <v-card-text class="settings-card-footer">
+                    <v-btn color="primary" variant="flat" :append-icon="mdiChevronDown"
+                           :loading="exportingData"
+                           :disabled="loadingDataStatistics || exportingData || !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0'">
+                        {{ tt('Export Data') }}
+                        <v-menu activator="parent">
+                            <v-list :disabled="loadingDataStatistics || exportingData || !dataStatistics || !dataStatistics.totalTransactionCount || dataStatistics.totalTransactionCount === '0'">
+                                <v-list-item @click="exportData('csv')">
+                                    <v-list-item-title>{{ tt('CSV (Comma-separated values) File') }}</v-list-item-title>
+                                </v-list-item>
+                                <v-list-item @click="exportData('tsv')">
+                                    <v-list-item-title>{{ tt('TSV (Tab-separated values) File') }}</v-list-item-title>
+                                </v-list-item>
+                            </v-list>
+                        </v-menu>
+                    </v-btn>
                 </v-card-text>
             </v-card>
         </v-col>
 
         <v-col cols="12">
-            <v-card :class="{ 'disabled': clearingData }">
+            <v-card class="settings-danger-card" :class="{ 'disabled': clearingData }">
                 <template #title>
                     <span class="text-error">{{ tt('Danger Zone') }}</span>
                 </template>
 
-                <v-card-text class="py-0">
-                    <span class="text-body-1 text-error">
-                        <v-icon class="mt-n1" :icon="mdiAlert"/>
-                        {{ tt('You CANNOT undo this action. "Clear All Transactions" will clear all your transactions data, and "Clear All Data" will clear your accounts, categories, tags and transactions data. Please enter your current password to confirm.') }}
-                    </span>
-                </v-card-text>
+                <v-card-text class="settings-danger-card__body">
+                    <div class="settings-danger-card__warning text-error">
+                        <v-icon :icon="mdiAlert"/>
+                        <span>{{ tt('You CANNOT undo this action. "Clear All Transactions" will clear all your transactions data, and "Clear All Data" will clear your accounts, categories, tags and transactions data. Please enter your current password to confirm.') }}</span>
+                    </div>
 
-                <v-card-text class="pb-0">
-                    <v-row class="mb-3">
-                        <v-col cols="12" md="6">
+                    <v-row class="settings-danger-card__form">
+                        <v-col cols="12" md="7" lg="6">
+                            <label class="settings-field-label settings-field-label--error">{{ tt('Current Password') }}</label>
                             <v-text-field
                                 autocomplete="current-password"
                                 ref="currentPasswordInput"
                                 type="password"
-                                variant="underlined"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
                                 color="error"
                                 :disabled="loadingDataStatistics || clearingData"
                                 :placeholder="tt('Current Password')"
@@ -144,7 +145,7 @@
                     </v-row>
                 </v-card-text>
 
-                <v-card-text class="d-flex flex-wrap gap-4">
+                <v-card-text class="settings-card-footer settings-danger-card__footer">
                     <v-btn color="error" :disabled="loadingDataStatistics || !currentPasswordForClearData || clearingData">
                         {{ tt('Clear User Data') }}
                         <v-progress-circular indeterminate size="22" class="ms-2" v-if="clearingData"></v-progress-circular>
@@ -186,6 +187,7 @@ import { startDownloadFile } from '@/lib/ui/common.ts';
 
 import {
     mdiRefresh,
+    mdiChevronDown,
     mdiListBoxOutline,
     mdiCreditCardOutline,
     mdiImage,

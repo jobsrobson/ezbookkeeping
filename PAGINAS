@@ -1,0 +1,86 @@
+## UI global
+
+Desktop:
+
+- [desktop-main.ts](/home/jobsr/Documents/GitHub/ezbookkeeping/src/desktop-main.ts:1) — configuração do Vuetify, temas claro/escuro, cores e defaults dos componentes.
+- [DesktopApp.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/DesktopApp.vue) — componente raiz desktop.
+- [global.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/global.scss:1) — estilos globais, cartões, títulos, fonte Inter, radius e remoção de sombras.
+- [font-size.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/font-size.scss:1) — tamanhos tipográficos.
+- [amount-color.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/amount-color.scss:1) — cores de receitas e despesas.
+- [Vuetify variables](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/vuetify/_variables.scss:1) — tipografia e variáveis-base.
+- [Vuetify overrides](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/vuetify/_overrides.scss:1) — customizações dos componentes Vuetify.
+- [template/base](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/base/_index.scss:1) — estrutura visual geral do template.
+- [desktop router](/home/jobsr/Documents/GitHub/ezbookkeeping/src/router/desktop.ts:1) — associação entre URLs e páginas.
+
+Mobile:
+
+- [mobile-main.ts](/home/jobsr/Documents/GitHub/ezbookkeeping/src/mobile-main.ts:1) — inicialização do Framework7 e componentes globais.
+- [MobileApp.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/MobileApp.vue:1) — tema, cor principal e componente raiz mobile.
+- [mobile global.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/mobile/global.scss:1) — backgrounds, cartões, listas, radius, sombras e fonte.
+- [mobile amount-color.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/mobile/amount-color.scss:1) — cores financeiras.
+- [font-size-default.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/mobile/font-size-default.scss:1) e demais `font-size-*.scss` — escalas de texto mobile.
+- [mobile login-page.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/mobile/common/login-page.scss:1) — visual das páginas de autenticação.
+- [mobile router](/home/jobsr/Documents/GitHub/ezbookkeeping/src/router/mobile.ts:1) — associação entre URLs e páginas.
+
+## Sidebar e navegação
+
+- [MainLayout.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/MainLayout.vue:1) — sidebar desktop completa, itens do menu, cabeçalho, área do usuário e conteúdo principal.
+- [vertical-nav.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/base/_vertical-nav.scss:1) — aparência-base da navegação vertical.
+- [template vertical-nav.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/template/_vertical-nav.scss:1) — customizações visuais da sidebar.
+- [layout vertical-nav.scss](/home/jobsr/Documents/GitHub/ezbookkeeping/src/styles/desktop/template/layout/component/vertical-nav.scss:1) — dimensões, transições e comportamento responsivo.
+
+O mobile não tem sidebar fixa. A navegação principal é controlada por:
+
+- [HomePage.vue mobile](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/HomePage.vue:1)
+- [SettingsPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/SettingsPage.vue:1)
+- [mobile router](/home/jobsr/Documents/GitHub/ezbookkeeping/src/router/mobile.ts:1)
+
+## Páginas desktop
+
+Principais páginas:
+
+- Visão geral: [HomePage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/HomePage.vue:1)
+- Transações: [transactions/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/transactions/ListPage.vue:1)
+- Contas: [accounts/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/accounts/ListPage.vue:1)
+- Faturas: [CreditCardInvoicePage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/accounts/CreditCardInvoicePage.vue:1)
+- Planejamento anual: [AnnualPlanningPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/planning/AnnualPlanningPage.vue:1)
+- Estatísticas: [statistics/TransactionPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/statistics/TransactionPage.vue:1)
+- Insights: [insights/ExplorerPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/insights/ExplorerPage.vue:1)
+- Categorias: [categories/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/categories/ListPage.vue:1)
+- Tags: [tags/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/tags/ListPage.vue:1)
+- Templates e agendamentos: [templates/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/templates/ListPage.vue:1)
+- Câmbio: [exchangerates/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/exchangerates/ListPage.vue:1)
+- Preferências do usuário: [UserSettingsPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/user/UserSettingsPage.vue:1)
+- Preferências da aplicação: [AppSettingsPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/app/AppSettingsPage.vue:1)
+- Sobre: [AboutPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/AboutPage.vue:1)
+
+Autenticação:
+
+- [LoginPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/LoginPage.vue:1)
+- [SignupPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/SignupPage.vue:1)
+- [UnlockPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/UnlockPage.vue:1)
+- [ForgetPasswordPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/ForgetPasswordPage.vue:1)
+- [ResetPasswordPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/desktop/ResetPasswordPage.vue:1)
+
+## Páginas mobile
+
+- Visão geral: [HomePage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/HomePage.vue:1)
+- Transações: [transactions/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/transactions/ListPage.vue:1)
+- Cadastro de transação: [transactions/EditPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/transactions/EditPage.vue:1)
+- Contas: [accounts/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/accounts/ListPage.vue:1)
+- Cadastro de conta: [accounts/EditPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/accounts/EditPage.vue:1)
+- Faturas: [CreditCardInvoicePage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/accounts/CreditCardInvoicePage.vue:1)
+- Conciliação: [ReconciliationStatementPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/accounts/ReconciliationStatementPage.vue:1)
+- Estatísticas: [statistics/TransactionPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/statistics/TransactionPage.vue:1)
+- Categorias: [categories/AllPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/categories/AllPage.vue:1)
+- Tags: [tags/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/tags/ListPage.vue:1)
+- Templates: [templates/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/templates/ListPage.vue:1)
+- Câmbio: [exchangerates/ListPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/exchangerates/ListPage.vue:1)
+- Configurações: [SettingsPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/SettingsPage.vue:1)
+- Perfil: [UserProfilePage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/users/UserProfilePage.vue:1)
+- Sobre: [AboutPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/AboutPage.vue:1)
+- Login: [LoginPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/LoginPage.vue:1)
+- Cadastro: [SignupPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/SignupPage.vue:1)
+- Desbloqueio: [UnlockPage.vue](/home/jobsr/Documents/GitHub/ezbookkeeping/src/views/mobile/UnlockPage.vue:1)
+
+Componentes menores, diálogos e abas específicos ficam abaixo das respectivas pastas de página, como `transactions/list/dialogs`, `accounts/list/dialogs`, `insights/tabs` e `insights/dialogs`.

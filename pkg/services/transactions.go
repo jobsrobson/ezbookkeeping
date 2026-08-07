@@ -516,6 +516,19 @@ func (s *TransactionService) GetTransactionByTransactionId(c core.Context, uid i
 	return transaction, nil
 }
 
+// GetTransactionsByInstallmentGroupId returns every installment in a purchase plan.
+func (s *TransactionService) GetTransactionsByInstallmentGroupId(c core.Context, uid int64, groupId int64) ([]*models.Transaction, error) {
+	if uid <= 0 || groupId <= 0 {
+		return nil, errs.ErrTransactionIdInvalid
+	}
+
+	var transactions []*models.Transaction
+	err := s.UserDataDB(uid).NewSession(c).
+		Where("uid=? AND deleted=? AND installment_group_id=?", uid, false, groupId).
+		OrderBy("installment_number asc").Find(&transactions)
+	return transactions, err
+}
+
 // GetTransactionsByTransactionIds returns transaction models according to transaction ids
 func (s *TransactionService) GetTransactionsByTransactionIds(c core.Context, uid int64, transactionIds []int64) ([]*models.Transaction, error) {
 	if uid <= 0 {
@@ -564,6 +577,18 @@ func (s *TransactionService) GetTransactionCount(c core.Context, uid int64, maxT
 
 // CreateTransaction saves a new transaction to database
 func (s *TransactionService) CreateTransaction(c core.Context, transaction *models.Transaction, tagIds []int64, pictureIds []int64) error {
+	return s.createTransaction(c, transaction, tagIds, pictureIds, nil)
+}
+
+// CreateTransactionWithSubscription saves a transaction and its monthly subscription schedule atomically.
+func (s *TransactionService) CreateTransactionWithSubscription(c core.Context, transaction *models.Transaction, tagIds []int64, pictureIds []int64, template *models.TransactionTemplate) error {
+	if template == nil {
+		return errs.ErrIncompleteOrIncorrectSubmission
+	}
+	return s.createTransaction(c, transaction, tagIds, pictureIds, template)
+}
+
+func (s *TransactionService) createTransaction(c core.Context, transaction *models.Transaction, tagIds []int64, pictureIds []int64, subscriptionTemplate *models.TransactionTemplate) error {
 	if transaction.Uid <= 0 {
 		return errs.ErrUserIdInvalid
 	}
@@ -599,6 +624,14 @@ func (s *TransactionService) CreateTransaction(c core.Context, transaction *mode
 
 	transaction.TransactionId = transactionUuids[0]
 
+	if subscriptionTemplate != nil {
+		subscriptionTemplate.TemplateId = s.GenerateUuid(uuid.UUID_TYPE_TEMPLATE)
+		if subscriptionTemplate.TemplateId < 1 {
+			return errs.ErrSystemIsBusy
+		}
+		transaction.SubscriptionTemplateId = subscriptionTemplate.TemplateId
+	}
+
 	if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
 		transaction.RelatedId = transactionUuids[1]
 	}
@@ -630,7 +663,26 @@ func (s *TransactionService) CreateTransaction(c core.Context, transaction *mode
 	userDataDb := s.UserDataDB(transaction.Uid)
 
 	return userDataDb.DoTransaction(c, func(sess *xorm.Session) error {
-		return s.doCreateTransaction(c, userDataDb, sess, transaction, transactionTagIndexes, tagIds, pictureIds, pictureUpdateModel)
+		err := s.doCreateTransaction(c, userDataDb, sess, transaction, transactionTagIndexes, tagIds, pictureIds, pictureUpdateModel)
+		if err != nil || subscriptionTemplate == nil {
+			return err
+		}
+
+		maxTemplate := &models.TransactionTemplate{}
+		has, err := sess.Where("uid=? AND deleted=? AND template_type=?", transaction.Uid, false, models.TRANSACTION_TEMPLATE_TYPE_SCHEDULE).
+			OrderBy("display_order desc").Limit(1).Get(maxTemplate)
+		if err != nil {
+			return err
+		}
+		if has {
+			subscriptionTemplate.DisplayOrder = maxTemplate.DisplayOrder + 1
+		} else {
+			subscriptionTemplate.DisplayOrder = 1
+		}
+		subscriptionTemplate.CreatedUnixTime = now
+		subscriptionTemplate.UpdatedUnixTime = now
+		_, err = sess.Insert(subscriptionTemplate)
+		return err
 	})
 }
 
@@ -698,6 +750,13 @@ func (s *TransactionService) BatchCreateTransactions(c core.Context, uid int64, 
 		if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT || transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
 			transaction.RelatedId = transactionUuids[transactionUuidIndex]
 			transactionUuidIndex++
+		}
+	}
+
+	if len(transactions) > 1 && transactions[0].InstallmentCount > 1 {
+		groupId := transactions[0].TransactionId
+		for i := 0; i < len(transactions); i++ {
+			transactions[i].InstallmentGroupId = groupId
 		}
 	}
 
@@ -927,6 +986,9 @@ func (s *TransactionService) CreateScheduledTransactions(c core.Context, current
 			Comment:           template.Comment,
 			CreatedIp:         c.ClientIP(),
 			ScheduledCreated:  true,
+		}
+		if template.Subscription {
+			transaction.SubscriptionTemplateId = template.TemplateId
 		}
 
 		if template.Type == models.TRANSACTION_TYPE_TRANSFER {

@@ -122,7 +122,7 @@
                                 </div>
                             </a>
 
-                            <icon-selection-sheet :all-icon-infos="ALL_ACCOUNT_ICONS"
+                            <icon-selection-sheet icon-type="account" :all-icon-infos="ALL_ACCOUNT_ICONS"
                                                   :color="account.color"
                                                   v-model:show="accountContext.showIconSelectionSheet"
                                                   v-model="account.icon"
@@ -183,7 +183,7 @@
             <f7-list-item
                 link="#"
                 class="list-item-with-header-and-title list-item-no-item-after"
-                :header="tt('Statement Date')"
+                :header="tt('Closing Date')"
                 :title="getAccountCreditCardStatementDate(account.creditCardStatementDate)"
                 v-if="isAccountSupportCreditCardStatementDate"
                 @click="accountContext.showCreditCardStatementDatePopup = true"
@@ -191,7 +191,7 @@
                 <list-item-selection-popup value-type="item"
                                            key-field="type" value-field="type"
                                            title-field="displayName"
-                                           :title="tt('Statement Date')"
+                                           :title="tt('Closing Date')"
                                            :enable-filter="true"
                                            :filter-placeholder="tt('Statement Date')"
                                            :filter-no-items-text="tt('No results')"
@@ -199,6 +199,38 @@
                                            v-model:show="accountContext.showCreditCardStatementDatePopup"
                                            v-model="account.creditCardStatementDate">
                 </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Due Date')"
+                :title="getAccountCreditCardStatementDate(account.creditCardDueDate)"
+                v-if="isAccountSupportCreditCardStatementDate"
+                @click="accountContext.showCreditCardDueDatePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Due Date')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="accountContext.showCreditCardDueDatePopup"
+                                           v-model="account.creditCardDueDate" />
+            </f7-list-item>
+
+            <f7-list-item
+                link="#" no-chevron
+                class="list-item-with-header-and-title"
+                :header="tt('Total Credit Limit')"
+                :title="formatCreditCardLimit(account)"
+                v-if="isAccountSupportCreditCardStatementDate"
+                @click="accountContext.showCreditCardLimitSheet = true"
+            >
+                <number-pad-sheet :min-value="0"
+                                  :max-value="TRANSACTION_MAX_AMOUNT"
+                                  :currency="account.currency"
+                                  v-model:show="accountContext.showCreditCardLimitSheet"
+                                  v-model="account.creditCardLimit" />
             </f7-list-item>
 
             <f7-list-item
@@ -310,7 +342,7 @@
                                 </div>
                             </a>
 
-                            <icon-selection-sheet :all-icon-infos="ALL_ACCOUNT_ICONS"
+                            <icon-selection-sheet icon-type="account" :all-icon-infos="ALL_ACCOUNT_ICONS"
                                                   :color="account.color"
                                                   v-model:show="accountContext.showIconSelectionSheet"
                                                   v-model="account.icon"
@@ -344,7 +376,7 @@
             <f7-list-item
                 link="#"
                 class="list-item-with-header-and-title list-item-no-item-after"
-                :header="tt('Statement Date')"
+                :header="tt('Closing Date')"
                 :title="getAccountCreditCardStatementDate(account.creditCardStatementDate)"
                 v-if="isAccountSupportCreditCardStatementDate"
                 @click="accountContext.showCreditCardStatementDatePopup = true"
@@ -352,7 +384,7 @@
                 <list-item-selection-popup value-type="item"
                                            key-field="type" value-field="type"
                                            title-field="displayName"
-                                           :title="tt('Statement Date')"
+                                           :title="tt('Closing Date')"
                                            :enable-filter="true"
                                            :filter-placeholder="tt('Statement Date')"
                                            :filter-no-items-text="tt('No results')"
@@ -360,6 +392,23 @@
                                            v-model:show="accountContext.showCreditCardStatementDatePopup"
                                            v-model="account.creditCardStatementDate">
                 </list-item-selection-popup>
+            </f7-list-item>
+
+            <f7-list-item
+                link="#"
+                class="list-item-with-header-and-title list-item-no-item-after"
+                :header="tt('Due Date')"
+                :title="getAccountCreditCardStatementDate(account.creditCardDueDate)"
+                v-if="isAccountSupportCreditCardStatementDate"
+                @click="accountContext.showCreditCardDueDatePopup = true"
+            >
+                <list-item-selection-popup value-type="item"
+                                           key-field="type" value-field="type"
+                                           title-field="displayName"
+                                           :title="tt('Due Date')"
+                                           :items="allAvailableMonthDays"
+                                           v-model:show="accountContext.showCreditCardDueDatePopup"
+                                           v-model="account.creditCardDueDate" />
             </f7-list-item>
 
             <f7-list-item :title="tt('Visible')" v-if="editAccountId">
@@ -417,7 +466,7 @@
                                     </div>
                                 </a>
 
-                                <icon-selection-sheet :all-icon-infos="ALL_ACCOUNT_ICONS"
+                                <icon-selection-sheet icon-type="account" :all-icon-infos="ALL_ACCOUNT_ICONS"
                                                       :color="subAccount.color"
                                                       v-model:show="subAccountContexts[idx]!.showIconSelectionSheet"
                                                       v-model="subAccount.icon"
@@ -610,6 +659,8 @@ interface AccountContext {
     showColorSelectionSheet: boolean;
     showCurrencyPopup: boolean;
     showCreditCardStatementDatePopup: boolean;
+    showCreditCardDueDatePopup: boolean;
+    showCreditCardLimitSheet: boolean;
     showBalanceSheet: boolean;
     showBalanceDateTimeSheet: boolean;
     showLastReconciledTimeSheet: boolean;
@@ -664,6 +715,8 @@ const DEFAULT_ACCOUNT_CONTEXT: AccountContext = {
     showColorSelectionSheet: false,
     showCurrencyPopup: false,
     showCreditCardStatementDatePopup: false,
+    showCreditCardDueDatePopup: false,
+    showCreditCardLimitSheet: false,
     showBalanceSheet: false,
     showBalanceDateTimeSheet: false,
     showLastReconciledTimeSheet: false,
@@ -685,6 +738,10 @@ const allCurrencies = computed<LocalizedCurrencyInfo[]>(() => getAllCurrencies()
 function formatAccountDisplayBalance(selectedAccount: Account): string {
     const balance = parseBigDecimal(selectedAccount.balance);
     return formatAmountToLocalizedNumeralsWithCurrency(account.value.isLiability ? balance.negate() : balance, selectedAccount.currency);
+}
+
+function formatCreditCardLimit(selectedAccount: Account): string {
+    return formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(selectedAccount.creditCardLimit.toString(10)), selectedAccount.currency);
 }
 
 function formatDate(unixTime?: number): string {

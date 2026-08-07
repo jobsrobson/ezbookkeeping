@@ -4,7 +4,7 @@
     display: block;
     margin: 0 auto;
     border-radius: 12px;
-    box-shadow: 0 12px 28px rgba(var(--ebk-primary-color), 0.2);
+    box-shadow: none;
 }
 
 .login-page {
@@ -46,7 +46,7 @@
         overflow: hidden;
         border: 1px solid rgba(var(--ebk-primary-color), 0.18);
         border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        box-shadow: none;
         transition: border-color 160ms ease, box-shadow 160ms ease;
     }
 
@@ -57,7 +57,7 @@
 
     > ul:focus-within {
         border-color: rgba(var(--ebk-primary-color), 0.55);
-        box-shadow: 0 0 0 3px rgba(var(--ebk-primary-color), 0.1), 0 8px 24px rgba(0, 0, 0, 0.07);
+        box-shadow: none;
     }
 
     .login-page-utilities > .item-content > .item-inner {
@@ -100,7 +100,7 @@
     .login-page-primary-action > .list-button {
         background: var(--f7-theme-color);
         color: #fff;
-        box-shadow: 0 8px 20px rgba(var(--ebk-primary-color), 0.22);
+        box-shadow: none;
     }
 
     .login-page-secondary-action > .list-button {

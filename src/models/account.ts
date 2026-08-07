@@ -17,6 +17,8 @@ export class Account implements AccountInfoResponse {
     public lastReconciledTime?: number;
     public comment: string;
     public creditCardStatementDate?: number;
+    public creditCardDueDate?: number;
+    public creditCardLimit: number;
     public displayOrder: number;
     public visible: boolean;
     public subAccounts?: Account[];
@@ -27,7 +29,7 @@ export class Account implements AccountInfoResponse {
     private readonly _isAsset?: boolean;
     private readonly _isLiability?: boolean;
 
-    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[]) {
+    protected constructor(id: string, name: string, parentId: string, category: number, type: number, icon: string, color: string, currency: string, initialBalance: string, comment: string, displayOrder: number, visible: boolean, balanceTime?: number, lastReconciledTime?: number, creditCardStatementDate?: number, isAsset?: boolean, isLiability?: boolean, subAccounts?: Account[], creditCardDueDate?: number, creditCardLimit?: string | number) {
         this.id = id;
         this.name = name;
         this.parentId = parentId;
@@ -42,6 +44,12 @@ export class Account implements AccountInfoResponse {
         this.displayOrder = displayOrder;
         this.visible = visible;
         this.creditCardStatementDate = creditCardStatementDate;
+        this.creditCardDueDate = creditCardDueDate;
+        this.creditCardLimit = typeof(creditCardLimit) === 'number' ? creditCardLimit : parseInt(creditCardLimit ?? '0', 10);
+
+        if (!Number.isSafeInteger(this.creditCardLimit) || this.creditCardLimit < 0) {
+            this.creditCardLimit = 0;
+        }
 
         this._initialBalance = initialBalance;
         this._numericBalance = undefined;
@@ -134,7 +142,9 @@ export class Account implements AccountInfoResponse {
             this.comment === other.comment &&
             this.displayOrder === other.displayOrder &&
             this.visible === other.visible &&
-            this.creditCardStatementDate === other.creditCardStatementDate;
+            this.creditCardStatementDate === other.creditCardStatementDate &&
+            this.creditCardDueDate === other.creditCardDueDate &&
+            this.creditCardLimit === other.creditCardLimit;
 
         if (!isEqual) {
             return false;
@@ -169,6 +179,8 @@ export class Account implements AccountInfoResponse {
         this.lastReconciledTime = other.lastReconciledTime;
         this.comment = other.comment;
         this.creditCardStatementDate = other.creditCardStatementDate;
+        this.creditCardDueDate = other.creditCardDueDate;
+        this.creditCardLimit = other.creditCardLimit;
         this.visible = other.visible;
 
         this._initialBalance = other._initialBalance;
@@ -223,6 +235,8 @@ export class Account implements AccountInfoResponse {
             balanceTime: (parentAccount || this.type === AccountType.SingleAccount.type) && this.balanceTime ? this.balanceTime : 0,
             comment: this.comment,
             creditCardStatementDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardStatementDate : undefined,
+            creditCardDueDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardDueDate : undefined,
+            creditCardLimit: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardLimit.toString(10) : undefined,
             subAccounts: !parentAccount ? subAccountCreateRequests : undefined,
             clientSessionId: !parentAccount ? clientSessionId : undefined
         };
@@ -257,6 +271,8 @@ export class Account implements AccountInfoResponse {
             lastReconciledTime: this.lastReconciledTime,
             comment: this.comment,
             creditCardStatementDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardStatementDate : undefined,
+            creditCardDueDate: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardDueDate : undefined,
+            creditCardLimit: !parentAccount && this.category === AccountCategory.CreditCard.type ? this.creditCardLimit.toString(10) : undefined,
             hidden: !this.visible,
             subAccounts: !parentAccount ? subAccountModifyRequests : undefined,
             clientSessionId: !parentAccount ? clientSessionId : undefined
@@ -409,7 +425,10 @@ export class Account implements AccountInfoResponse {
             this.lastReconciledTime,
             this.creditCardStatementDate,
             this.isAsset,
-            this.isLiability
+            this.isLiability,
+            undefined,
+            this.creditCardDueDate,
+            this.creditCardLimit
         );
     }
 
@@ -432,7 +451,9 @@ export class Account implements AccountInfoResponse {
             this.creditCardStatementDate,
             this.isAsset,
             this.isLiability,
-            typeof(this.subAccounts) !== 'undefined' ? Account.cloneAccounts(this.subAccounts) : undefined);
+            typeof(this.subAccounts) !== 'undefined' ? Account.cloneAccounts(this.subAccounts) : undefined,
+            this.creditCardDueDate,
+            this.creditCardLimit);
     }
 
     public createNewSubAccount(currency: string, balanceTime: number): Account {
@@ -494,7 +515,9 @@ export class Account implements AccountInfoResponse {
             accountResponse.creditCardStatementDate,
             accountResponse.isAsset,
             accountResponse.isLiability,
-            accountResponse.subAccounts ? Account.ofMulti(accountResponse.subAccounts) : undefined
+            accountResponse.subAccounts ? Account.ofMulti(accountResponse.subAccounts) : undefined,
+            accountResponse.creditCardDueDate,
+            accountResponse.creditCardLimit
         );
     }
 
@@ -609,7 +632,9 @@ export class AccountWithDisplayBalance extends Account {
             account.creditCardStatementDate,
             account.isAsset,
             account.isLiability,
-            account.subAccounts
+            account.subAccounts,
+            account.creditCardDueDate,
+            account.creditCardLimit
         );
 
         this.displayBalance = displayBalance;
@@ -631,6 +656,8 @@ export interface AccountCreateRequest {
     readonly balanceTime: number;
     readonly comment: string;
     readonly creditCardStatementDate?: number;
+    readonly creditCardDueDate?: number;
+    readonly creditCardLimit?: string;
     readonly subAccounts?: AccountCreateRequest[];
     readonly clientSessionId?: string;
 }
@@ -647,6 +674,8 @@ export interface AccountModifyRequest {
     readonly lastReconciledTime?: number;
     readonly comment: string;
     readonly creditCardStatementDate?: number;
+    readonly creditCardDueDate?: number;
+    readonly creditCardLimit?: string;
     readonly hidden: boolean;
     readonly subAccounts?: AccountModifyRequest[];
     readonly clientSessionId?: string;
@@ -670,6 +699,8 @@ export interface AccountInfoResponse {
     readonly lastReconciledTime?: number;
     readonly comment: string;
     readonly creditCardStatementDate?: number;
+    readonly creditCardDueDate?: number;
+    readonly creditCardLimit?: string | number;
     readonly displayOrder: number;
     readonly isAsset?: boolean;
     readonly isLiability?: boolean;

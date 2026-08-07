@@ -1,4 +1,5 @@
 import type { IconInfo } from '@/core/icon.ts';
+import { ALL_BANK_LOGOS } from '@/assets/bank-logos';
 
 export const DEFAULT_ACCOUNT_ICON_ID = '1';
 
@@ -9,6 +10,15 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     },
     '10': {
         icon: 'las la-coins'
+    },
+    '11': {
+        icon: 'las la-money-bill-wave'
+    },
+    '12': {
+        icon: 'las la-hand-holding-usd'
+    },
+    '13': {
+        icon: 'las la-cash-register'
     },
     '20': {
         icon: 'las la-money-bill-alt'
@@ -22,6 +32,18 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     },
     '110': {
         icon: 'las la-money-check-alt'
+    },
+    '111': {
+        icon: 'las la-landmark'
+    },
+    '112': {
+        icon: 'las la-university'
+    },
+    '113': {
+        icon: 'las la-money-check'
+    },
+    '114': {
+        icon: 'las la-percentage'
     },
     // 500 - 999 : Other Symbols
     '500': {
@@ -39,8 +61,14 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     '540': {
         icon: 'las la-donate'
     },
+    '550': {
+        icon: 'las la-briefcase'
+    },
     '560': {
         icon: 'las la-shield-alt'
+    },
+    '570': {
+        icon: 'las la-balance-scale'
     },
     '600': {
         icon: 'las la-calendar-minus'
@@ -54,11 +82,17 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     '701': {
         icon: 'las la-receipt'
     },
+    '702': {
+        icon: 'las la-file-contract'
+    },
     '800': {
         icon: 'las la-chart-area'
     },
     '801': {
         icon: 'las la-chart-line'
+    },
+    '802': {
+        icon: 'las la-chart-pie'
     },
     '900': {
         icon: 'las la-user-friends'
@@ -74,6 +108,27 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     },
     '912': {
         icon: 'las la-industry'
+    },
+    '913': {
+        icon: 'las la-store'
+    },
+    '920': {
+        icon: 'las la-car'
+    },
+    '921': {
+        icon: 'las la-plane'
+    },
+    '922': {
+        icon: 'las la-graduation-cap'
+    },
+    '923': {
+        icon: 'las la-gift'
+    },
+    '930': {
+        icon: 'las la-laptop'
+    },
+    '931': {
+        icon: 'las la-mobile-alt'
     },
     '990': {
         icon: 'las la-globe'
@@ -161,7 +216,17 @@ export const ALL_ACCOUNT_ICONS: Record<string, IconInfo> = {
     },
     '8303': {
         icon: 'lab la-line'
-    }
+    },
+    // 10000+ : Locally bundled bank and financial brand SVGs
+    ...Object.fromEntries(ALL_BANK_LOGOS.map((bankLogo, index) => [
+        (10000 + index).toString(),
+        {
+            icon: '',
+            assetUrl: bankLogo.assetUrl,
+            brandColor: bankLogo.brandColor,
+            name: bankLogo.name
+        }
+    ]))
 };
 
 export const DEFAULT_ACCOUNT_ICON: IconInfo = ALL_ACCOUNT_ICONS[DEFAULT_ACCOUNT_ICON_ID] as IconInfo;

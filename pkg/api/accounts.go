@@ -165,6 +165,14 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 		return nil, errs.ErrIncompleteOrIncorrectSubmission
 	}
 
+	creditCardLimit := int64(0)
+	if accountCreateReq.CreditCardLimit != "" {
+		creditCardLimit, err = utils.StringToInt64(accountCreateReq.CreditCardLimit)
+		if err != nil || creditCardLimit < 0 {
+			return nil, errs.ErrIncompleteOrIncorrectSubmission
+		}
+	}
+
 	subAccountBalances := make([]int64, len(accountCreateReq.SubAccounts))
 
 	if accountCreateReq.Category < models.ACCOUNT_CATEGORY_CASH || accountCreateReq.Category > models.ACCOUNT_CATEGORY_CERTIFICATE_OF_DEPOSIT {
@@ -175,6 +183,10 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 	if accountCreateReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && accountCreateReq.CreditCardStatementDate != 0 {
 		log.Warnf(c, "[accounts.AccountCreateHandler] cannot set statement date with category \"%d\"", accountCreateReq.Category)
 		return nil, errs.ErrCannotSetStatementDateForNonCreditCard
+	}
+
+	if accountCreateReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && (accountCreateReq.CreditCardDueDate != 0 || creditCardLimit != 0) {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
 	}
 
 	if accountCreateReq.Type == models.ACCOUNT_TYPE_SINGLE_ACCOUNT {
@@ -256,7 +268,7 @@ func (a *AccountsApi) AccountCreateHandler(c *core.WebContext) (any, *errs.Error
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	mainAccount := a.createNewAccountModel(uid, &accountCreateReq, mainAccountBalance, false, maxOrderId+1)
+	mainAccount := a.createNewAccountModel(uid, &accountCreateReq, mainAccountBalance, creditCardLimit, false, maxOrderId+1)
 	childrenAccounts, childrenAccountBalanceTimes := a.createSubAccountModels(uid, &accountCreateReq, subAccountBalances)
 
 	if a.CurrentConfig().EnableDuplicateSubmissionsCheck && accountCreateReq.ClientSessionId != "" {
@@ -347,6 +359,10 @@ func (a *AccountsApi) AccountModifyHandler(c *core.WebContext) (any, *errs.Error
 	if accountModifyReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && accountModifyReq.CreditCardStatementDate != 0 {
 		log.Warnf(c, "[accounts.AccountModifyHandler] cannot set statement date with category \"%d\"", accountModifyReq.Category)
 		return nil, errs.ErrCannotSetStatementDateForNonCreditCard
+	}
+
+	if accountModifyReq.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD && (accountModifyReq.CreditCardDueDate != 0 || accountModifyReq.CreditCardLimit != "") {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
 	}
 
 	uid := c.GetCurrentUid()
@@ -816,11 +832,13 @@ func (a *AccountsApi) SubAccountDeleteHandler(c *core.WebContext) (any, *errs.Er
 	return true, nil
 }
 
-func (a *AccountsApi) createNewAccountModel(uid int64, accountCreateReq *models.AccountCreateRequest, balance int64, isSubAccount bool, order int32) *models.Account {
+func (a *AccountsApi) createNewAccountModel(uid int64, accountCreateReq *models.AccountCreateRequest, balance int64, creditCardLimit int64, isSubAccount bool, order int32) *models.Account {
 	accountExtend := &models.AccountExtend{}
 
 	if !isSubAccount && accountCreateReq.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD {
 		accountExtend.CreditCardStatementDate = &accountCreateReq.CreditCardStatementDate
+		accountExtend.CreditCardDueDate = &accountCreateReq.CreditCardDueDate
+		accountExtend.CreditCardLimit = &creditCardLimit
 	}
 
 	return &models.Account{
@@ -865,7 +883,7 @@ func (a *AccountsApi) createSubAccountModels(uid int64, accountCreateReq *models
 	childrenAccountBalanceTimes := make([]int64, len(accountCreateReq.SubAccounts))
 
 	for i := int32(0); i < int32(len(accountCreateReq.SubAccounts)); i++ {
-		childrenAccounts[i] = a.createNewAccountModel(uid, accountCreateReq.SubAccounts[i], balances[i], true, i+1)
+		childrenAccounts[i] = a.createNewAccountModel(uid, accountCreateReq.SubAccounts[i], balances[i], 0, true, i+1)
 		childrenAccountBalanceTimes[i] = accountCreateReq.SubAccounts[i].BalanceTime
 	}
 
@@ -878,6 +896,16 @@ func (a *AccountsApi) getToUpdateAccount(user *models.User, accountModifyReq *mo
 
 	if !isSubAccount && accountModifyReq.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD {
 		newAccountExtend.CreditCardStatementDate = &accountModifyReq.CreditCardStatementDate
+		newAccountExtend.CreditCardDueDate = &accountModifyReq.CreditCardDueDate
+		creditCardLimit := int64(0)
+		if accountModifyReq.CreditCardLimit != "" {
+			var err error
+			creditCardLimit, err = utils.StringToInt64(accountModifyReq.CreditCardLimit)
+			if err != nil || creditCardLimit < 0 {
+				return nil, errs.ErrIncompleteOrIncorrectSubmission
+			}
+		}
+		newAccountExtend.CreditCardLimit = &creditCardLimit
 	}
 
 	newAccount := &models.Account{
@@ -920,7 +948,24 @@ func (a *AccountsApi) getToUpdateAccount(user *models.User, accountModifyReq *mo
 		return newAccount, nil
 	}
 
+	if accountCreditCardDetailsChanged(newAccountExtend, oldAccountExtend) {
+		return newAccount, nil
+	}
+
 	return nil, nil
+}
+
+func accountCreditCardDetailsChanged(newExtend *models.AccountExtend, oldExtend *models.AccountExtend) bool {
+	if newExtend.CreditCardDueDate != nil && (oldExtend == nil || oldExtend.CreditCardDueDate == nil || *newExtend.CreditCardDueDate != *oldExtend.CreditCardDueDate) {
+		return true
+	}
+	if newExtend.CreditCardDueDate == nil && oldExtend != nil && oldExtend.CreditCardDueDate != nil {
+		return true
+	}
+	if newExtend.CreditCardLimit != nil && (oldExtend == nil || oldExtend.CreditCardLimit == nil || *newExtend.CreditCardLimit != *oldExtend.CreditCardLimit) {
+		return true
+	}
+	return newExtend.CreditCardLimit == nil && oldExtend != nil && oldExtend.CreditCardLimit != nil
 }
 
 func (a *AccountsApi) getToDeleteSubAccountIds(accountModifyReq *models.AccountModifyRequest, mainAccount *models.Account, accountAndSubAccounts []*models.Account) []int64 {

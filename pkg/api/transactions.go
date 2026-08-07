@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/big"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1004,6 +1005,41 @@ func (a *TransactionsApi) TransactionGetHandler(c *core.WebContext) (any, *errs.
 		transactionResp.Pictures = a.GetTransactionPictureInfoResponseList(pictureInfos)
 	}
 
+	if transaction.InstallmentGroupId > 0 {
+		installments, installmentErr := a.transactions.GetTransactionsByInstallmentGroupId(c, uid, transaction.InstallmentGroupId)
+		if installmentErr != nil {
+			return nil, errs.Or(installmentErr, errs.ErrOperationFailed)
+		}
+
+		now := time.Now().Unix()
+		sourceAccount := accountMap[transaction.AccountId]
+		summary := &models.TransactionInstallmentSummaryResponse{
+			Items: make([]*models.TransactionInstallmentItemResponse, 0, len(installments)),
+		}
+		for _, installment := range installments {
+			installmentTime := utils.GetUnixTimeFromTransactionTime(installment.TransactionTime)
+			dueTime := int64(0)
+			if sourceAccount != nil && sourceAccount.Extend != nil && sourceAccount.Extend.CreditCardStatementDate != nil && sourceAccount.Extend.CreditCardDueDate != nil {
+				dueTime = getCreditCardInstallmentDueTime(installmentTime, installment.TimezoneUtcOffset, *sourceAccount.Extend.CreditCardStatementDate, *sourceAccount.Extend.CreditCardDueDate)
+			}
+			paid := dueTime > 0 && dueTime < now
+			summary.TotalAmount += installment.Amount
+			if paid {
+				summary.PaidAmount += installment.Amount
+			}
+			summary.Items = append(summary.Items, &models.TransactionInstallmentItemResponse{
+				TransactionId: installment.TransactionId,
+				Number:        installment.InstallmentNumber,
+				Time:          installmentTime,
+				DueTime:       dueTime,
+				Amount:        installment.Amount,
+				Paid:          paid,
+			})
+		}
+		summary.RemainingAmount = summary.TotalAmount - summary.PaidAmount
+		transactionResp.InstallmentSummary = summary
+	}
+
 	return transactionResp, nil
 }
 
@@ -1081,12 +1117,36 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 	}
 
 	transaction := a.createNewTransactionModel(uid, &transactionCreateReq, c.ClientIP())
+	isInstallment := transactionCreateReq.InstallmentCount > 1
+	isSubscription := transactionCreateReq.Subscription
+	if isInstallment && isSubscription {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
+	}
+	if isInstallment && transactionCreateReq.Type != models.TRANSACTION_TYPE_EXPENSE {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
+	}
+	if isInstallment && (transactionCreateReq.SourceAmount <= 0 || int64(transactionCreateReq.InstallmentCount) > transactionCreateReq.SourceAmount) {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
+	}
 
 	allUsedAccounts, err := a.getTransactionUsedAccounts(c, uid, []*models.Transaction{transaction})
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionCreateHandler] failed to get transaction used accounts for user \"uid:%d\", because %s", uid, err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	if isInstallment {
+		sourceAccount := allUsedAccounts[transaction.AccountId]
+		if sourceAccount == nil || sourceAccount.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD || len(pictureIds) > 0 {
+			return nil, errs.ErrIncompleteOrIncorrectSubmission
+		}
+	}
+	if isSubscription {
+		sourceAccount := allUsedAccounts[transaction.AccountId]
+		if transactionCreateReq.Type != models.TRANSACTION_TYPE_EXPENSE || sourceAccount == nil || sourceAccount.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD || !a.CurrentConfig().EnableScheduledTransaction {
+			return nil, errs.ErrIncompleteOrIncorrectSubmission
+		}
 	}
 
 	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
@@ -1136,7 +1196,22 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 		}
 	}
 
-	err = a.transactions.CreateTransaction(c, transaction, tagIds, pictureIds)
+	if isInstallment {
+		installments := a.createInstallmentTransactionModels(uid, &transactionCreateReq, c.ClientIP())
+		allTagIds := make(map[int][]int64, len(installments))
+		for i := range installments {
+			allTagIds[i] = tagIds
+		}
+		err = a.transactions.BatchCreateTransactions(c, uid, installments, allTagIds, nil)
+		if err == nil {
+			transaction = installments[0]
+		}
+	} else if isSubscription {
+		subscriptionTemplate := createSubscriptionTemplate(uid, &transactionCreateReq)
+		err = a.transactions.CreateTransactionWithSubscription(c, transaction, tagIds, pictureIds, subscriptionTemplate)
+	} else {
+		err = a.transactions.CreateTransaction(c, transaction, tagIds, pictureIds)
+	}
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionCreateHandler] failed to create transaction \"id:%d\" for user \"uid:%d\", because %s", transaction.TransactionId, uid, err.Error())
@@ -1150,6 +1225,45 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 	transactionResp.Pictures = a.GetTransactionPictureInfoResponseList(pictureInfos)
 
 	return transactionResp, nil
+}
+
+func createSubscriptionTemplate(uid int64, req *models.TransactionCreateRequest) *models.TransactionTemplate {
+	location := time.FixedZone("Subscription Timezone", int(req.UtcOffset)*60)
+	purchaseDate := time.Unix(req.Time, 0).In(location)
+	nextMonthStart := time.Date(purchaseDate.Year(), purchaseDate.Month()+1, 1, 0, 0, 0, 0, location).Unix()
+	frequencyDay := strconv.Itoa(purchaseDate.Day())
+	if purchaseDate.Day() > 28 {
+		frequencyDay = "-1"
+	}
+	name := strings.TrimSpace(req.Comment)
+	if name == "" {
+		name = "Subscription"
+	}
+	nameRunes := []rune(name)
+	if len(nameRunes) > 64 {
+		name = string(nameRunes[:64])
+	}
+	localMidnight := time.Date(2020, 1, 1, 0, 0, 0, 0, location).In(time.UTC)
+	scheduledAt := int16(localMidnight.Hour()*60 + localMidnight.Minute())
+
+	return &models.TransactionTemplate{
+		Uid:                        uid,
+		TemplateType:               models.TRANSACTION_TEMPLATE_TYPE_SCHEDULE,
+		Name:                       name,
+		Type:                       models.TRANSACTION_TYPE_EXPENSE,
+		CategoryId:                 req.CategoryId,
+		AccountId:                  req.SourceAccountId,
+		ScheduledFrequencyType:     models.TRANSACTION_SCHEDULE_FREQUENCY_TYPE_MONTHLY,
+		ScheduledFrequency:         frequencyDay,
+		ScheduledStartTime:         &nextMonthStart,
+		ScheduledAt:                scheduledAt,
+		ScheduledTimezoneUtcOffset: req.UtcOffset,
+		TagIds:                     strings.Join(req.TagIds, ","),
+		Amount:                     req.SourceAmount,
+		HideAmount:                 req.HideAmount,
+		Comment:                    req.Comment,
+		Subscription:               true,
+	}
 }
 
 // TransactionModifyHandler saves an existed transaction by request parameters for current user
@@ -1259,16 +1373,17 @@ func (a *TransactionsApi) TransactionModifyHandler(c *core.WebContext) (any, *er
 	transactionPictureIds := a.transactionPictures.GetTransactionPictureIds(transactionPictureInfos)
 
 	newTransaction := &models.Transaction{
-		TransactionId:     transaction.TransactionId,
-		Uid:               uid,
-		Type:              newTransactionType,
-		CategoryId:        transactionModifyReq.CategoryId,
-		TransactionTime:   utils.GetMinTransactionTimeFromUnixTime(transactionModifyReq.Time),
-		TimezoneUtcOffset: transactionModifyReq.UtcOffset,
-		AccountId:         transactionModifyReq.SourceAccountId,
-		Amount:            transactionModifyReq.SourceAmount,
-		HideAmount:        transactionModifyReq.HideAmount,
-		Comment:           transactionModifyReq.Comment,
+		TransactionId:          transaction.TransactionId,
+		Uid:                    uid,
+		Type:                   newTransactionType,
+		CategoryId:             transactionModifyReq.CategoryId,
+		TransactionTime:        utils.GetMinTransactionTimeFromUnixTime(transactionModifyReq.Time),
+		TimezoneUtcOffset:      transactionModifyReq.UtcOffset,
+		AccountId:              transactionModifyReq.SourceAccountId,
+		Amount:                 transactionModifyReq.SourceAmount,
+		HideAmount:             transactionModifyReq.HideAmount,
+		Comment:                transactionModifyReq.Comment,
+		SubscriptionTemplateId: transaction.SubscriptionTemplateId,
 	}
 
 	if newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
@@ -1308,7 +1423,7 @@ func (a *TransactionsApi) TransactionModifyHandler(c *core.WebContext) (any, *er
 	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 	newTransactionEditable := user.CanEditTransactionByTransactionTime(newTransaction.TransactionTime, clientTimezone, allUsedAccounts[newTransaction.AccountId], allUsedAccounts[newTransaction.RelatedAccountId])
 
-	if !transactionEditable || !newTransactionEditable {
+	if (!transactionEditable || !newTransactionEditable) && transaction.InstallmentGroupId <= 0 {
 		return nil, errs.ErrCannotModifyTransactionWithThisTransactionTime
 	}
 
@@ -2101,18 +2216,29 @@ func (a *TransactionsApi) TransactionDeleteHandler(c *core.WebContext) (any, *er
 
 	transactionEditable := user.CanEditTransactionByTransactionTime(transaction.TransactionTime, clientTimezone, allUsedAccounts[transaction.AccountId], allUsedAccounts[transaction.RelatedAccountId])
 
-	if !transactionEditable {
+	// Registered expenses must remain removable from the expense editor even when
+	// they are outside the user's general transaction editing time range.
+	if !transactionEditable && transaction.Type != models.TRANSACTION_DB_TYPE_EXPENSE {
 		return nil, errs.ErrCannotDeleteTransactionWithThisTransactionTime
 	}
 
-	err = a.transactions.DeleteTransaction(c, uid, transactionDeleteReq.Id)
-
-	if err != nil {
-		log.Errorf(c, "[transactions.TransactionDeleteHandler] failed to delete transaction \"id:%d\" for user \"uid:%d\", because %s", transactionDeleteReq.Id, uid, err.Error())
-		return nil, errs.Or(err, errs.ErrOperationFailed)
+	transactionsToDelete := []*models.Transaction{transaction}
+	if transaction.InstallmentGroupId > 0 {
+		transactionsToDelete, err = a.transactions.GetTransactionsByInstallmentGroupId(c, uid, transaction.InstallmentGroupId)
+		if err != nil {
+			return nil, errs.Or(err, errs.ErrOperationFailed)
+		}
 	}
 
-	log.Infof(c, "[transactions.TransactionDeleteHandler] user \"uid:%d\" has deleted transaction \"id:%d\"", uid, transactionDeleteReq.Id)
+	for _, transactionToDelete := range transactionsToDelete {
+		err = a.transactions.DeleteTransaction(c, uid, transactionToDelete.TransactionId)
+		if err != nil {
+			log.Errorf(c, "[transactions.TransactionDeleteHandler] failed to delete transaction \"id:%d\" for user \"uid:%d\", because %s", transactionToDelete.TransactionId, uid, err.Error())
+			return nil, errs.Or(err, errs.ErrOperationFailed)
+		}
+	}
+
+	log.Infof(c, "[transactions.TransactionDeleteHandler] user \"uid:%d\" has deleted transaction \"id:%d\" and %d installment(s)", uid, transactionDeleteReq.Id, len(transactionsToDelete)-1)
 	return true, nil
 }
 
@@ -3019,4 +3145,61 @@ func (a *TransactionsApi) createNewTransactionModel(uid int64, transactionCreate
 	}
 
 	return transaction
+}
+
+func (a *TransactionsApi) createInstallmentTransactionModels(uid int64, req *models.TransactionCreateRequest, clientIp string) []*models.Transaction {
+	count := int(req.InstallmentCount)
+	installments := make([]*models.Transaction, count)
+	baseAmount := req.SourceAmount / int64(count)
+	remainder := req.SourceAmount % int64(count)
+
+	for i := 0; i < count; i++ {
+		installmentReq := *req
+		installmentReq.InstallmentCount = 0
+		installmentReq.Time = addMonthsClamped(req.Time, i, req.UtcOffset)
+		installmentReq.SourceAmount = baseAmount
+		if int64(i) < remainder {
+			installmentReq.SourceAmount++
+		}
+		installment := a.createNewTransactionModel(uid, &installmentReq, clientIp)
+		installment.InstallmentNumber = int16(i + 1)
+		installment.InstallmentCount = req.InstallmentCount
+		installments[i] = installment
+	}
+
+	return installments
+}
+
+func addMonthsClamped(unixTime int64, months int, utcOffset int16) int64 {
+	location := time.FixedZone("Transaction Timezone", int(utcOffset)*60)
+	original := time.Unix(unixTime, 0).In(location)
+	firstOfTargetMonth := time.Date(original.Year(), original.Month()+time.Month(months), 1, original.Hour(), original.Minute(), original.Second(), 0, location)
+	lastDay := time.Date(firstOfTargetMonth.Year(), firstOfTargetMonth.Month()+1, 0, original.Hour(), original.Minute(), original.Second(), 0, location).Day()
+	day := original.Day()
+	if day > lastDay {
+		day = lastDay
+	}
+	return time.Date(firstOfTargetMonth.Year(), firstOfTargetMonth.Month(), day, original.Hour(), original.Minute(), original.Second(), 0, location).Unix()
+}
+
+func getCreditCardInstallmentDueTime(transactionTime int64, utcOffset int16, statementDay int, dueDay int) int64 {
+	if statementDay <= 0 || dueDay <= 0 {
+		return 0
+	}
+	location := time.FixedZone("Transaction Timezone", int(utcOffset)*60)
+	transactionDate := time.Unix(transactionTime, 0).In(location)
+	closingMonthOffset := 0
+	if transactionDate.Day() > statementDay {
+		closingMonthOffset = 1
+	}
+	dueMonthOffset := closingMonthOffset
+	if dueDay <= statementDay {
+		dueMonthOffset++
+	}
+	firstOfDueMonth := time.Date(transactionDate.Year(), transactionDate.Month()+time.Month(dueMonthOffset), 1, 23, 59, 59, 0, location)
+	lastDay := time.Date(firstOfDueMonth.Year(), firstOfDueMonth.Month()+1, 0, 23, 59, 59, 0, location).Day()
+	if dueDay > lastDay {
+		dueDay = lastDay
+	}
+	return time.Date(firstOfDueMonth.Year(), firstOfDueMonth.Month(), dueDay, 23, 59, 59, 0, location).Unix()
 }

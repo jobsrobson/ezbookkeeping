@@ -5,7 +5,7 @@
 @use "@/styles/desktop/template/base/mixins";
 
 %default-layout-vertical-nav-floating-navbar-and-sticky-elevated-navbar-scrolled {
-    box-shadow: 0 4px 8px -4px rgba(var(--v-shadow-key-umbra-color), 42%);
+    box-shadow: none;
 
     // If navbar is contained => Squeeze navbar content on scroll
     @if variables.$layout-vertical-nav-navbar-is-contained {

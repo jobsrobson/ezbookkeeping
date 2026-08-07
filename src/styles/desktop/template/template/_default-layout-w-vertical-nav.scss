@@ -21,7 +21,7 @@ $header: ".layout-navbar";
                 // ℹ️ .layout-footer-sticky#{$ele-layout-footer} => .layout-footer-sticky.layout-wrapper.layout-nav-type-vertical .layout-footer
                 .layout-footer-sticky#{$ele-layout-footer} {
                     .footer-content-container {
-                        box-shadow: 0 -4px 8px -4px rgba(var(--v-shadow-key-umbra-color), 42%);
+                        box-shadow: none;
                         padding-inline: 1.5rem;
                     }
                 }

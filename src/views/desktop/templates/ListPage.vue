@@ -1,17 +1,32 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
+    <v-row class="management-page match-height">
+        <v-col class="management-page__column" cols="12">
+            <v-card class="management-shell management-content-card" variant="flat">
                 <template #title>
-                    <div class="title-and-toolbar d-flex align-center">
-                        <span>{{ templateType === TemplateType.Schedule.type ? tt('Scheduled Transactions') : tt('Transaction Templates') }}</span>
-                        <v-btn class="ms-3" color="default" variant="outlined"
+                    <div class="management-page-header">
+                        <div class="management-page-header__top">
+                        <div class="management-page-header__identity">
+                            <div class="management-page-header__titles">
+                                <h1>{{ templateType === TemplateType.Schedule.type ? tt('Scheduled Transactions') : tt('Transaction Templates') }}</h1>
+                                <span>{{ availableTemplateCount }} {{ templateType === TemplateType.Schedule.type ? tt('Scheduled Transactions') : tt('Transaction Templates') }}</span>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="management-page-toolbar">
+                            <div class="management-search">
+                                <v-text-field density="compact" variant="outlined" hide-details clearable
+                                              :prepend-inner-icon="mdiMagnify" :disabled="loading || updating"
+                                              :placeholder="templateType === TemplateType.Schedule.type ? tt('Search scheduled transactions') : tt('Search transaction templates')"
+                                              v-model="searchKeyword" />
+                            </div>
+                        <div class="management-page-header__actions">
+                        <v-btn color="primary" variant="flat"
                                :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
-                        <v-btn class="ms-3" color="primary" variant="tonal"
+                        <v-btn color="default" variant="outlined"
                                :disabled="loading || updating" @click="saveSortResult"
                                v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                        <v-btn density="compact" color="default" variant="text" size="24"
-                               class="ms-2" :icon="true" :disabled="loading || updating"
+                        <v-btn density="comfortable" color="default" variant="text"
+                               :icon="true" :disabled="loading || updating"
                                :loading="loading" @click="reload">
                             <template #loader>
                                 <v-progress-circular indeterminate size="20"/>
@@ -19,8 +34,7 @@
                             <v-icon :icon="mdiRefresh" size="24" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
-                        <v-spacer/>
-                        <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                        <v-btn density="comfortable" color="default" variant="text"
                                :disabled="loading || updating" :icon="true">
                             <v-icon :icon="mdiDotsVertical" />
                             <v-menu activator="parent">
@@ -34,10 +48,12 @@
                                 </v-list>
                             </v-menu>
                         </v-btn>
+                        </div>
+                        </div>
                     </div>
                 </template>
 
-                <v-table class="transaction-templates-table table-striped" :hover="!loading">
+                <v-table class="management-table transaction-templates-table table-striped" :hover="!loading">
                     <thead>
                     <tr>
                         <th>
@@ -75,6 +91,7 @@
                                     @change="onMove">
                         <template #item="{ element }">
                             <tr class="transaction-templates-table-row" v-if="showHidden || !element.hidden"
+                                v-show="templateMatchesSearch(element)"
                                 @mouseenter="hoveredTemplateId = element.id" @mouseleave="hoveredTemplateId = ''">
                                 <td>
                                     <div class="d-flex align-center">
@@ -167,6 +184,7 @@ import {
 } from '@/lib/template.ts';
 
 import {
+    mdiMagnify,
     mdiRefresh,
     mdiPencilOutline,
     mdiEyeOffOutline,
@@ -195,6 +213,7 @@ const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const editDialog = useTemplateRef<EditDialogType>('editDialog');
 
 const templateType = ref<number>(TemplateType.Normal.type);
+const searchKeyword = ref<string | null>('');
 const loading = ref<boolean>(true);
 const updating = ref<boolean>(false);
 const hoveredTemplateId = ref<string>('');
@@ -206,6 +225,11 @@ const showHidden = ref<boolean>(false);
 const templates = computed<TransactionTemplate[]>(() => transactionTemplatesStore.allTransactionTemplates[templateType.value] || []);
 const noAvailableTemplate = computed<boolean>(() => isNoAvailableTemplate(templates.value, showHidden.value));
 const availableTemplateCount = computed<number>(() => getAvailableTemplateCount(templates.value, showHidden.value));
+
+function templateMatchesSearch(template: TransactionTemplate): boolean {
+    const keyword = (searchKeyword.value || '').trim().toLocaleLowerCase();
+    return !keyword || template.name.toLocaleLowerCase().includes(keyword);
+}
 
 function init(): void {
     templateType.value = props.initType;

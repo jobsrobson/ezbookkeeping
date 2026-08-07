@@ -1,0 +1,11 @@
+cd /home/jobsr/Documents/GitHub/ezbookkeeping
+
+# Iniciar o backend de desenvolvimento
+pkill -f "ezbookkeeping-dev server run"                                                                                ─╯
+go build -o ezbookkeeping-dev .
+./ezbookkeeping-dev server run
+
+# Iniciar o frontend
+npm run serve 
+
+

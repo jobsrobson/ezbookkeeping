@@ -21,6 +21,8 @@ import StatisticsTransactionPage from '@/views/desktop/statistics/TransactionPag
 import InsightsExplorerPage from '@/views/desktop/insights/ExplorerPage.vue';
 
 import AccountListPage from '@/views/desktop/accounts/ListPage.vue';
+import CreditCardInvoicePage from '@/views/desktop/accounts/CreditCardInvoicePage.vue';
+import AnnualPlanningPage from '@/views/desktop/planning/AnnualPlanningPage.vue';
 
 import TransactionCategoryListPage from '@/views/desktop/categories/ListPage.vue';
 
@@ -155,6 +157,17 @@ const router = createRouter({
                 {
                     path: '/account/list',
                     component: AccountListPage,
+                    beforeEnter: checkLogin
+                },
+                {
+                    path: '/account/invoices',
+                    component: CreditCardInvoicePage,
+                    beforeEnter: checkLogin,
+                    props: route => ({ initAccountId: route.query['accountId'] })
+                },
+                {
+                    path: '/planning/annual',
+                    component: AnnualPlanningPage,
                     beforeEnter: checkLogin
                 },
                 {

@@ -34,6 +34,7 @@
                 class="transaction-edit-amount ebk-large-amount"
                 header="Expense Amount" title="0.00">
             </f7-list-item>
+
             <f7-list-item
                 class="transaction-edit-amount ebk-large-amount"
                 header="Transfer In Amount" title="0.00" v-if="transaction.type === TransactionType.Transfer">
@@ -80,6 +81,41 @@
                                   v-model="transaction.sourceAmount"
                 ></number-pad-sheet>
             </f7-list-item>
+
+            <f7-list-item :title="tt('Installment Purchase')"
+                          v-if="isCreditCardExpense && mode === TransactionEditPageMode.Add">
+                <template #after>
+                    <f7-toggle :checked="transaction.installmentCount > 1"
+                               @toggle:change="transaction.installmentCount = $event ? 2 : 0; transaction.subscription = false" />
+                </template>
+            </f7-list-item>
+            <f7-list-input type="number"
+                           :min="2" :max="120"
+                           :label="tt('Number of Installments')"
+                           v-if="isCreditCardExpense && mode === TransactionEditPageMode.Add && transaction.installmentCount > 1"
+                           v-model:value="transaction.installmentCount" />
+            <f7-list-item :title="tt('Subscription')"
+                          v-if="isCreditCardExpense && mode === TransactionEditPageMode.Add">
+                <template #after>
+                    <f7-toggle :checked="transaction.subscription"
+                               @toggle:change="transaction.subscription = $event; transaction.installmentCount = 0" />
+                </template>
+            </f7-list-item>
+            <f7-list-item :title="tt('Subscription')"
+                          :subtitle="tt('This expense repeats monthly with the same amount and billing day.')"
+                          v-if="mode === TransactionEditPageMode.View && transaction.subscription" />
+
+            <template v-if="mode === TransactionEditPageMode.View && transaction.installmentSummary">
+                <f7-list-item group-title>{{ tt('Installment Details') }}</f7-list-item>
+                <f7-list-item :title="tt('Total Purchase')" :after="displayInstallmentAmount(transaction.installmentSummary.totalAmount)" />
+                <f7-list-item :title="tt('Total Paid')" :after="displayInstallmentAmount(transaction.installmentSummary.paidAmount)" />
+                <f7-list-item :title="tt('Remaining Amount')" :after="displayInstallmentAmount(transaction.installmentSummary.remainingAmount)" />
+                <f7-list-item :key="item.transactionId"
+                              :title="`${tt('Installment')} ${item.number}/${transaction.installmentCount}`"
+                              :subtitle="displayInstallmentSubtitle(item.time, item.dueTime)"
+                              :after="displayInstallmentAmount(item.amount)"
+                              v-for="item in transaction.installmentSummary.items" />
+            </template>
 
             <f7-list-item
                 class="transaction-edit-amount text-color-primary"
@@ -540,6 +576,7 @@ import { useTransactionsStore } from '@/stores/transaction.ts';
 import { useTransactionTemplatesStore } from '@/stores/transactionTemplate.ts';
 
 import { CategoryType } from '@/core/category.ts';
+import { AccountCategory } from '@/core/account.ts';
 import {
     TransactionType,
     TransactionEditScopeType,
@@ -678,6 +715,24 @@ const showGeoLocationActionSheet = ref<boolean>(false);
 const showMoreActionSheet = ref<boolean>(false);
 const showSourceAmountSheet = ref<boolean>(false);
 const showDestinationAmountSheet = ref<boolean>(false);
+
+const isCreditCardExpense = computed<boolean>(() => {
+    const account = accountsStore.allAccountsMap[transaction.value.sourceAccountId];
+    return transaction.value.type === TransactionType.Expense && account?.category === AccountCategory.CreditCard.type;
+});
+
+function displayInstallmentAmount(amount: number): string {
+    return getDisplayAmount(parseBigDecimal(amount.toString(10)), false, sourceAccountCurrency.value);
+}
+
+function displayInstallmentSubtitle(time: number, dueTime: number): string {
+    const invoiceDate = formatDateTimeToLongDate(parseDateTimeFromUnixTimeWithTimezoneOffset(time, transaction.value.utcOffset));
+    if (!dueTime) {
+        return `${tt('Invoice')}: ${invoiceDate}`;
+    }
+    const dueDate = formatDateTimeToLongDate(parseDateTimeFromUnixTimeWithTimezoneOffset(dueTime, transaction.value.utcOffset));
+    return `${tt('Invoice')}: ${invoiceDate} · ${tt('Due Date')}: ${dueDate}`;
+}
 const showCategorySheet = ref<boolean>(false);
 const showSourceAccountSheet = ref<boolean>(false);
 const showDestinationAccountSheet = ref<boolean>(false);

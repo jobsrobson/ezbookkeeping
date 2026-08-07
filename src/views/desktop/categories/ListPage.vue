@@ -1,18 +1,18 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
-                <v-layout>
-                    <v-navigation-drawer ref="navbar" :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-6 my-4">
+    <v-row class="management-page match-height">
+        <v-col class="management-page__column" cols="12">
+            <v-card class="management-shell" variant="flat">
+                <v-layout class="management-layout">
+                    <v-navigation-drawer class="management-sidebar" ref="navbar" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="management-sidebar__section">
                             <btn-vertical-group :disabled="loading" :buttons="[
                                 { name: tt('Expense'), value: CategoryType.Expense },
                                 { name: tt('Income'), value: CategoryType.Income },
                                 { name: tt('Transfer'), value: CategoryType.Transfer }
                             ]" v-model="activeCategoryType" @update:model-value="switchAllPrimaryCategories" />
                         </div>
-                        <v-divider />
-                        <v-tabs show-arrows class="my-4" direction="vertical"
+                        <v-divider class="management-sidebar__divider" />
+                        <v-tabs show-arrows class="management-sidebar__tabs" direction="vertical"
                                 :disabled="loading" v-model="primaryCategoryId">
                             <v-tab class="tab-text-truncate" value="0" @click="switchAllPrimaryCategories">
                                 <span class="text-truncate">{{ tt('Primary Categories') }}</span>
@@ -29,32 +29,45 @@
                             </template>
                         </v-tabs>
                     </v-navigation-drawer>
-                    <v-main>
+                    <v-main class="management-main">
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="categoryPage">
-                                <v-card variant="flat" :min-height="cardMinHeight">
+                                <v-card class="management-content-card" variant="flat" :min-height="cardMinHeight">
                                     <template #title>
-                                        <div class="title-and-toolbar d-flex align-center">
-                                            <v-btn class="me-3 d-md-none" density="compact" color="default" variant="plain"
+                                        <div class="management-page-header">
+                                            <div class="management-page-header__top">
+                                            <div class="management-page-header__identity">
+                                            <v-btn class="d-md-none" density="compact" color="default" variant="plain"
                                                    :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
+                                                <v-icon :icon="mdiMenu" size="22" />
                                             </v-btn>
-                                            <span>{{ tt('Transaction Categories') }}</span>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
+                                            <div class="management-page-header__titles">
+                                                <h1>{{ tt('Transaction Categories') }}</h1>
+                                                <span>{{ activeCategoryType === CategoryType.Expense ? tt('Expense') : activeCategoryType === CategoryType.Income ? tt('Income') : tt('Transfer') }}</span>
+                                            </div>
+                                            </div>
+                                            </div>
+                                            <div class="management-page-toolbar">
+                                                <div class="management-search">
+                                                    <v-text-field density="compact" variant="outlined" hide-details clearable
+                                                                  :prepend-inner-icon="mdiMagnify" :disabled="loading || updating"
+                                                                  :placeholder="tt('Search categories')" v-model="searchKeyword" />
+                                                </div>
+                                            <div class="management-page-header__actions">
+                                            <v-btn color="primary" variant="flat"
                                                    :disabled="loading || updating" @click="add">{{ tt('Add') }}</v-btn>
-                                            <v-btn class="ms-3" color="primary" variant="tonal"
+                                            <v-btn color="default" variant="outlined"
                                                    :disabled="loading || updating" @click="saveSortResult"
                                                    v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                                            <v-btn density="compact" color="default" variant="text" size="24"
-                                                   class="ms-2" :icon="true" :loading="loading || updating" @click="reload(true)">
+                                            <v-btn density="comfortable" color="default" variant="text"
+                                                   :icon="true" :loading="loading || updating" @click="reload(true)">
                                                 <template #loader>
                                                     <v-progress-circular indeterminate size="20"/>
                                                 </template>
                                                 <v-icon :icon="mdiRefresh" size="24" />
                                                 <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                             </v-btn>
-                                            <v-spacer/>
-                                            <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                                            <v-btn density="comfortable" color="default" variant="text"
                                                    :disabled="loading || updating" :icon="true">
                                                 <v-icon :icon="mdiDotsVertical" />
                                                 <v-menu activator="parent">
@@ -68,10 +81,12 @@
                                                     </v-list>
                                                 </v-menu>
                                             </v-btn>
+                                            </div>
+                                            </div>
                                         </div>
                                     </template>
 
-                                    <v-table class="transaction-category-table table-striped" :hover="!loading">
+                                    <v-table class="management-table transaction-category-table table-striped" :hover="!loading">
                                         <thead>
                                         <tr>
                                             <th>
@@ -116,6 +131,7 @@
                                                         @change="onMove">
                                             <template #item="{ element }">
                                                 <tr class="transaction-category-table-row" v-if="showHidden || !element.hidden"
+                                                    v-show="categoryMatchesSearch(element)"
                                                     @mouseenter="hoveredCategoryId = element.id" @mouseleave="hoveredCategoryId = ''">
                                                     <td>
                                                         <div class="d-flex align-center">
@@ -218,6 +234,7 @@ import {
 import { getNavSideBarOuterHeight } from '@/lib/ui/desktop.ts';
 
 import {
+    mdiMagnify,
     mdiRefresh,
     mdiMenu,
     mdiPencilOutline,
@@ -245,6 +262,7 @@ const editDialog = useTemplateRef<EditDialogType>('editDialog');
 
 const activeCategoryType = ref<CategoryType>(CategoryType.Expense);
 const activeTab = ref<string>('categoryPage');
+const searchKeyword = ref<string | null>('');
 const updating = ref<boolean>(false);
 const hoveredCategoryId = ref<string>('');
 const categoryHiding = ref<Record<string, boolean>>({});
@@ -287,6 +305,17 @@ const categories = computed<TransactionCategory[]>(() => {
 const noAvailableCategory = computed<boolean>(() => isNoAvailableCategory(categories.value, showHidden.value));
 const noCategory = computed<boolean>(() => categories.value.length < 1);
 const availableCategoryCount = computed<number>(() => getAvailableCategoryCount(categories.value, showHidden.value));
+
+function categoryMatchesSearch(category: TransactionCategory): boolean {
+    const keyword = (searchKeyword.value || '').trim().toLocaleLowerCase();
+
+    if (!keyword) {
+        return true;
+    }
+
+    return category.name.toLocaleLowerCase().includes(keyword) ||
+        category.comment?.toLocaleLowerCase().includes(keyword);
+}
 
 function updateCardMinHeight(): void {
     nextTick(() => {

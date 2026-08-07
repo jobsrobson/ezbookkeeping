@@ -14,8 +14,8 @@ export function getIconsInRows(allIconInfos: Record<string, IconInfo>, itemPerRo
         }
 
         ret[rowCount]!.push({
-            id: iconInfoId,
-            icon: iconInfo.icon
+            ...iconInfo,
+            id: iconInfoId
         });
     }
 

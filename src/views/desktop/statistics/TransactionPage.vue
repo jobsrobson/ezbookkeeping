@@ -1,23 +1,23 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
-                <v-layout>
-                    <v-navigation-drawer :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-6 my-4">
+    <v-row class="statistics-page match-height">
+        <v-col class="statistics-page__column" cols="12">
+            <v-card class="statistics-shell" variant="flat">
+                <v-layout class="statistics-layout">
+                    <v-navigation-drawer class="statistics-sidebar" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="statistics-sidebar__section statistics-sidebar__section--analysis">
                             <btn-vertical-group :disabled="loading" :buttons="[
                                 { name: tt('Categorical Analysis'), value: StatisticsAnalysisType.CategoricalAnalysis },
                                 { name: tt('Trend Analysis'), value: StatisticsAnalysisType.TrendAnalysis },
                                 { name: tt('Asset Trends'), value: StatisticsAnalysisType.AssetTrends }
                             ]" v-model="queryAnalysisType" />
                         </div>
-                        <v-divider />
-                        <div class="mx-6 mt-4">
-                            <span class="text-subtitle-2">{{ tt('Chart Type') }}</span>
+                        <v-divider class="statistics-sidebar__divider" />
+                        <div class="statistics-sidebar__section">
+                            <span class="statistics-sidebar__label">{{ tt('Chart Type') }}</span>
                             <v-select
                                 item-title="displayName"
                                 item-value="type"
-                                class="mt-2"
+                                class="statistics-sidebar__select mt-2"
                                 density="compact"
                                 :disabled="loading"
                                 :items="allChartTypes"
@@ -27,7 +27,7 @@
                             <v-select
                                 item-title="displayName"
                                 item-value="type"
-                                class="mt-2"
+                                class="statistics-sidebar__select mt-2"
                                 density="compact"
                                 :disabled="true"
                                 :items="[{ displayName: tt('Sankey Chart'), type: 0 }]"
@@ -35,19 +35,19 @@
                                 v-show="isQuerySpecialChartType && queryChartDataType === ChartDataType.Overview.type"
                             />
                         </div>
-                        <div class="mx-6 mt-4">
-                            <span class="text-subtitle-2">{{ tt('Sort Order') }}</span>
+                        <div class="statistics-sidebar__section">
+                            <span class="statistics-sidebar__label">{{ tt('Sort Order') }}</span>
                             <v-select
                                 item-title="displayName"
                                 item-value="type"
-                                class="mt-2"
+                                class="statistics-sidebar__select mt-2"
                                 density="compact"
                                 :disabled="loading"
                                 :items="allSortingTypes"
                                 v-model="querySortingType"
                             />
                         </div>
-                        <v-tabs show-arrows class="my-4" direction="vertical"
+                        <v-tabs show-arrows class="statistics-sidebar__tabs" direction="vertical"
                                 :disabled="loading" v-model="queryChartDataType">
                             <v-tab class="tab-text-truncate" :key="dataType.type" :value="dataType.type"
                                    v-for="dataType in ChartDataType.values(undefined, true)"
@@ -57,135 +57,414 @@
                             </v-tab>
                         </v-tabs>
                     </v-navigation-drawer>
-                    <v-main>
+                    <v-main class="statistics-main">
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="statisticsPage">
-                                <v-card variant="flat" :min-height="queryAnalysisType === StatisticsAnalysisType.TrendAnalysis || queryAnalysisType === StatisticsAnalysisType.AssetTrends ? '900' : '800'">
+                                <v-card class="statistics-content-card" variant="flat" :min-height="queryAnalysisType === StatisticsAnalysisType.TrendAnalysis || queryAnalysisType === StatisticsAnalysisType.AssetTrends ? '900' : '800'">
                                     <template #title>
-                                        <div class="title-and-toolbar d-flex align-center">
-                                            <v-btn class="me-3 d-md-none" density="compact" color="default" variant="plain"
-                                                   :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
-                                            </v-btn>
-                                            <span>{{ tt('Statistics & Analysis') }}</span>
-                                            <v-btn-group class="ms-4" color="default" density="comfortable" variant="outlined" divided>
-                                                <v-btn class="button-icon-with-direction" :icon="mdiArrowLeft"
-                                                       :disabled="loading || !canShiftDateRange"
-                                                       @click="shiftDateRange(-1)"/>
-                                                <v-menu location="bottom" max-height="500">
-                                                    <template #activator="{ props }">
-                                                        <v-btn :disabled="loading || !canChangeDateRange"
-                                                               v-bind="props">{{ queryDateRangeName }}</v-btn>
-                                                    </template>
-                                                    <v-list :selected="[queryDateType]">
-                                                        <v-list-item :key="dateRange.type" :value="dateRange.type"
-                                                                     :append-icon="(queryDateType === dateRange.type ? mdiCheck : undefined)"
-                                                                     v-for="dateRange in allDateRanges">
-                                                            <v-list-item-title class="cursor-pointer"
-                                                                               @click="setDateFilter(dateRange.type)">
-                                                                <div class="d-flex align-center">
-                                                                    <span>{{ dateRange.displayName }}</span>
-                                                                </div>
-                                                                <div class="statistics-custom-datetime-range smaller" v-if="dateRange.isUserCustomRange && canShowCustomDateRange(dateRange.type)">
-                                                                    <span>{{ queryStartTime }}</span>
-                                                                    <span>&nbsp;-&nbsp;</span>
-                                                                    <br/>
-                                                                    <span>{{ queryEndTime }}</span>
-                                                                </div>
-                                                            </v-list-item-title>
-                                                        </v-list-item>
-                                                    </v-list>
-                                                </v-menu>
-                                                <v-btn class="button-icon-with-direction" :icon="mdiArrowRight"
-                                                       :disabled="loading || !canShiftDateRange"
-                                                       @click="shiftDateRange(1)"/>
-                                            </v-btn-group>
+                                        <div class="statistics-page-header">
+    <div class="statistics-page-header__top">
+        <div class="statistics-page-header__identity">
+            <v-btn
+                class="d-md-none statistics-sidebar-trigger"
+                density="compact"
+                color="default"
+                variant="plain"
+                :ripple="false"
+                :icon="true"
+                @click="showNav = !showNav"
+            >
+                <v-icon :icon="mdiMenu" size="22" />
+            </v-btn>
 
-                                            <v-menu location="bottom" max-height="500" v-if="queryAnalysisType === StatisticsAnalysisType.TrendAnalysis">
-                                                <template #activator="{ props }">
-                                                    <v-btn class="ms-3" color="default" variant="outlined"
-                                                           :prepend-icon="mdiCalendarRangeOutline" :disabled="loading"
-                                                           v-bind="props">{{ queryTrendDateAggregationTypeName }}</v-btn>
-                                                </template>
-                                                <v-list>
-                                                    <v-list-item class="cursor-pointer" :key="aggregationType.type" :value="aggregationType.type"
-                                                                 :append-icon="(trendDateAggregationType === aggregationType.type ? mdiCheck : undefined)"
-                                                                 :title="aggregationType.displayName"
-                                                                 v-for="aggregationType in allTrendAnalysisDateAggregationTypes"
-                                                                 @click="setTrendDateAggregationType(aggregationType.type)">
-                                                    </v-list-item>
-                                                </v-list>
-                                            </v-menu>
+            <div class="statistics-page-header__titles">
+                <h1>{{ tt('Statistics & Analysis') }}</h1>
 
-                                            <v-menu location="bottom" max-height="500" v-if="queryAnalysisType === StatisticsAnalysisType.AssetTrends">
-                                                <template #activator="{ props }">
-                                                    <v-btn class="ms-3" color="default" variant="outlined"
-                                                           :prepend-icon="mdiCalendarRangeOutline" :disabled="loading"
-                                                           v-bind="props">{{ queryAssetTrendsDateAggregationTypeName }}</v-btn>
-                                                </template>
-                                                <v-list>
-                                                    <v-list-item class="cursor-pointer" :key="aggregationType.type" :value="aggregationType.type"
-                                                                 :append-icon="(assetTrendsDateAggregationType === aggregationType.type ? mdiCheck : undefined)"
-                                                                 :title="aggregationType.displayName"
-                                                                 v-for="aggregationType in allAssetTrendsDateAggregationTypes"
-                                                                 @click="setAssetTrendsDateAggregationType(aggregationType.type)">
-                                                    </v-list-item>
-                                                </v-list>
-                                            </v-menu>
+                <span>
+                    {{
+                        queryAnalysisType === StatisticsAnalysisType.CategoricalAnalysis
+                            ? tt('Categorical Analysis')
+                            : (
+                                queryAnalysisType === StatisticsAnalysisType.TrendAnalysis
+                                    ? tt('Trend Analysis')
+                                    : tt('Asset Trends')
+                            )
+                    }}
+                </span>
+            </div>
+        </div>
+    </div>
 
-                                            <v-btn density="compact" color="default" variant="text" size="24"
-                                                   class="ms-2" :icon="true" :loading="loading" @click="reload(true)">
-                                                <template #loader>
-                                                    <v-progress-circular indeterminate size="20"/>
-                                                </template>
-                                                <v-icon :icon="mdiRefresh" size="24" />
-                                                <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
-                                            </v-btn>
-                                            <v-spacer/>
-                                            <div class="transaction-keyword-filter ms-2">
-                                                <v-text-field density="compact" :disabled="loading"
-                                                              :prepend-inner-icon="mdiMagnify"
-                                                              :append-inner-icon="filterKeyword !== query.keyword ? mdiCheck : undefined"
-                                                              :placeholder="tt('Filter transaction description')"
-                                                              v-model="filterKeyword"
-                                                              v-if="canUseKeywordFilter"
-                                                              @click:append-inner="setKeywordFilter(filterKeyword)"
-                                                              @keyup.enter="setKeywordFilter(filterKeyword)"
-                                                />
-                                            </div>
-                                            <v-btn density="comfortable" color="default" variant="text" class="ms-2"
-                                                   :disabled="loading" :icon="true">
-                                                <v-icon :icon="mdiDotsVertical" />
-                                                <v-menu activator="parent">
-                                                    <v-list>
-                                                        <v-list-item :disabled="loading"
-                                                                     :prepend-icon="mdiFilterOutline"
-                                                                     :title="tt('Filter Accounts')"
-                                                                     @click="showFilterAccountDialog = true"></v-list-item>
-                                                        <v-list-item :disabled="loading"
-                                                                     :prepend-icon="mdiFilterOutline"
-                                                                     :title="tt('Filter Transaction Categories')"
-                                                                     @click="showFilterCategoryDialog = true"
-                                                                     v-if="canUseCategoryFilter"></v-list-item>
-                                                        <v-list-item :disabled="loading"
-                                                                     :prepend-icon="mdiFilterOutline"
-                                                                     :title="tt('Filter Transaction Tags')"
-                                                                     @click="showFilterTagDialog = true"
-                                                                     v-if="canUseTagFilter"></v-list-item>
-                                                        <v-divider class="my-2" v-if="!isQuerySpecialChartType" />
-                                                        <v-list-item :prepend-icon="mdiExport"
-                                                                     :title="tt('Export Results')"
-                                                                     :disabled="!statisticsDataHasData"
-                                                                     @click="exportResults"
-                                                                     v-if="!isQuerySpecialChartType"></v-list-item>
-                                                        <v-divider class="my-2"/>
-                                                        <v-list-item to="/app/settings?tab=statisticsSetting"
-                                                                     :prepend-icon="mdiFilterCogOutline"
-                                                                     :title="tt('Settings')"></v-list-item>
-                                                    </v-list>
-                                                </v-menu>
-                                            </v-btn>
-                                        </div>
+    <div class="statistics-page-toolbar">
+        <div class="statistics-page-toolbar__search">
+            <div class="statistics-search statistics-search--desktop">
+                <v-text-field
+                    v-if="canUseKeywordFilter"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    :disabled="loading"
+                    :prepend-inner-icon="mdiMagnify"
+                    :append-inner-icon="filterKeyword !== query.keyword ? mdiCheck : undefined"
+                    :placeholder="tt('Filter transaction description')"
+                    v-model="filterKeyword"
+                    @click:append-inner="setKeywordFilter(filterKeyword)"
+                    @keyup.enter="setKeywordFilter(filterKeyword)"
+                />
+            </div>
+
+            <v-menu
+                v-if="canUseKeywordFilter"
+                v-model="showCompactSearch"
+                location="bottom start"
+                :close-on-content-click="false"
+                width="320"
+                max-width="calc(100vw - 24px)"
+            >
+                <template #activator="{ props }">
+                    <v-btn
+                        class="statistics-search-trigger"
+                        density="comfortable"
+                        color="default"
+                        variant="text"
+                        :icon="true"
+                        v-bind="props"
+                    >
+                        <v-icon :icon="mdiMagnify" size="21" />
+
+                        <v-tooltip activator="parent">
+                            {{ tt('Search') }}
+                        </v-tooltip>
+                    </v-btn>
+                </template>
+
+                <v-card class="statistics-search-popover" elevation="0">
+                    <v-card-text>
+                        <v-text-field
+                            autofocus
+                            density="comfortable"
+                            variant="outlined"
+                            hide-details
+                            clearable
+                            :disabled="loading"
+                            :prepend-inner-icon="mdiMagnify"
+                            :append-inner-icon="filterKeyword !== query.keyword ? mdiCheck : undefined"
+                            :placeholder="tt('Filter transaction description')"
+                            v-model="filterKeyword"
+                            @click:append-inner="applyCompactKeywordFilter"
+                            @keyup.enter="applyCompactKeywordFilter"
+                        />
+                    </v-card-text>
+                </v-card>
+            </v-menu>
+        </div>
+
+        <div class="statistics-page-toolbar__actions">
+            <div class="statistics-page-header__desktop-actions">
+                <v-btn-group
+                    class="statistics-date-range-group"
+                    color="default"
+                    density="comfortable"
+                    variant="outlined"
+                    divided
+                >
+                    <v-btn
+                        class="button-icon-with-direction"
+                        :icon="mdiArrowLeft"
+                        :disabled="loading || !canShiftDateRange"
+                        @click="shiftDateRange(-1)"
+                    />
+
+                    <v-menu location="bottom" max-height="500">
+                        <template #activator="{ props }">
+                            <v-btn
+                                class="statistics-date-range-button"
+                                :disabled="loading || !canChangeDateRange"
+                                v-bind="props"
+                            >
+                                {{ queryDateRangeName }}
+                            </v-btn>
+                        </template>
+
+                        <v-list :selected="[queryDateType]">
+                            <v-list-item
+                                :key="dateRange.type"
+                                :value="dateRange.type"
+                                :append-icon="queryDateType === dateRange.type ? mdiCheck : undefined"
+                                v-for="dateRange in allDateRanges"
+                            >
+                                <v-list-item-title
+                                    class="cursor-pointer"
+                                    @click="setDateFilter(dateRange.type)"
+                                >
+                                    <div class="d-flex align-center">
+                                        <span>{{ dateRange.displayName }}</span>
+                                    </div>
+
+                                    <div
+                                        class="statistics-custom-datetime-range smaller"
+                                        v-if="
+                                            dateRange.isUserCustomRange &&
+                                            canShowCustomDateRange(dateRange.type)
+                                        "
+                                    >
+                                        <span>{{ queryStartTime }}</span>
+                                        <span>&nbsp;-&nbsp;</span>
+                                        <br />
+                                        <span>{{ queryEndTime }}</span>
+                                    </div>
+                                </v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
+
+                    <v-btn
+                        class="button-icon-with-direction"
+                        :icon="mdiArrowRight"
+                        :disabled="loading || !canShiftDateRange"
+                        @click="shiftDateRange(1)"
+                    />
+                </v-btn-group>
+
+                <v-menu
+                    location="bottom"
+                    max-height="500"
+                    v-if="queryAnalysisType === StatisticsAnalysisType.TrendAnalysis"
+                >
+                    <template #activator="{ props }">
+                        <v-btn
+                            class="statistics-aggregation-button"
+                            color="default"
+                            variant="outlined"
+                            :prepend-icon="mdiCalendarRangeOutline"
+                            :disabled="loading"
+                            v-bind="props"
+                        >
+                            {{ queryTrendDateAggregationTypeName }}
+                        </v-btn>
+                    </template>
+
+                    <v-list>
+                        <v-list-item
+                            class="cursor-pointer"
+                            :key="aggregationType.type"
+                            :value="aggregationType.type"
+                            :append-icon="
+                                trendDateAggregationType === aggregationType.type
+                                    ? mdiCheck
+                                    : undefined
+                            "
+                            :title="aggregationType.displayName"
+                            v-for="aggregationType in allTrendAnalysisDateAggregationTypes"
+                            @click="setTrendDateAggregationType(aggregationType.type)"
+                        />
+                    </v-list>
+                </v-menu>
+
+                <v-menu
+                    location="bottom"
+                    max-height="500"
+                    v-if="queryAnalysisType === StatisticsAnalysisType.AssetTrends"
+                >
+                    <template #activator="{ props }">
+                        <v-btn
+                            class="statistics-aggregation-button"
+                            color="default"
+                            variant="outlined"
+                            :prepend-icon="mdiCalendarRangeOutline"
+                            :disabled="loading"
+                            v-bind="props"
+                        >
+                            {{ queryAssetTrendsDateAggregationTypeName }}
+                        </v-btn>
+                    </template>
+
+                    <v-list>
+                        <v-list-item
+                            class="cursor-pointer"
+                            :key="aggregationType.type"
+                            :value="aggregationType.type"
+                            :append-icon="
+                                assetTrendsDateAggregationType === aggregationType.type
+                                    ? mdiCheck
+                                    : undefined
+                            "
+                            :title="aggregationType.displayName"
+                            v-for="aggregationType in allAssetTrendsDateAggregationTypes"
+                            @click="setAssetTrendsDateAggregationType(aggregationType.type)"
+                        />
+                    </v-list>
+                </v-menu>
+
+                <v-btn
+                    class="statistics-toolbar-icon-button"
+                    density="comfortable"
+                    color="default"
+                    variant="text"
+                    :icon="true"
+                    :loading="loading"
+                    @click="reload(true)"
+                >
+                    <template #loader>
+                        <v-progress-circular indeterminate size="19" />
+                    </template>
+
+                    <v-icon :icon="mdiRefresh" size="21" />
+
+                    <v-tooltip activator="parent">
+                        {{ tt('Refresh') }}
+                    </v-tooltip>
+                </v-btn>
+
+                <v-btn
+                    class="statistics-toolbar-icon-button"
+                    density="comfortable"
+                    color="default"
+                    variant="text"
+                    :disabled="loading"
+                    :icon="true"
+                >
+                    <v-icon :icon="mdiDotsVertical" />
+
+                    <v-menu activator="parent">
+                        <v-list>
+                            <v-list-item
+                                :disabled="loading"
+                                :prepend-icon="mdiFilterOutline"
+                                :title="tt('Filter Accounts')"
+                                @click="showFilterAccountDialog = true"
+                            />
+
+                            <v-list-item
+                                :disabled="loading"
+                                :prepend-icon="mdiFilterOutline"
+                                :title="tt('Filter Transaction Categories')"
+                                @click="showFilterCategoryDialog = true"
+                                v-if="canUseCategoryFilter"
+                            />
+
+                            <v-list-item
+                                :disabled="loading"
+                                :prepend-icon="mdiFilterOutline"
+                                :title="tt('Filter Transaction Tags')"
+                                @click="showFilterTagDialog = true"
+                                v-if="canUseTagFilter"
+                            />
+
+                            <v-divider
+                                class="my-2"
+                                v-if="!isQuerySpecialChartType"
+                            />
+
+                            <v-list-item
+                                :prepend-icon="mdiExport"
+                                :title="tt('Export Results')"
+                                :disabled="!statisticsDataHasData"
+                                @click="exportResults"
+                                v-if="!isQuerySpecialChartType"
+                            />
+
+                            <v-divider class="my-2" />
+
+                            <v-list-item
+                                to="/app/settings?tab=statisticsSetting"
+                                :prepend-icon="mdiFilterCogOutline"
+                                :title="tt('Settings')"
+                            />
+                        </v-list>
+                    </v-menu>
+                </v-btn>
+            </div>
+
+            <v-btn
+                class="statistics-mobile-actions-trigger"
+                density="comfortable"
+                color="default"
+                variant="text"
+                :icon="true"
+            >
+                <v-icon :icon="mdiDotsVertical" size="22" />
+
+                <v-menu activator="parent" location="bottom end">
+                    <v-list>
+                        <v-list-item
+                            :disabled="loading"
+                            :prepend-icon="mdiCalendarRangeOutline"
+                            :title="queryDateRangeName"
+                        >
+                            <v-menu
+                                activator="parent"
+                                location="start"
+                                max-height="500"
+                            >
+                                <v-list :selected="[queryDateType]">
+                                    <v-list-item
+                                        :key="dateRange.type"
+                                        :value="dateRange.type"
+                                        :append-icon="
+                                            queryDateType === dateRange.type
+                                                ? mdiCheck
+                                                : undefined
+                                        "
+                                        :title="dateRange.displayName"
+                                        v-for="dateRange in allDateRanges"
+                                        @click="setDateFilter(dateRange.type)"
+                                    />
+                                </v-list>
+                            </v-menu>
+                        </v-list-item>
+
+                        <v-list-item
+                            :disabled="loading"
+                            :prepend-icon="mdiFilterOutline"
+                            :title="tt('Filter Accounts')"
+                            @click="showFilterAccountDialog = true"
+                        />
+
+                        <v-list-item
+                            v-if="canUseCategoryFilter"
+                            :disabled="loading"
+                            :prepend-icon="mdiFilterOutline"
+                            :title="tt('Filter Transaction Categories')"
+                            @click="showFilterCategoryDialog = true"
+                        />
+
+                        <v-list-item
+                            v-if="canUseTagFilter"
+                            :disabled="loading"
+                            :prepend-icon="mdiFilterOutline"
+                            :title="tt('Filter Transaction Tags')"
+                            @click="showFilterTagDialog = true"
+                        />
+
+                        <v-divider class="my-2" />
+
+                        <v-list-item
+                            :disabled="loading"
+                            :prepend-icon="mdiRefresh"
+                            :title="tt('Refresh')"
+                            @click="reload(true)"
+                        />
+
+                        <v-list-item
+                            v-if="!isQuerySpecialChartType"
+                            :disabled="!statisticsDataHasData"
+                            :prepend-icon="mdiExport"
+                            :title="tt('Export Results')"
+                            @click="exportResults"
+                        />
+
+                        <v-list-item
+                            to="/app/settings?tab=statisticsSetting"
+                            :prepend-icon="mdiFilterCogOutline"
+                            :title="tt('Settings')"
+                        />
+                    </v-list>
+                </v-menu>
+            </v-btn>
+        </div>
+    </div>
+</div>
                                     </template>
 
                                     <v-card-text class="statistics-overview-title pt-0" :class="{ 'disabled': loading }"
@@ -634,6 +913,7 @@ const exportDialog = useTemplateRef<ExportDialogType>('exportDialog');
 const activeTab = ref<string>('statisticsPage');
 const initing = ref<boolean>(true);
 const filterKeyword = ref<string>('');
+const showCompactSearch = ref<boolean>(false);
 const alwaysShowNav = ref<boolean>(display.mdAndUp.value);
 const showNav = ref<boolean>(display.mdAndUp.value);
 const showCustomDateRangeDialog = ref<boolean>(false);
@@ -1199,6 +1479,11 @@ function setTagFilter(changed: boolean): void {
     }
 }
 
+function applyCompactKeywordFilter(): void {
+    setKeywordFilter(filterKeyword.value);
+    showCompactSearch.value = false;
+}
+
 function setKeywordFilter(keyword: string): void {
     if (analysisType.value === StatisticsAnalysisType.AssetTrends) {
         return;
@@ -1347,47 +1632,665 @@ init(props);
 </script>
 
 <style>
-.statistics-custom-datetime-range {
-    line-height: 1rem;
+
+/* REMOVE A APP BAR EM DESKTOP, MAS MANTÉM NO TABLET E MOBILE */
+@media screen and (min-width: 1250px) {
+    .layout-navbar {
+        display:none!important;
+    }
 }
 
-.statistics-overview-title {
-    line-height: 2rem !important;
-    height: 46px;
+.statistics-page {
+    width: calc(100% + 48px);
+    min-width: 0;
+    min-height: 100vh;
+    margin: -24px;
+    background: rgb(var(--v-theme-background));
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+}
+
+.statistics-page,
+.statistics-page *,
+.statistics-page *::before,
+.statistics-page *::after {
+    box-sizing: border-box;
+}
+
+.statistics-page__column {
+    padding: 0 !important;
+}
+
+.statistics-shell {
+    min-height: 100vh;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgb(var(--v-theme-background)) !important;
+    box-shadow: none !important;
+}
+
+.statistics-layout {
+    min-height: 100vh;
+    background: rgb(var(--v-theme-background));
+}
+
+/* =========================================================
+ * SIDEBAR
+ * ======================================================= */
+
+.statistics-sidebar {
+    border-right: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.statistics-sidebar .v-navigation-drawer__content {
+    padding: 10px 10px 10px;
+}
+
+.statistics-sidebar__section {
+    padding: 14px 10px;
+}
+
+.statistics-sidebar__section--analysis {
+    padding-top: 6px;
+}
+
+.statistics-sidebar__divider {
+    margin: 4px 10px !important;
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+    opacity: 0 !important;
+}
+
+.statistics-sidebar__label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.statistics-sidebar__select {
+    margin-top: 0 !important;
+}
+
+.statistics-sidebar__tabs {
+    width: 100%;
+    margin: 10px 0 0 !important;
+    padding: 0 0px;
+}
+
+/* =========================================================
+ * MAIN CONTENT
+ * ======================================================= */
+
+.statistics-main {
+    min-width: 0;
+    background: rgb(var(--v-theme-background));
+}
+
+.statistics-content-card {
+    min-width: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+ * HEADER — MESMO SISTEMA DA HOMEPAGE
+ * ======================================================= */
+
+.statistics-content-card > .v-card-item {
+    min-height: auto;
+    padding: 0 !important;
+    background: rgb(var(--v-theme-surface));
+}
+
+.statistics-content-card > .v-card-item .v-card-title {
+    width: 100%;
+    white-space: normal;
+}
+
+.statistics-page-header {
+    width: 100%;
+    padding: 36px 25px 0;
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.statistics-page-header__top {
     display: flex;
-    align-items: flex-end;
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.statistics-page-header__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+}
+
+.statistics-page-header__titles {
+    min-width: 0;
+}
+
+.statistics-page-header__titles h1 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: clamp(1.8rem, 3vw, 2.65rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.statistics-page-header__titles > span {
+    display: block;
+    margin-top: 10px;
+    color: rgb(var(--v-theme-tertiary));
+    font-weight: 500;
+}
+
+.statistics-page-toolbar {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 20px;
+    padding-bottom: 20px;
+}
+
+.statistics-page-toolbar__search {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.statistics-page-toolbar__actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.statistics-page-header__desktop-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.statistics-search {
+    width: min(100%, 320px);
+}
+
+.statistics-date-range-group {
+    flex: 0 0 auto;
+    overflow: hidden;
+    min-height: 42px !important;
+    border: 1px solid rgb(var(--v-theme-border)) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.statistics-date-range-group .v-btn {
+    min-height: 40px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    color: rgb(var(--v-theme-on-background)) !important;
+    background: rgb(var(--v-theme-background)) !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    font-size: 0.76rem !important;
+    font-weight: 550 !important;
+}
+
+.statistics-date-range-group .v-btn + .v-btn {
+    border-left: 1px solid rgb(var(--v-theme-muted-border)) !important;
+}
+
+.statistics-date-range-group .v-btn:hover {
+    background: rgb(var(--v-theme-on-hover-background)) !important;
+}
+
+.statistics-date-range-button {
+    min-width: 108px !important;
+    max-width: 200px;
+}
+
+.statistics-date-range-button .v-btn__content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.statistics-aggregation-button {
+    min-height: 42px !important;
+    border-color: rgb(var(--v-theme-border)) !important;
+    border-radius: 6px !important;
+    background: rgb(var(--v-theme-background)) !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    font-size: 0.76rem !important;
+}
+
+.statistics-toolbar-icon-button,
+.statistics-search-trigger,
+.statistics-mobile-actions-trigger {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.statistics-toolbar-icon-button:hover,
+.statistics-search-trigger:hover,
+.statistics-mobile-actions-trigger:hover {
+    background: rgb(var(--v-theme-on-hover-background)) !important;
+}
+
+.statistics-search-trigger,
+.statistics-mobile-actions-trigger {
+    display: none !important;
+}
+
+/* =========================================================
+ * SUMMARY STRIP
+ * ======================================================= */
+
+.statistics-overview-title {
+    display: flex;
+    min-height: 64px;
+    height: auto;
+    align-items: center;
+    gap: 10px 14px;
+    margin: 25px 25px 0;
+    padding: 16px 18px !important;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 8px;
+    background: rgb(var(--v-theme-surface));
 }
 
 .statistics-overview-amount {
-    font-size: 1.5rem;
     overflow: hidden;
+    font-size: 1.15rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
     text-overflow: ellipsis;
 }
 
 .statistics-subtitle {
-    font-size: 1rem;
-    line-height: 1.75rem
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.69rem;
+    font-weight: 600;
+    letter-spacing: 0.035em;
+    line-height: 1.2;
+    text-transform: uppercase;
 }
 
 .statistics-overview-empty-tip {
-    color: rgba(var(--v-theme-on-background), var(--v-medium-emphasis-opacity)) !important;
+    color: rgb(var(--v-theme-tertiary)) !important;
+}
+
+/* =========================================================
+ * CHART / DATA AREA
+ * ======================================================= */
+
+.statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+    margin: 25px 25px 25px;
+    padding: 24px !important;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.statistics-content-card > .v-card-text:last-child {
+    margin-bottom: 40px;
+}
+
+.statistics-content-card .v-list {
+    background: transparent !important;
+}
+
+.statistics-content-card .v-divider {
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+    opacity: 1 !important;
+}
+
+.statistics-custom-datetime-range {
+    line-height: 1rem;
 }
 
 .statistics-list-item {
-    color: var(--v-theme-on-default);
-    font-size: 1rem !important;
-    line-height: 1.75rem;
+    color: rgb(var(--v-theme-on-background));
+    font-size: 0.88rem !important;
+    line-height: 1.5rem;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-decoration: none;
 }
 
 .statistics-list-item .statistics-percent {
-    font-size: 0.75rem;
-    opacity: 0.7;
     margin-inline-start: 6px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.7rem;
 }
 
 .statistics-list-item .statistics-amount {
-    opacity: 0.8;
+    font-weight: 600;
 }
+
+/* =========================================================
+ * RESPONSIVE
+ * ======================================================= */
+
+
+@media (max-width: 1260px) {
+    .statistics-page {
+        width: calc(100% + 48px);
+        margin: -24px;
+    }
+
+    .statistics-page-header {
+        padding-inline: 28px;
+    }
+
+    .statistics-overview-title,
+    .statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+        margin-inline: 28px;
+    }
+}
+
+@media (max-width: 1180px) {
+    /*
+     * Em telas menores, os controles compactos ficam na mesma linha
+     * visual do título, sem duplicar ou mover elementos no template.
+     */
+    .statistics-page-header {
+        position: relative;
+        padding-bottom: 28px;
+    }
+
+    .statistics-page-header__top {
+        align-items: center;
+        padding-right: 92px;
+    }
+
+    .statistics-page-header__identity {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    /*
+     * A toolbar existente é reposicionada sobre o header.
+     * Apenas busca compacta e menu de ações permanecem visíveis.
+     */
+    .statistics-page-toolbar {
+        position: absolute;
+        top: 30px;
+        right: 28px;
+
+        display: flex;
+        width: auto;
+        min-width: 0;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 4px;
+
+        margin: 0;
+        padding: 0;
+    }
+
+    .statistics-page-toolbar__search,
+    .statistics-page-toolbar__actions {
+        flex: 0 0 auto;
+    }
+
+    .statistics-page-header__desktop-actions,
+    .statistics-search--desktop {
+        display: none !important;
+    }
+
+    .statistics-search-trigger,
+    .statistics-mobile-actions-trigger {
+        display: inline-grid !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .statistics-page-header {
+        padding: 24px 20px;
+    }
+
+    .statistics-page-header__top {
+        gap: 12px;
+        padding-right: 88px;
+    }
+
+    .statistics-page-toolbar {
+        top: 18px;
+        right: 20px;
+    }
+
+    .statistics-page-header__titles h1 {
+        font-size: 1.55rem;
+    }
+
+    .statistics-page-header__titles > span {
+        display: none;
+    }
+
+    .statistics-overview-title,
+    .statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+        margin-inline: 18px;
+    }
+
+    .statistics-overview-title {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+        padding: 18px !important;
+    }
+    
+}
+
+@media (max-width: 600px) {
+    .statistics-page-header {
+        padding: 20px 14px;
+    }
+
+    .statistics-page-header__top {
+        padding-right: 78px;
+    }
+
+    .statistics-page-toolbar {
+        top: 14px;
+        right: 14px;
+        gap: 0;
+    }
+
+    .statistics-page-header__identity {
+        gap: 8px;
+    }
+
+    .statistics-page-header__titles h1 {
+        font-size: 1.35rem;
+    }
+
+    .statistics-page-header__actions {
+        gap: 2px;
+    }
+
+    .statistics-overview-title,
+    .statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+        margin-inline: 12px;
+    }
+
+    .statistics-overview-title {
+        min-height: 56px;
+        padding: 12px !important;
+        border-radius: 7px;
+    }
+
+    .statistics-overview-amount {
+        font-size: 1rem;
+    }
+
+    .statistics-content-card > .v-card-text:not(.statistics-overview-title) {
+        margin-top: 12px;
+        padding: 14px !important;
+        border-radius: 8px;
+    }
+}
+
+/* =========================================================
+ * TABS VERTICAIS DA SIDEBAR
+ * ======================================================= */
+
+.statistics-sidebar__tabs {
+    width: 100%;
+    min-width: 0;
+    margin: 12px 0 0 !important;
+    padding: 0 10px 14px;
+
+    background: transparent !important;
+}
+
+/* Área rolável */
+.statistics-sidebar__tabs .v-slide-group__container {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Lista de opções */
+.statistics-sidebar__tabs .v-slide-group__content {
+    width: 100%;
+    min-width: 0;
+    gap: 3px;
+}
+
+/* Tab individual */
+.statistics-sidebar__tabs .v-tab {
+    position: relative;
+
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    justify-content: flex-start !important;
+
+    padding: 0 12px 0 14px !important;
+
+    border: 0 !important;
+    border-radius: 6px !important;
+
+    color: rgb(var(--v-theme-tertiary)) !important;
+    background: transparent !important;
+
+    box-shadow: none !important;
+    text-transform: none !important;
+
+    font-family:
+        "Lausanne",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    font-size: 0.79rem !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em;
+
+    transition:
+        color 130ms ease,
+        background-color 130ms ease;
+}
+
+/* Conteúdo alinhado corretamente */
+.statistics-sidebar__tabs .v-tab .v-btn__content {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start !important;
+
+    overflow: hidden;
+    text-align: left;
+}
+
+/* Texto */
+.statistics-sidebar__tabs .v-tab .text-truncate {
+    display: block;
+    width: 100%;
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Remove overlay padrão do Vuetify */
+.statistics-sidebar__tabs .v-tab .v-btn__overlay,
+.statistics-sidebar__tabs .v-tab .v-btn__underlay {
+    background: transparent !important;
+    opacity: 0 !important;
+}
+
+/* Hover */
+.statistics-sidebar__tabs .v-tab:hover {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+    background: rgb(var(--v-theme-verticalbutton-hover)) !important;
+}
+
+/* Selecionada */
+.statistics-sidebar__tabs .v-tab.v-tab--selected,
+.statistics-sidebar__tabs .v-tab.v-tab-item--selected {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+    background: rgba(var(--v-theme-verticalbutton-selected), 0.5) !important;
+
+    font-weight: 600 !important;
+}
+
+/* Neutraliza text-primary aplicado pelo Vuetify */
+.statistics-sidebar__tabs .v-tab.text-primary {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+}
+
+/* Indicador lateral da seleção */
+.statistics-sidebar__tabs .v-tab__slider {
+    position: absolute !important;
+
+    top: 9px !important;
+    bottom: 9px !important;
+    left: 4px !important;
+    right: auto !important;
+
+    width: 2px !important;
+    height: auto !important;
+
+    border-radius: 999px;
+
+    background: rgb(var(--v-theme-highlight)) !important;
+}
+
+/* Esconde o indicador nas tabs inativas */
+.statistics-sidebar__tabs
+    .v-tab:not(.v-tab--selected):not(.v-tab-item--selected)
+    .v-tab__slider {
+    opacity: 0 !important;
+}
+
+/* Foco por teclado */
+.statistics-sidebar__tabs .v-tab:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: -2px;
+}
+
+/* Desabilitada */
+.statistics-sidebar__tabs .v-tab.v-btn--disabled {
+    opacity: var(--v-disabled-opacity);
+}
+
 </style>

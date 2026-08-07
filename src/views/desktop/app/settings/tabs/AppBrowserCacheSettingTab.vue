@@ -113,24 +113,24 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" sm="6" v-if="getMapProvider()">
+                                <label class="settings-field-label">{{ tt('Cache Expiration for Map Data') }}</label>
                                 <v-select
                                     item-title="name"
                                     item-value="value"
                                     persistent-placeholder
                                     :disabled="loading || !isSupportedFileCache || !fileCacheStatistics || isMapProviderUseExternalSDK() || !isMapDataFetchProxyEnabled()"
-                                    :label="tt('Cache Expiration for Map Data')"
                                     :placeholder="tt('Cache Expiration for Map Data')"
                                     :items="allMapCacheExpirationOptions"
                                     v-model="mapCacheExpiration"
                                 />
                             </v-col>
                             <v-col cols="12" sm="6">
+                                <label class="settings-field-label">{{ tt('Cache Expiration for Exchange Rates Data') }}</label>
                                 <v-select
                                     item-title="name"
                                     item-value="value"
                                     persistent-placeholder
                                     :disabled="loading"
-                                    :label="tt('Cache Expiration for Exchange Rates Data')"
                                     :placeholder="tt('Cache Expiration for Exchange Rates Data')"
                                     :items="allExchangeRatesDataCacheExpirationOptions"
                                     v-model="exchangeRatesDataCacheExpiration"

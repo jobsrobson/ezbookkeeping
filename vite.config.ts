@@ -118,10 +118,10 @@ export default defineConfig(() => {
                 injectRegister: false,
                 manifestFilename: 'manifest.json',
                 manifest: {
-                    name: 'ezBookkeeping',
-                    short_name: 'ezBookkeeping',
+                    name: 'Bookkeeping',
+                    short_name: 'Bookkeeping',
                     description: 'A lightweight, self-hosted personal finance app with a user-friendly interface and powerful bookkeeping features.',
-                    theme_color: '#C67E48',
+                    theme_color: '#00ff9c',
                     background_color: '#F6F7F8',
                     start_url: './',
                     scope: './',
@@ -130,12 +130,12 @@ export default defineConfig(() => {
                     prefer_related_applications: false,
                     icons: [
                         {
-                            src: 'img/ezbookkeeping-192.png',
+                            src: 'img/bookkeeping-192.png',
                             sizes: '192x192',
                             type: 'image/png'
                         },
                         {
-                            src: 'img/ezbookkeeping-512.png',
+                            src: 'img/bookkeeping-512.png',
                             sizes: '512x512',
                             type: 'image/png'
                         }
@@ -286,7 +286,7 @@ export default defineConfig(() => {
         },
         server: {
             host: '0.0.0.0',
-            port: 8081,
+            port: 5173,
             strictPort: true,
             proxy: {
                 '/server_settings.js': {

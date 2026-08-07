@@ -10,14 +10,39 @@
             </f7-nav-right>
         </f7-navbar>
 
-        <f7-block-title class="margin-top">{{ tt('global.app.title') }}</f7-block-title>
+        <f7-block class="about-mobile-hero">
+            <img class="about-mobile-logo about-mobile-logo--light" src="/img/bookkeeping-logo-light.svg" alt="Bookkeeping"/>
+            <img class="about-mobile-logo about-mobile-logo--dark" src="/img/bookkeeping-logo-dark.svg" alt="Bookkeeping"/>
+            <span class="about-mobile-kicker">Independent fork</span>
+            <h1>Bookkeeping</h1>
+            <p>An independent fork focused on a refined, practical bookkeeping experience.</p>
+            <div class="about-mobile-maintainer">
+                <span>Maintained by</span>
+                <strong>Robson Ricardo</strong>
+                <f7-link @click="openExternalUrl('https://github.com/jobsrobson')">@jobsrobson</f7-link>
+            </div>
+        </f7-block>
+
+        <f7-block-title>Bookkeeping</f7-block-title>
         <f7-list strong inset dividers>
             <f7-list-item :title="tt('Version')" :after="clientVersion" @click="showVersion"></f7-list-item>
             <f7-list-item :title="tt('Build Time')" :after="clientBuildTime" v-if="clientBuildTime"></f7-list-item>
-            <f7-list-item :title="tt('Official Website')" link="#" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')"></f7-list-item>
-            <f7-list-item :title="tt('Report Issue')" link="#" @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping/issues')"></f7-list-item>
-            <f7-list-item :title="tt('Getting help')" link="#" popup-open=".document-popup"></f7-list-item>
+            <f7-list-item title="Developer GitHub" after="github.com/jobsrobson" link="#"
+                          @click="openExternalUrl('https://github.com/jobsrobson')"></f7-list-item>
             <f7-list-item :title="tt('License')" link="#" popup-open=".license-popup"></f7-list-item>
+        </f7-list>
+
+        <f7-block-title>Open-source foundation</f7-block-title>
+        <f7-block strong inset class="about-mobile-origin">
+            <p>
+                Bookkeeping is based on the original <strong>ezBookkeeping</strong> project, created and maintained by
+                <f7-link @click="openExternalUrl('https://github.com/mayswind')">@mayswind</f7-link>.
+            </p>
+        </f7-block>
+        <f7-list strong inset dividers>
+            <f7-list-item title="Original project" after="ezBookkeeping" link="#"
+                          @click="openExternalUrl('https://github.com/mayswind/ezbookkeeping')"></f7-list-item>
+            <f7-list-item title="Original documentation" link="#" popup-open=".document-popup"></f7-list-item>
         </f7-list>
 
         <f7-block-title class="margin-top" v-if="exchangeRatesData && !isUserCustomExchangeRates">{{ tt('Exchange Rates Data') }}</f7-block-title>
@@ -49,10 +74,10 @@
                     </p>
                     <hr/>
                     <p>
-                        <span>ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                        <span>Bookkeeping inherits the work of the ezBookkeeping community. The following credits recognize contributors to the original codebase and its translations.</span>
                     </p>
                     <div>
-                        <strong>Project Maintainer</strong>
+                        <strong>Original Project Maintainer</strong>
                         <div class="margin-top-half">
                             <f7-link target="_blank" @click="openExternalUrl('https://github.com/mayswind')">@mayswind</f7-link>
                         </div>
@@ -105,7 +130,7 @@
                         </tbody>
                     </table>
                     <p class="margin-top margin-bottom">
-                        <span>ezBookkeeping also contains additional third party software and illustration.</span><br/>
+                        <span>Bookkeeping also contains additional third party software and illustration.</span><br/>
                         <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                     </p>
                     <p :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">
@@ -207,8 +232,8 @@ const documentUrl = computed<string>(() => {
 
 function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermission: boolean, hasGeolocationPermission: boolean): void {
     diagnosisInformation.value =
-        `ezBookkeeping Frontend Version: ${clientVersion}\n` +
-        `ezBookkeeping Backend Version: ${serverDisplayVersion.value}\n` +
+        `Bookkeeping Frontend Version: ${clientVersion}\n` +
+        `Bookkeeping Backend Version: ${serverDisplayVersion.value}\n` +
         `User Agent: ${navigator.userAgent}\n` +
         `Security Context: ${window.isSecureContext}\n` +
         `Standalone: ${isiOSHomeScreenMode()}\n` +
@@ -221,7 +246,7 @@ function updateDiagnosisInformation(supportsWebAuthn: boolean, hasClipboardPermi
         `Clipboard Permission Granted: ${hasClipboardPermission}\n` +
         `Geolocation API Supported: ${!!navigator.geolocation}\n` +
         `Geolocation Permission Granted: ${hasGeolocationPermission}\n` +
-        `ezBookkeeping Server Settings:\n${getStringifiedServerSetting()}`;
+        `Bookkeeping Server Settings:\n${getStringifiedServerSetting()}`;
 }
 
 function showDiagnosisInformation(): void {
@@ -308,6 +333,85 @@ init();
 </script>
 
 <style>
+.about-mobile-hero {
+    margin: 0 !important;
+    padding: 34px 24px 30px !important;
+    border-bottom: 1px solid var(--f7-list-item-border-color);
+    background: var(--f7-page-bg-color);
+}
+
+.about-mobile-logo {
+    display: block;
+    width: min(263px, 78vw);
+    height: auto;
+    margin-bottom: 28px;
+}
+
+.about-mobile-logo--dark {
+    display: none;
+}
+
+.dark .about-mobile-logo--light,
+:root.dark .about-mobile-logo--light {
+    display: none;
+}
+
+.dark .about-mobile-logo--dark,
+:root.dark .about-mobile-logo--dark {
+    display: block;
+}
+
+.about-mobile-kicker,
+.about-mobile-maintainer > span {
+    display: block;
+    color: var(--f7-list-item-footer-text-color);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.about-mobile-hero h1 {
+    margin: 7px 0 0;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1.05;
+}
+
+.about-mobile-hero > p {
+    max-width: 32rem;
+    margin: 12px 0 0;
+    color: var(--f7-list-item-footer-text-color);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.about-mobile-maintainer {
+    display: grid;
+    gap: 3px;
+    margin-top: 24px;
+}
+
+.about-mobile-maintainer strong {
+    font-size: 16px;
+}
+
+.about-mobile-maintainer a {
+    justify-content: flex-start;
+    font-size: 14px;
+}
+
+.about-mobile-origin {
+    color: var(--f7-list-item-text-color);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.about-mobile-origin p {
+    margin: 0;
+}
+
 .license-popup {
     --f7-navbar-height: 72px;
 

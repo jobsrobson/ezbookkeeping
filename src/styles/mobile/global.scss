@@ -4,6 +4,7 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
+    font-family: "Google Sans Flex Variable", "Google Sans Flex", sans-serif;
 }
 
 input::-webkit-outer-spin-button,
@@ -101,6 +102,13 @@ input[type=number] {
     --f7-color-gray-shade: #79797f;
     --f7-color-gray-tint: #a3a3a7;
     --f7-notification-title-text-transform: unset;
+    --f7-page-bg-color: #f1f2f6;
+    --f7-card-bg-color: #ffffff;
+    --f7-list-bg-color: #ffffff;
+    --f7-card-border-radius: 20px;
+    --f7-list-inset-border-radius: 20px;
+    --f7-card-box-shadow: none;
+    --f7-list-inset-box-shadow: none;
 }
 
 :root.dark {
@@ -108,6 +116,18 @@ input[type=number] {
     --f7-fab-pressed-bg-color: var(--f7-glass-bg-color);
     --f7-fab-text-color: var(--f7-theme-color);
     --f7-glass-shadow-fab: var(--f7-glass-shadow);
+    --f7-page-bg-color: #1b1e20;
+    --f7-card-bg-color: #26292c;
+    --f7-list-bg-color: #26292c;
+    --f7-text-color: #ffffff;
+    --f7-list-item-text-text-color: #ffffff;
+    --f7-navbar-text-color: #ffffff;
+}
+
+.navbar .title,
+.page-title,
+.block-title {
+    font-weight: 700;
 }
 
 .color-gray {
@@ -187,8 +207,23 @@ i.icon.la, i.icon.las, i.icon.lab {
 /** custom class **/
 :root {
     --default-icon-color: #000;
-    --ebk-primary-color: 198, 126, 72;
+    --ebk-primary-color: 253, 98, 27;
     --ebk-transaction-tag-chip-bg-color: rgba(0, 0, 0, 0.04);
+}
+
+.card,
+.list.inset,
+.navbar,
+.toolbar,
+.popover,
+.popup,
+.sheet-modal {
+    box-shadow: none !important;
+}
+
+.card,
+.list.inset > ul {
+    border-radius: 20px !important;
 }
 
 :root.dark {
@@ -299,7 +334,7 @@ html[dir="rtl"] i.icon.icon-with-direction {
 
 /** Replacing the default style of @vuepic/vue-datepicker **/
 .dp--theme-light {
-    --dp-primary-color: #c67e48;
+    --dp-primary-color: #fd621b;
     --dp-background-color: inherit;
     --dp-border-color: #aaa;
     --dp-menu-border-color: #aaa;
@@ -310,7 +345,7 @@ html[dir="rtl"] i.icon.icon-with-direction {
 }
 
 .dp--theme-dark {
-    --dp-primary-color: #c67e48;
+    --dp-primary-color: #fd621b;
     --dp-background-color: inherit;
     --dp-border-color: #555;
     --dp-menu-border-color: #555;

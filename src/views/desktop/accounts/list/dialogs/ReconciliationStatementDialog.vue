@@ -1,12 +1,17 @@
 <template>
-    <v-dialog :persistent="loading || updatingLastReconciledTime" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="reconciliation-dialog" width="1400" max-width="calc(100vw - 24px)"
+              :persistent="loading || updatingLastReconciledTime" v-model="showState">
+        <v-card class="reconciliation-dialog__card">
             <template #title>
-                <div class="d-flex align-center justify-center">
-                    <div class="d-flex flex-wrap w-100 align-center">
-                        <h4 class="text-h4">{{ tt('Reconciliation Statement') }}</h4>
+                <div class="reconciliation-dialog__header">
+                    <div class="reconciliation-dialog__heading">
+                        <div>
+                            <h4>{{ tt('Reconciliation Statement') }}</h4>
+                            <span v-if="!startTime && !endTime">{{ tt('All') }}</span>
+                            <span v-else>{{ displayStartDateTime }} — {{ displayEndDateTime }}</span>
+                        </div>
                         <v-btn density="compact" color="default" variant="text" size="24"
-                               class="ms-2" :icon="true" :disabled="updatingLastReconciledTime"
+                               :icon="true" :disabled="updatingLastReconciledTime"
                                :loading="loading" @click="reload(true)">
                             <template #loader>
                                 <v-progress-circular indeterminate size="20"/>
@@ -14,7 +19,7 @@
                             <v-icon :icon="mdiRefresh" size="24" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
-                        <v-switch class="bidirectional-switch ms-2 pt-1" color="secondary"
+                        <v-switch class="reconciliation-dialog__view-switch bidirectional-switch" color="secondary"
                                   :disabled="loading || updatingLastReconciledTime"
                                   :label="tt('Account Balance Trends')"
                                   v-model="showAccountBalanceTrendsCharts"
@@ -24,7 +29,7 @@
                             </template>
                         </v-switch>
                     </div>
-                    <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                    <v-btn density="comfortable" color="default" variant="text"
                            :icon="true" :disabled="loading || updatingLastReconciledTime"
                            v-if="showAccountBalanceTrendsCharts">
                         <v-icon :icon="mdiTuneVertical" />
@@ -56,7 +61,7 @@
                             </v-list>
                         </v-menu>
                     </v-btn>
-                    <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                    <v-btn density="comfortable" color="default" variant="text"
                            :icon="true" :disabled="loading || updatingLastReconciledTime">
                         <v-icon :icon="mdiDotsVertical" />
                         <v-menu activator="parent">
@@ -90,73 +95,57 @@
                 </div>
             </template>
 
-            <template #subtitle>
-                <div class="text-body-1 text-wrap mt-2" v-if="!startTime && !endTime">
-                    <span>{{ tt('All') }}</span>
-                </div>
-                <div class="text-body-1 text-wrap mt-2" v-if="startTime || endTime">
-                    <span>{{ displayStartDateTime }}</span>
-                    <span> - </span>
-                    <span>{{ displayEndDateTime }}</span>
-                </div>
-            </template>
-
-            <v-card-text>
-                <div class="d-flex align-center mb-4">
-                    <div class="d-flex align-center text-body-1">
+            <v-card-text class="reconciliation-dialog__body">
+                <div class="reconciliation-summary">
+                    <div class="reconciliation-summary__metric">
                         <span>{{ tt('Opening Balance') }}</span>
-                        <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                        <span class="text-primary ms-2" v-else-if="!loading">
+                        <v-skeleton-loader class="skeleton-no-margin" type="text" width="90" :loading="true" v-if="loading" />
+                        <strong v-else-if="!loading">
                             {{ displayOpeningBalance }}
                             <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
                                 <span>{{ displayOpeningBalanceInDefaultCurrency }}</span>
                             </v-tooltip>
-                        </span>
-                        <span class="ms-3">{{ tt('Closing Balance') }}</span>
-                        <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                        <span class="text-primary ms-2" v-else-if="!loading">
+                        </strong>
+                    </div>
+                    <div class="reconciliation-summary__metric">
+                        <span>{{ tt('Closing Balance') }}</span>
+                        <v-skeleton-loader class="skeleton-no-margin" type="text" width="90" :loading="true" v-if="loading" />
+                        <strong v-else-if="!loading">
                             {{ displayClosingBalance }}
                             <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
                                 <span>{{ displayClosingBalanceInDefaultCurrency }}</span>
                             </v-tooltip>
-                        </span>
+                        </strong>
                     </div>
-                    <v-spacer/>
-                    <div class="d-flex align-center text-body-1">
-                        <span class="ms-2">{{ tt('Total Inflows') }}</span>
-                        <span class="text-income" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                        <span class="text-income ms-2" v-else-if="!loading">
+                    <div class="reconciliation-summary__metric">
+                        <span>{{ tt('Total Inflows') }}</span>
+                        <v-skeleton-loader class="skeleton-no-margin" type="text" width="90" :loading="true" v-if="loading" />
+                        <strong class="text-income" v-else-if="!loading">
                             {{ displayTotalInflows }}
                             <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
                                 <span>{{ displayTotalInflowsInDefaultCurrency }}</span>
                             </v-tooltip>
-                        </span>
-                        <span class="ms-3">{{ tt('Total Outflows') }}</span>
-                        <span class="text-expense" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                        <span class="text-expense ms-2" v-else-if="!loading">
+                        </strong>
+                    </div>
+                    <div class="reconciliation-summary__metric">
+                        <span>{{ tt('Total Outflows') }}</span>
+                        <v-skeleton-loader class="skeleton-no-margin" type="text" width="90" :loading="true" v-if="loading" />
+                        <strong class="text-expense" v-else-if="!loading">
                             {{ displayTotalOutflows }}
                             <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
                                 <span>{{ displayTotalOutflowsInDefaultCurrency }}</span>
                             </v-tooltip>
-                        </span>
-                        <span class="ms-3">{{ tt('Net Cash Flow') }}</span>
-                        <span class="text-primary" v-if="loading">
-                            <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
-                        </span>
-                        <span class="text-primary ms-2" v-else-if="!loading">
+                        </strong>
+                    </div>
+                    <div class="reconciliation-summary__metric reconciliation-summary__metric--highlight">
+                        <span>{{ tt('Net Cash Flow') }}</span>
+                        <v-skeleton-loader class="skeleton-no-margin" type="text" width="90" :loading="true" v-if="loading" />
+                        <strong v-else-if="!loading">
                             {{ displayTotalBalance }}
                             <v-tooltip activator="parent" v-if="currentAccountCurrency !== defaultCurrency">
                                 <span>{{ displayTotalBalanceInDefaultCurrency }}</span>
                             </v-tooltip>
-                        </span>
+                        </strong>
                     </div>
                 </div>
 
@@ -232,7 +221,7 @@
                         </v-btn>
                     </template>
                     <template #bottom>
-                        <div class="title-and-toolbar d-flex align-center text-no-wrap mt-2" v-if="loading || (reconciliationStatements && reconciliationStatements.transactions && reconciliationStatements.transactions.length)">
+                        <div class="reconciliation-table-footer d-flex align-center text-no-wrap mt-2" v-if="loading || (reconciliationStatements && reconciliationStatements.transactions && reconciliationStatements.transactions.length)">
                             <span class="ms-2">{{ tt('Total Transactions') }}</span>
                             <span v-if="loading">
                                 <v-skeleton-loader class="skeleton-no-margin ms-3" type="text" style="width: 80px" :loading="true"></v-skeleton-loader>
@@ -290,15 +279,15 @@
                 </div>
             </v-card-text>
 
-            <v-card-text>
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
+            <v-card-text class="reconciliation-dialog__footer">
+                <div class="reconciliation-dialog__footer-actions">
                     <v-btn color="primary" variant="tonal"
                            :disabled="loading || updatingLastReconciledTime" @click="updateLastReconciledTime"
                            v-if="newLastReconciledTime">
                         {{ tt('Mark as Reconciled') }}
                         <v-progress-circular indeterminate size="22" class="ms-2" v-if="updatingLastReconciledTime"></v-progress-circular>
                     </v-btn>
-                    <v-btn color="secondary" variant="tonal"
+                    <v-btn color="default" variant="outlined"
                            :disabled="loading || updatingLastReconciledTime" @click="close">{{ tt('Close') }}</v-btn>
                 </div>
             </v-card-text>
@@ -742,6 +731,215 @@ defineExpose({
 </script>
 
 <style>
+.reconciliation-dialog .v-overlay__content {
+    max-height: calc(100vh - 20px) !important;
+}
+
+.reconciliation-dialog__card {
+    display: flex;
+    max-height: calc(100vh - 20px);
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    border-radius: 10px !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+}
+
+.reconciliation-dialog__card > .v-card-item {
+    min-height: auto;
+    padding: 0 !important;
+}
+
+.reconciliation-dialog__card > .v-card-item .v-card-title {
+    width: 100%;
+    white-space: normal;
+}
+
+.reconciliation-dialog__header {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.reconciliation-dialog__heading {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.reconciliation-dialog__heading > div {
+    min-width: 0;
+}
+
+.reconciliation-dialog__heading h4 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: clamp(1.25rem, 2vw, 1.65rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+}
+
+.reconciliation-dialog__heading > div > span {
+    display: block;
+    margin-top: 6px;
+    overflow: hidden;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reconciliation-dialog__header > .v-btn,
+.reconciliation-dialog__heading > .v-btn {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    border-radius: 5px !important;
+}
+
+.reconciliation-dialog__view-switch {
+    flex: 0 0 auto;
+    margin-left: 10px;
+}
+
+.reconciliation-dialog__view-switch .v-label,
+.reconciliation-dialog__view-switch .v-input__prepend {
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.72rem;
+    font-weight: 500;
+}
+
+.reconciliation-dialog__body {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 18px !important;
+    overflow: auto;
+    background: rgb(var(--v-theme-background));
+}
+
+.reconciliation-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 8px;
+    background: rgb(var(--v-theme-surface));
+}
+
+
+.reconciliation-summary__metric {
+    display: flex;
+    min-width: 0;
+    min-height: 58px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: rgb(var(--v-theme-background));
+}
+
+.reconciliation-summary__metric > span {
+    overflow: hidden;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.reconciliation-summary__metric strong {
+    overflow: hidden;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reconciliation-summary__metric--highlight {
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.reconciliation-statement-table {
+    overflow: hidden;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 8px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.reconciliation-statement-table thead th {
+    background: rgb(var(--v-theme-table-header-color)) !important;
+    color: rgb(var(--v-theme-tertiary)) !important;
+    font-size: 0.64rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.025em !important;
+    text-transform: uppercase;
+}
+
+.reconciliation-statement-table tbody td {
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+    font-size: 0.80rem;
+}
+
+.reconciliation-table-footer {
+    min-height: 32px;
+    padding-bottom:8px !important;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.68rem !important;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.reconciliation-table-footer > span {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+}
+
+.reconciliation-dialog__footer {
+    flex: 0 0 auto;
+    padding: 16px 16px !important;
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.reconciliation-dialog__footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+    padding-top: 16px !important;
+    gap: 8px;
+}
+
+.reconciliation-dialog__footer .v-btn {
+    min-height: 38px;
+    border-radius: 6px !important;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
 .reconciliation-statement-table > .v-table__wrapper > table {
     th:not(:nth-last-child(2)),
     td:not(:nth-last-child(2)) {
@@ -752,6 +950,75 @@ defineExpose({
     th:nth-last-child(2),
     td:nth-last-child(2) {
         width: 100% !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .reconciliation-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .reconciliation-dialog__view-switch {
+        margin-left: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .reconciliation-dialog .v-overlay__content {
+        width: calc(100vw - 12px) !important;
+        max-width: calc(100vw - 12px) !important;
+        max-height: calc(100vh - 12px) !important;
+        margin: 6px !important;
+    }
+
+    .reconciliation-dialog__card {
+        max-height: calc(100vh - 12px);
+        border-radius: 8px !important;
+    }
+
+    .reconciliation-dialog__header {
+        flex-wrap: wrap;
+        padding: 13px 14px;
+    }
+
+    .reconciliation-dialog__heading {
+        flex: 1 1 calc(100% - 84px);
+    }
+
+    .reconciliation-dialog__view-switch {
+        width: 100%;
+        margin: 4px 0 0;
+        order: 4;
+    }
+
+    .reconciliation-dialog__body {
+        padding: 12px !important;
+    }
+
+    .reconciliation-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .reconciliation-statement-table > .v-table__wrapper {
+        overflow-x: auto;
+    }
+
+    .reconciliation-dialog__footer {
+        padding: 10px 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .reconciliation-summary {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .reconciliation-summary__metric {
+        min-height: 52px;
+    }
+
+    .reconciliation-dialog__footer-actions .v-btn {
+        flex: 1 1 auto;
     }
 }
 </style>

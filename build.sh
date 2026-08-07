@@ -29,7 +29,7 @@ check_dependency() {
 
 show_help() {
     cat <<-EOF
-ezBookkeeping build script
+Bookkeeping build script
 
 Usage:
     build.sh type [options]

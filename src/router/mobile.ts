@@ -15,6 +15,7 @@ import AccountListPage from '@/views/mobile/accounts/ListPage.vue';
 import AccountEditPage from '@/views/mobile/accounts/EditPage.vue';
 import AccountReconciliationStatementPage from '@/views/mobile/accounts/ReconciliationStatementPage.vue';
 import AccountMoveAllTransactionsPage from '@/views/mobile/accounts/MoveAllTransactionsPage.vue';
+import CreditCardInvoicePage from '@/views/mobile/accounts/CreditCardInvoicePage.vue';
 
 import StatisticsTransactionPage from '@/views/mobile/statistics/TransactionPage.vue';
 import StatisticsSettingsPage from '@/views/mobile/statistics/SettingsPage.vue';
@@ -200,6 +201,11 @@ const routes: Router.RouteParameters[] = [
     {
         path: '/account/reconciliation_statements',
         async: asyncResolve(AccountReconciliationStatementPage),
+        beforeEnter: [checkLogin]
+    },
+    {
+        path: '/account/invoices',
+        async: asyncResolve(CreditCardInvoicePage),
         beforeEnter: [checkLogin]
     },
     {

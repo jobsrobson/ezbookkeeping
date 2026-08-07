@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Bookkeeping"
         }
     },
     "language": {
@@ -160,22 +160,22 @@
             "clearTransactionsTagsTip": "You CANNOT undo this action. This will clear all tags from {count} transactions.",
             "accountActivationAndResendValidationEmailTip": "ลิงก์สำหรับเปิดใช้งานบัญชีได้ถูกส่งไปยังอีเมลของคุณแล้ว: {email} หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันอีกครั้ง",
             "resendValidationEmailTip": "หากคุณไม่ได้รับอีเมล โปรดกรอกรหัสผ่านอีกครั้งแล้วกดปุ่มด้านล่างเพื่อส่งอีเมลยืนยันไปยัง: {email}",
-            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your ezBookkeeping password to verify."
+            "oauth2bindTip": "You're signing in to the {userName} user using {providerName}. Please enter your Bookkeeping password to verify."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_data",
-        "exportFilename": "ezBookkeeping_{nickname}_export_data",
-        "defaultExportStatisticsFileName": "ezBookkeeping_statistics_data",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_statistics_data",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_reconciliation_statements",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_reconciliation_statements",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_import_data_mapping",
-        "defaultImportHandlingScript": "ezBookkeeping_handling_script",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_import_replace_rule",
-        "defaultImportCheckResultFileName": "ezBookkeeping_import_check_result"
+        "defaultExportFilename": "Bookkeeping_export_data",
+        "exportFilename": "Bookkeeping_{nickname}_export_data",
+        "defaultExportStatisticsFileName": "Bookkeeping_statistics_data",
+        "exportStatisticsFileName": "Bookkeeping_{nickname}_statistics_data",
+        "defaultExportReconciliationStatementsFileName": "Bookkeeping_reconciliation_statements",
+        "exportReconciliationStatementsFileName": "Bookkeeping_{nickname}_reconciliation_statements",
+        "defaultInsightsExplorerQueryFileName": "Bookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Bookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Bookkeeping_import_data_mapping",
+        "defaultImportHandlingScript": "Bookkeeping_handling_script",
+        "defaultImportReplaceRuleFileName": "Bookkeeping_import_replace_rule",
+        "defaultImportCheckResultFileName": "Bookkeeping_import_check_result"
     },
     "calendar": {
         "Gregorian": "เกรกอเรียน",
@@ -1691,8 +1691,8 @@
     "Change Language": "เปลี่ยนภาษา",
     "Date is too early": "วันที่เร็วเกินไป",
     "User Canceled": "User Canceled",
-    "Welcome to ezBookkeeping": "ยินดีต้อนรับสู่ ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "กรุณาเข้าสู่ระบบด้วยบัญชี ezBookkeeping ของคุณ",
+    "Welcome to Bookkeeping": "ยินดีต้อนรับสู่ Bookkeeping",
+    "Please log in with your Bookkeeping account": "กรุณาเข้าสู่ระบบด้วยบัญชี Bookkeeping ของคุณ",
     "Unlock Application": "ปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code or use WebAuthn to unlock application": "กรุณาใส่รหัส PIN หรือใช้ WebAuthn เพื่อปลดล็อกแอปพลิเคชัน",
     "Please enter your PIN code to unlock application": "กรุณาใส่รหัส PIN เพื่อปลดล็อกแอปพลิเคชัน",
@@ -2118,13 +2118,13 @@
     "Filter Description": "กรองคำอธิบาย",
     "How to import this file?": "วิธีการนำเข้าไฟล์นี้?",
     "How to export this file?": "วิธีการส่งออกไฟล์นี้?",
-    "ezBookkeeping File Format": "รูปแบบไฟล์ ezBookkeeping",
+    "Bookkeeping File Format": "รูปแบบไฟล์ Bookkeeping",
     "Custom File Format": "รูปแบบไฟล์กำหนดเอง",
     "General Data Exchange Format": "รูปแบบแลกเปลี่ยนข้อมูลทั่วไป",
     "General Bank Statement Format": "รูปแบบรายการบัญชีธนาคารทั่วไป",
     "Other Bank/Payment App Statement File": "ไฟล์รายการธนาคาร/แอปชำระเงินอื่น",
     "Other Finance App File Format": "รูปแบบไฟแอปการเงินอื่น",
-    "ezbookkeeping Data Export File": "ไฟล์ส่งออกข้อมูล ezBookkeeping",
+    "Bookkeeping Data Export File": "ไฟล์ส่งออกข้อมูล Bookkeeping",
     "Excel Workbook File": "ไฟล์ Excel",
     "Excel Workbook File (.xlsx)": "Excel Workbook File (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Excel 97-2003 Workbook File (.xls)",

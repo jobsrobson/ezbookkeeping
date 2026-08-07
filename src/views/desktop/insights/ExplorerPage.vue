@@ -1,15 +1,15 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
-                <v-layout>
-                    <v-navigation-drawer :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-6 my-4">
+    <v-row class="insights-page match-height">
+        <v-col class="insights-page__column" cols="12">
+            <v-card class="insights-shell" variant="flat">
+                <v-layout class="insights-layout">
+                    <v-navigation-drawer class="insights-sidebar" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="insights-sidebar__section insights-sidebar__section--modes">
                             <btn-vertical-group :disabled="loading || updating || isCurrentDataTableEditable" :buttons="allTabs" v-model="activeTab" />
                         </div>
-                        <v-divider />
+                        <v-divider class="insights-sidebar__divider" />
                         <v-tabs show-arrows
-                                class="scrollable-vertical-tabs"
+                                class="insights-sidebar__tabs scrollable-vertical-tabs"
                                 style="max-height: calc(100% - 150px)"
                                 direction="vertical"
                                 :prev-icon="mdiMenuUp" :next-icon="mdiMenuDown"
@@ -30,138 +30,548 @@
                             </template>
                         </v-tabs>
                     </v-navigation-drawer>
-                    <v-main>
-                        <v-card variant="flat" min-height="800">
+                    <v-main class="insights-main">
+                        <v-card class="insights-content-card" variant="flat" min-height="800">
                             <template #title>
-                                <div class="title-and-toolbar d-flex align-center">
-                                    <v-btn class="me-3 d-md-none" density="compact" color="default" variant="plain"
-                                           :ripple="false" :icon="true" @click="showNav = !showNav">
-                                        <v-icon :icon="mdiMenu" size="24" />
-                                    </v-btn>
-                                    <span>{{ tt('Insights Explorer') }}</span>
-                                    <v-btn-group class="ms-4" color="default" density="comfortable" variant="outlined" divided>
-                                        <v-btn class="button-icon-with-direction" :icon="mdiArrowLeft"
-                                               :disabled="loading || updating || !canShiftDateRange || isCurrentDataTableEditable"
-                                               @click="shiftDateRange(-1)"/>
-                                        <v-menu location="bottom" max-height="500">
-                                            <template #activator="{ props }">
-                                                <v-btn :disabled="loading || updating || isCurrentDataTableEditable"
-                                                       v-bind="props">{{ displayQueryDateRangeName }}</v-btn>
-                                            </template>
-                                            <v-list :selected="[currentFilter.dateRangeType]">
-                                                <v-list-item :key="dateRange.type" :value="dateRange.type"
-                                                             :append-icon="(currentFilter.dateRangeType === dateRange.type ? mdiCheck : undefined)"
-                                                             v-for="dateRange in allDateRanges">
-                                                    <v-list-item-title class="cursor-pointer"
-                                                                       @click="setDateFilter(dateRange.type)">
-                                                        <div class="d-flex align-center">
-                                                            <span>{{ dateRange.displayName }}</span>
-                                                        </div>
-                                                        <div class="statistics-custom-datetime-range smaller" v-if="dateRange.isUserCustomRange && currentFilter.dateRangeType === dateRange.type && !!currentFilter.startTime && !!currentFilter.endTime">
-                                                            <span>{{ displayQueryStartTime }}</span>
-                                                            <span>&nbsp;-&nbsp;</span>
-                                                            <br/>
-                                                            <span>{{ displayQueryEndTime }}</span>
-                                                        </div>
-                                                    </v-list-item-title>
-                                                </v-list-item>
-                                            </v-list>
-                                        </v-menu>
-                                        <v-btn class="button-icon-with-direction" :icon="mdiArrowRight"
-                                               :disabled="loading || updating || !canShiftDateRange || isCurrentDataTableEditable"
-                                               @click="shiftDateRange(1)"/>
-                                    </v-btn-group>
+                                <div class="insights-page-header">
+                                    <div class="insights-page-header__top">
+                                        <div class="insights-page-header__identity">
+                                            <v-btn
+                                                class="d-md-none insights-sidebar-trigger"
+                                                density="compact"
+                                                color="default"
+                                                variant="plain"
+                                                :ripple="false"
+                                                :icon="true"
+                                                @click="showNav = !showNav"
+                                            >
+                                                <v-icon :icon="mdiMenu" size="22" />
+                                            </v-btn>
 
-                                    <v-btn density="compact" color="default" variant="text" size="24"
-                                           class="ms-2" :icon="true" :loading="loading" :disabled="updating" @click="reload(true)">
-                                        <template #loader>
-                                            <v-progress-circular indeterminate size="20"/>
-                                        </template>
-                                        <v-icon :icon="mdiRefresh" size="24" />
-                                        <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
-                                    </v-btn>
-                                    <v-spacer/>
-                                    <v-btn class="ms-3"
-                                           :color="isCurrentExplorationModified ? 'primary' : 'default'"
-                                           :variant="isCurrentExplorationModified ? 'elevated' : 'outlined'"
-                                           :disabled="loading || updating || isCurrentDataTableEditable" @click="saveExploration(false)">
-                                        {{ tt('Save Exploration') }}
-                                        <v-progress-circular indeterminate size="22" class="ms-2" v-if="updating"></v-progress-circular>
-                                        <v-menu activator="parent" :open-on-hover="true">
-                                            <v-list>
-                                                <v-list-item @click="saveExploration(true)">
-                                                    <v-list-item-title>{{ tt('Save As New Exploration') }}</v-list-item-title>
-                                                </v-list-item>
-                                                <v-list-item @click="restoreExploration()" v-if="currentExploration.id">
-                                                    <v-list-item-title>{{ tt('Restore to Last Saved') }}</v-list-item-title>
-                                                </v-list-item>
-                                            </v-list>
-                                        </v-menu>
-                                    </v-btn>
-                                    <v-btn density="comfortable" color="default" variant="text" class="ms-2"
-                                           :disabled="loading || updating" :icon="true">
-                                        <v-icon :icon="mdiDotsVertical" />
-                                        <v-menu activator="parent">
-                                            <v-list>
-                                                <v-list-subheader :title="tt('Timezone Used for Date Range')"
-                                                                  v-if="activeTab === 'query'"/>
-                                                <template v-if="activeTab === 'query'">
-                                                    <v-list-item :key="timezoneType.type" :value="timezoneType.type"
-                                                                 :prepend-icon="timezoneTypeIconMap[timezoneType.type]"
-                                                                 :append-icon="(currentExploration.timezoneUsedForDateRange === timezoneType.type ? mdiCheck : undefined)"
-                                                                 :title="timezoneType.displayName"
-                                                                 v-for="timezoneType in allTimezoneTypesUsedForDateRange"
-                                                                 @click="currentExploration.timezoneUsedForDateRange = timezoneType.type"></v-list-item>
-                                                </template>
-                                                <v-divider class="my-2" v-if="activeTab === 'query'"/>
-                                                <v-list-item :prepend-icon="mdiApplicationImport"
-                                                             :title="tt('Import Queries')"
-                                                             :disabled="loading || updating"
-                                                             @click="importQueries"
-                                                             v-if="activeTab === 'query'"></v-list-item>
-                                                <v-list-item :prepend-icon="mdiApplicationExport"
-                                                             :title="tt('Export Queries')"
-                                                             :disabled="loading || updating"
-                                                             @click="exportQueries"
-                                                             v-if="activeTab === 'query'"></v-list-item>
-                                                <v-list-item :prepend-icon="mdiTableEdit"
-                                                             :title="tt('Enter Edit Mode')"
-                                                             :disabled="loading || updating || filteredTransactionsInDataTable.length < 1"
-                                                             @click="isCurrentDataTableEditable = true"
-                                                             v-if="activeTab === 'table' && !isCurrentDataTableEditable"></v-list-item>
-                                                <v-list-item :prepend-icon="mdiTableCheck"
-                                                             :title="tt('Exit Edit Mode')"
-                                                             :disabled="loading || updating"
-                                                             @click="isCurrentDataTableEditable = false"
-                                                             v-if="activeTab === 'table' && isCurrentDataTableEditable"></v-list-item>
-                                                <v-divider class="my-2" v-if="activeTab === 'table' && !isCurrentDataTableEditable"/>
-                                                <v-list-item :prepend-icon="mdiExport"
-                                                             :title="tt('Export Results')"
-                                                             :disabled="loading || updating || (activeTab === 'table' && (!filteredTransactionsInDataTable || filteredTransactionsInDataTable.length < 1))"
-                                                             @click="exportResults"
-                                                             v-if="(activeTab === 'table' || activeTab === 'chart') && !isCurrentDataTableEditable"></v-list-item>
-                                                <v-divider class="my-2" v-if="currentExploration.id && !isCurrentDataTableEditable" />
-                                                <v-list-item :prepend-icon="mdiPencilOutline" @click="setExplorationName" v-if="currentExploration.id && !isCurrentDataTableEditable">
-                                                    <v-list-item-title>{{ tt('Rename Exploration') }}</v-list-item-title>
-                                                </v-list-item>
-                                                <v-list-item :prepend-icon="mdiEyeOffOutline" @click="hideExploration(true)" v-if="currentExploration.id && !currentExploration.hidden && !isCurrentDataTableEditable">
-                                                    <v-list-item-title>{{ tt('Hide Exploration') }}</v-list-item-title>
-                                                </v-list-item>
-                                                <v-list-item :prepend-icon="mdiEyeOutline" @click="hideExploration(false)" v-if="currentExploration.id && currentExploration.hidden && !isCurrentDataTableEditable">
-                                                    <v-list-item-title>{{ tt('Unhide Exploration') }}</v-list-item-title>
-                                                </v-list-item>
-                                                <v-list-item :prepend-icon="mdiDeleteOutline" @click="removeExploration" v-if="currentExploration.id && !isCurrentDataTableEditable">
-                                                    <v-list-item-title>{{ tt('Delete Exploration') }}</v-list-item-title>
-                                                </v-list-item>
-                                                <v-divider class="my-2" v-if="!isCurrentDataTableEditable"/>
-                                                <v-list-item :prepend-icon="mdiSort"
-                                                             :disabled="!allExplorations || allExplorations.length < 2"
-                                                             :title="tt('Change Exploration Display Order')"
-                                                             @click="showChangeExplorerDisplayOrderDialog"
-                                                             v-if="!isCurrentDataTableEditable"></v-list-item>
-                                            </v-list>
-                                        </v-menu>
-                                    </v-btn>
+                                            <div class="insights-page-header__titles">
+                                                <h1>{{ tt('Insights Explorer') }}</h1>
+
+                                                <span>
+                                                    {{
+                                                        currentExploration.name ||
+                                                        tt('Untitled Exploration')
+                                                    }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="insights-page-header__actions">
+                                            <div class="insights-page-header__desktop-actions">
+                                                <v-btn-group
+                                                    class="insights-date-range-group"
+                                                    color="default"
+                                                    density="comfortable"
+                                                    variant="outlined"
+                                                    divided
+                                                >
+                                                    <v-btn
+                                                        class="button-icon-with-direction"
+                                                        :icon="mdiArrowLeft"
+                                                        :disabled="
+                                                            loading ||
+                                                            updating ||
+                                                            !canShiftDateRange ||
+                                                            isCurrentDataTableEditable
+                                                        "
+                                                        @click="shiftDateRange(-1)"
+                                                    />
+
+                                                    <v-menu location="bottom" max-height="500">
+                                                        <template #activator="{ props }">
+                                                            <v-btn
+                                                                class="insights-date-range-button"
+                                                                :disabled="
+                                                                    loading ||
+                                                                    updating ||
+                                                                    isCurrentDataTableEditable
+                                                                "
+                                                                v-bind="props"
+                                                            >
+                                                                {{ displayQueryDateRangeName }}
+                                                            </v-btn>
+                                                        </template>
+
+                                                        <v-list :selected="[currentFilter.dateRangeType]">
+                                                            <v-list-item
+                                                                :key="dateRange.type"
+                                                                :value="dateRange.type"
+                                                                :append-icon="
+                                                                    currentFilter.dateRangeType === dateRange.type
+                                                                        ? mdiCheck
+                                                                        : undefined
+                                                                "
+                                                                v-for="dateRange in allDateRanges"
+                                                            >
+                                                                <v-list-item-title
+                                                                    class="cursor-pointer"
+                                                                    @click="setDateFilter(dateRange.type)"
+                                                                >
+                                                                    <div class="d-flex align-center">
+                                                                        <span>{{ dateRange.displayName }}</span>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="statistics-custom-datetime-range smaller"
+                                                                        v-if="
+                                                                            dateRange.isUserCustomRange &&
+                                                                            currentFilter.dateRangeType === dateRange.type &&
+                                                                            !!currentFilter.startTime &&
+                                                                            !!currentFilter.endTime
+                                                                        "
+                                                                    >
+                                                                        <span>{{ displayQueryStartTime }}</span>
+                                                                        <span>&nbsp;-&nbsp;</span>
+                                                                        <br />
+                                                                        <span>{{ displayQueryEndTime }}</span>
+                                                                    </div>
+                                                                </v-list-item-title>
+                                                            </v-list-item>
+                                                        </v-list>
+                                                    </v-menu>
+
+                                                    <v-btn
+                                                        class="button-icon-with-direction"
+                                                        :icon="mdiArrowRight"
+                                                        :disabled="
+                                                            loading ||
+                                                            updating ||
+                                                            !canShiftDateRange ||
+                                                            isCurrentDataTableEditable
+                                                        "
+                                                        @click="shiftDateRange(1)"
+                                                    />
+                                                </v-btn-group>
+
+                                                <v-btn
+                                                    density="comfortable"
+                                                    color="default"
+                                                    variant="text"
+                                                    :icon="true"
+                                                    :loading="loading"
+                                                    :disabled="updating"
+                                                    @click="reload(true)"
+                                                >
+                                                    <template #loader>
+                                                        <v-progress-circular
+                                                            indeterminate
+                                                            size="19"
+                                                        />
+                                                    </template>
+
+                                                    <v-icon :icon="mdiRefresh" size="21" />
+
+                                                    <v-tooltip activator="parent">
+                                                        {{ tt('Refresh') }}
+                                                    </v-tooltip>
+                                                </v-btn>
+
+                                                <v-btn
+                                                    class="insights-save-button"
+                                                    :color="
+                                                        isCurrentExplorationModified
+                                                            ? 'primary'
+                                                            : 'default'
+                                                    "
+                                                    :variant="
+                                                        isCurrentExplorationModified
+                                                            ? 'flat'
+                                                            : 'outlined'
+                                                    "
+                                                    :disabled="
+                                                        loading ||
+                                                        updating ||
+                                                        isCurrentDataTableEditable
+                                                    "
+                                                    @click="saveExploration(false)"
+                                                >
+                                                    {{ tt('Save Exploration') }}
+
+                                                    <v-progress-circular
+                                                        class="ms-2"
+                                                        indeterminate
+                                                        size="18"
+                                                        v-if="updating"
+                                                    />
+
+                                                    <v-menu activator="parent" :open-on-hover="true">
+                                                        <v-list>
+                                                            <v-list-item
+                                                                :title="tt('Save As New Exploration')"
+                                                                @click="saveExploration(true)"
+                                                            />
+
+                                                            <v-list-item
+                                                                :title="tt('Restore to Last Saved')"
+                                                                @click="restoreExploration()"
+                                                                v-if="currentExploration.id"
+                                                            />
+                                                        </v-list>
+                                                    </v-menu>
+                                                </v-btn>
+
+                                                <v-btn
+                                                    density="comfortable"
+                                                    color="default"
+                                                    variant="text"
+                                                    :disabled="loading || updating"
+                                                    :icon="true"
+                                                >
+                                                    <v-icon :icon="mdiDotsVertical" />
+
+                                                    <v-menu activator="parent">
+                                                        <v-list>
+                                                            <v-list-subheader
+                                                                :title="tt('Timezone Used for Date Range')"
+                                                                v-if="activeTab === 'query'"
+                                                            />
+
+                                                            <template v-if="activeTab === 'query'">
+                                                                <v-list-item
+                                                                    :key="timezoneType.type"
+                                                                    :value="timezoneType.type"
+                                                                    :prepend-icon="
+                                                                        timezoneTypeIconMap[timezoneType.type]
+                                                                    "
+                                                                    :append-icon="
+                                                                        currentExploration.timezoneUsedForDateRange ===
+                                                                        timezoneType.type
+                                                                            ? mdiCheck
+                                                                            : undefined
+                                                                    "
+                                                                    :title="timezoneType.displayName"
+                                                                    v-for="timezoneType in allTimezoneTypesUsedForDateRange"
+                                                                    @click="
+                                                                        currentExploration.timezoneUsedForDateRange =
+                                                                            timezoneType.type
+                                                                    "
+                                                                />
+                                                            </template>
+
+                                                            <v-divider
+                                                                class="my-2"
+                                                                v-if="activeTab === 'query'"
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiApplicationImport"
+                                                                :title="tt('Import Queries')"
+                                                                :disabled="loading || updating"
+                                                                @click="importQueries"
+                                                                v-if="activeTab === 'query'"
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiApplicationExport"
+                                                                :title="tt('Export Queries')"
+                                                                :disabled="loading || updating"
+                                                                @click="exportQueries"
+                                                                v-if="activeTab === 'query'"
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiTableEdit"
+                                                                :title="tt('Enter Edit Mode')"
+                                                                :disabled="
+                                                                    loading ||
+                                                                    updating ||
+                                                                    filteredTransactionsInDataTable.length < 1
+                                                                "
+                                                                @click="isCurrentDataTableEditable = true"
+                                                                v-if="
+                                                                    activeTab === 'table' &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiTableCheck"
+                                                                :title="tt('Exit Edit Mode')"
+                                                                :disabled="loading || updating"
+                                                                @click="isCurrentDataTableEditable = false"
+                                                                v-if="
+                                                                    activeTab === 'table' &&
+                                                                    isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-divider
+                                                                class="my-2"
+                                                                v-if="
+                                                                    activeTab === 'table' &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiExport"
+                                                                :title="tt('Export Results')"
+                                                                :disabled="
+                                                                    loading ||
+                                                                    updating ||
+                                                                    (
+                                                                        activeTab === 'table' &&
+                                                                        (
+                                                                            !filteredTransactionsInDataTable ||
+                                                                            filteredTransactionsInDataTable.length < 1
+                                                                        )
+                                                                    )
+                                                                "
+                                                                @click="exportResults"
+                                                                v-if="
+                                                                    (
+                                                                        activeTab === 'table' ||
+                                                                        activeTab === 'chart'
+                                                                    ) &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-divider
+                                                                class="my-2"
+                                                                v-if="
+                                                                    currentExploration.id &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiPencilOutline"
+                                                                :title="tt('Rename Exploration')"
+                                                                @click="setExplorationName"
+                                                                v-if="
+                                                                    currentExploration.id &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiEyeOffOutline"
+                                                                :title="tt('Hide Exploration')"
+                                                                @click="hideExploration(true)"
+                                                                v-if="
+                                                                    currentExploration.id &&
+                                                                    !currentExploration.hidden &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiEyeOutline"
+                                                                :title="tt('Unhide Exploration')"
+                                                                @click="hideExploration(false)"
+                                                                v-if="
+                                                                    currentExploration.id &&
+                                                                    currentExploration.hidden &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiDeleteOutline"
+                                                                :title="tt('Delete Exploration')"
+                                                                @click="removeExploration"
+                                                                v-if="
+                                                                    currentExploration.id &&
+                                                                    !isCurrentDataTableEditable
+                                                                "
+                                                            />
+
+                                                            <v-divider
+                                                                class="my-2"
+                                                                v-if="!isCurrentDataTableEditable"
+                                                            />
+
+                                                            <v-list-item
+                                                                :prepend-icon="mdiSort"
+                                                                :disabled="
+                                                                    !allExplorations ||
+                                                                    allExplorations.length < 2
+                                                                "
+                                                                :title="tt('Change Exploration Display Order')"
+                                                                @click="
+                                                                    showChangeExplorerDisplayOrderDialog
+                                                                "
+                                                                v-if="!isCurrentDataTableEditable"
+                                                            />
+                                                        </v-list>
+                                                    </v-menu>
+                                                </v-btn>
+                                            </div>
+
+                                            <v-btn
+                                                class="insights-mobile-actions-trigger"
+                                                density="comfortable"
+                                                color="default"
+                                                variant="text"
+                                                :icon="true"
+                                            >
+                                                <v-icon :icon="mdiDotsVertical" size="22" />
+
+                                                <v-menu activator="parent" location="bottom end">
+                                                    <v-list>
+                                                        <v-list-item
+                                                            :prepend-icon="mdiRefresh"
+                                                            :title="tt('Refresh')"
+                                                            :disabled="loading || updating"
+                                                            @click="reload(true)"
+                                                        />
+
+                                                        <v-list-item
+                                                            :title="displayQueryDateRangeName"
+                                                            :disabled="
+                                                                loading ||
+                                                                updating ||
+                                                                isCurrentDataTableEditable
+                                                            "
+                                                        >
+                                                            <v-menu
+                                                                activator="parent"
+                                                                location="start"
+                                                                max-height="500"
+                                                            >
+                                                                <v-list
+                                                                    :selected="[
+                                                                        currentFilter.dateRangeType
+                                                                    ]"
+                                                                >
+                                                                    <v-list-item
+                                                                        :key="dateRange.type"
+                                                                        :value="dateRange.type"
+                                                                        :append-icon="
+                                                                            currentFilter.dateRangeType ===
+                                                                            dateRange.type
+                                                                                ? mdiCheck
+                                                                                : undefined
+                                                                        "
+                                                                        :title="dateRange.displayName"
+                                                                        v-for="dateRange in allDateRanges"
+                                                                        @click="
+                                                                            setDateFilter(dateRange.type)
+                                                                        "
+                                                                    />
+                                                                </v-list>
+                                                            </v-menu>
+                                                        </v-list-item>
+
+                                                        <v-divider class="my-2" />
+
+                                                        <v-list-item
+                                                            :title="tt('Save Exploration')"
+                                                            :disabled="
+                                                                loading ||
+                                                                updating ||
+                                                                isCurrentDataTableEditable
+                                                            "
+                                                            @click="saveExploration(false)"
+                                                        />
+
+                                                        <v-list-item
+                                                            :title="tt('Save As New Exploration')"
+                                                            :disabled="
+                                                                loading ||
+                                                                updating ||
+                                                                isCurrentDataTableEditable
+                                                            "
+                                                            @click="saveExploration(true)"
+                                                        />
+
+                                                        <v-list-item
+                                                            :title="tt('Restore to Last Saved')"
+                                                            :disabled="loading || updating"
+                                                            @click="restoreExploration()"
+                                                            v-if="currentExploration.id"
+                                                        />
+
+                                                        <v-divider class="my-2" />
+
+                                                        <v-list-item
+                                                            :prepend-icon="mdiApplicationImport"
+                                                            :title="tt('Import Queries')"
+                                                            :disabled="loading || updating"
+                                                            @click="importQueries"
+                                                            v-if="activeTab === 'query'"
+                                                        />
+
+                                                        <v-list-item
+                                                            :prepend-icon="mdiApplicationExport"
+                                                            :title="tt('Export Queries')"
+                                                            :disabled="loading || updating"
+                                                            @click="exportQueries"
+                                                            v-if="activeTab === 'query'"
+                                                        />
+
+                                                        <v-list-item
+                                                            :prepend-icon="mdiExport"
+                                                            :title="tt('Export Results')"
+                                                            :disabled="
+                                                                loading ||
+                                                                updating ||
+                                                                (
+                                                                    activeTab === 'table' &&
+                                                                    filteredTransactionsInDataTable.length < 1
+                                                                )
+                                                            "
+                                                            @click="exportResults"
+                                                            v-if="
+                                                                (
+                                                                    activeTab === 'table' ||
+                                                                    activeTab === 'chart'
+                                                                ) &&
+                                                                !isCurrentDataTableEditable
+                                                            "
+                                                        />
+
+                                                        <v-list-item
+                                                            :prepend-icon="
+                                                                isCurrentDataTableEditable
+                                                                    ? mdiTableCheck
+                                                                    : mdiTableEdit
+                                                            "
+                                                            :title="
+                                                                isCurrentDataTableEditable
+                                                                    ? tt('Exit Edit Mode')
+                                                                    : tt('Enter Edit Mode')
+                                                            "
+                                                            :disabled="
+                                                                loading ||
+                                                                updating ||
+                                                                (
+                                                                    !isCurrentDataTableEditable &&
+                                                                    filteredTransactionsInDataTable.length < 1
+                                                                )
+                                                            "
+                                                            @click="
+                                                                isCurrentDataTableEditable =
+                                                                    !isCurrentDataTableEditable
+                                                            "
+                                                            v-if="activeTab === 'table'"
+                                                        />
+
+                                                        <v-divider class="my-2" />
+
+                                                        <v-list-item
+                                                            :prepend-icon="mdiPencilOutline"
+                                                            :title="tt('Rename Exploration')"
+                                                            @click="setExplorationName"
+                                                            v-if="currentExploration.id"
+                                                        />
+
+                                                        <v-list-item
+                                                            :prepend-icon="mdiDeleteOutline"
+                                                            :title="tt('Delete Exploration')"
+                                                            @click="removeExploration"
+                                                            v-if="currentExploration.id"
+                                                        />
+                                                    </v-list>
+                                                </v-menu>
+                                            </v-btn>
+                                        </div>
+                                    </div>
                                 </div>
                             </template>
 
@@ -842,3 +1252,475 @@ watch(currentExploration, () => {
 
 init(props);
 </script>
+
+
+<style scoped>
+/* =========================================================
+ * EXPLORADOR DE INSIGHTS
+ * Layout limpo, consistente e sem regras duplicadas
+ * ======================================================= */
+
+.insights-page {
+    width: calc(100% + 48px);
+    min-width: 0;
+    min-height: 100vh;
+    margin: -24px;
+
+    background: rgb(var(--v-theme-background));
+
+    font-family:
+        "Lausanne",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+}
+
+.insights-page,
+.insights-page *,
+.insights-page *::before,
+.insights-page *::after {
+    box-sizing: border-box;
+}
+
+.insights-page__column {
+    min-width: 0;
+    padding: 0 !important;
+}
+
+.insights-shell,
+.insights-layout,
+.insights-main,
+.insights-content-card {
+    min-width: 0;
+    min-height: 100vh;
+
+    background: rgb(var(--v-theme-background)) !important;
+}
+
+.insights-shell,
+.insights-content-card {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+ * SIDEBAR
+ * ======================================================= */
+
+.insights-sidebar {
+    border-right: 1px solid rgb(var(--v-theme-muted-border)) !important;
+
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.insights-sidebar :deep(.v-navigation-drawer__content) {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+
+    overflow: hidden;
+}
+
+.insights-sidebar__section {
+    padding: 24px 16px;
+}
+
+.insights-sidebar__section--modes {
+    padding-top: 24px;
+    padding-bottom: 18px;
+}
+
+.insights-sidebar__divider {
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+    opacity: 1 !important;
+}
+
+.insights-sidebar__tabs {
+    min-height: 0;
+    flex: 1 1 auto;
+
+    margin: 14px 0 0 !important;
+    padding: 0 12px 18px;
+
+    overflow: hidden;
+}
+
+.insights-sidebar__tabs :deep(.v-slide-group__container),
+.insights-sidebar__tabs :deep(.v-slide-group__content) {
+    width: 100%;
+}
+
+.insights-sidebar__tabs :deep(.v-slide-group__content) {
+    gap: 2px;
+}
+
+.insights-sidebar__tabs :deep(.v-tab) {
+    width: 100%;
+    min-height: 40px;
+
+    justify-content: flex-start;
+
+    padding-inline: 12px;
+
+    border-radius: 6px !important;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+.insights-sidebar__tabs :deep(.v-tab:hover) {
+    color: rgb(var(--v-theme-on-surface));
+    background: rgb(var(--v-theme-on-hover-background));
+}
+
+.insights-sidebar__tabs :deep(.v-tab--selected),
+.insights-sidebar__tabs :deep(.v-tab-item--selected) {
+    color: rgb(var(--v-theme-on-surface)) !important;
+    background: rgb(var(--v-theme-verticalbutton-selected)) !important;
+
+    font-weight: 600;
+}
+
+.insights-sidebar__tabs :deep(.v-tab__slider) {
+    top: 8px !important;
+    bottom: 8px !important;
+    left: 8px !important;
+
+    width: 2px !important;
+    height: auto !important;
+
+    background: rgb(var(--v-theme-highlight)) !important;
+}
+
+/* =========================================================
+ * HEADER
+ * ======================================================= */
+
+.insights-content-card > :deep(.v-card-item) {
+    padding: 0 !important;
+
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+
+    background: rgb(var(--v-theme-surface));
+}
+
+.insights-content-card > :deep(.v-card-item .v-card-title) {
+    overflow: visible;
+
+    white-space: normal;
+}
+
+.insights-page-header {
+    width: 100%;
+
+    background: rgb(var(--v-theme-surface));
+}
+
+.insights-page-header__top {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+
+    padding: 38px 40px 32px;
+}
+
+.insights-page-header__identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+}
+
+.insights-sidebar-trigger {
+    flex: 0 0 auto;
+}
+
+.insights-page-header__titles {
+    min-width: 0;
+}
+
+.insights-page-header__titles h1 {
+    margin: 0;
+
+    color: rgb(var(--v-theme-on-surface));
+
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1;
+}
+
+.insights-page-header__titles > span {
+    display: block;
+    max-width: 560px;
+
+    overflow: hidden;
+
+    margin-top: 12px;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.86rem;
+    font-weight: 500;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.insights-page-header__actions {
+    display: flex;
+    min-width: 0;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.insights-page-header__desktop-actions {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.insights-date-range-group {
+    flex: 0 1 auto;
+
+    box-shadow: none !important;
+}
+
+.insights-date-range-button {
+    min-width: 138px;
+    max-width: 220px;
+}
+
+.insights-date-range-button :deep(.v-btn__content) {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.insights-save-button {
+    min-width: 142px;
+
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+/*
+ * O botão de ações móveis fica realmente oculto no desktop.
+ * A duplicação dos dois menus "..." vinha da exibição simultânea
+ * deste botão e do menu de ações do desktop.
+ */
+.insights-mobile-actions-trigger,
+.insights-page-header__actions :deep(.insights-mobile-actions-trigger) {
+    display: none !important;
+}
+
+/* =========================================================
+ * CONTEÚDO DAS SUBPÁGINAS
+ * ======================================================= */
+
+/*
+ * O v-window é filho direto do card e não fica dentro de .v-card-text.
+ * Por isso, o espaçamento deve ser aplicado nele.
+ *
+ * Isso cria:
+ * - margem superior para "Adicionar Consulta";
+ * - espaçamento lateral para a tabela;
+ * - alinhamento igual entre Consulta, Tabela de Dados e Gráfico.
+ */
+.insights-content-card > :deep(.v-window) {
+    width: 100%;
+    min-width: 0;
+
+    padding: 28px 18px 28px;
+
+    background: rgb(var(--v-theme-background));
+}
+
+.insights-content-card :deep(.v-window__container),
+.insights-content-card :deep(.v-window-item) {
+    min-width: 0;
+}
+
+.insights-content-card :deep(.v-window-item) {
+    width: 100%;
+}
+
+/*
+ * Remove margens externas conflitantes dos componentes internos,
+ * mantendo todo o espaçamento sob controle do container principal.
+ */
+.insights-content-card :deep(.v-window-item > *) {
+    max-width: 100%;
+}
+
+/*
+ * Garante espaço abaixo da barra de ações inicial da aba Consulta.
+ * O seletor cobre o primeiro bloco renderizado pelo componente filho,
+ * sem depender de classes internas específicas.
+ */
+.insights-content-card :deep(.v-window-item[value="query"] > :first-child),
+.insights-content-card :deep(.v-window-item:first-child > :first-child) {
+    margin-top: 0;
+}
+
+/* Cards e tabelas internas */
+
+.insights-content-card :deep(.v-card:not(.insights-content-card)) {
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+
+    background: rgb(var(--v-theme-surface));
+
+    box-shadow: none !important;
+}
+
+.insights-content-card :deep(.v-table),
+.insights-content-card :deep(.v-data-table) {
+    width: 100%;
+
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+
+    background: rgb(var(--v-theme-surface));
+
+    box-shadow: none;
+}
+
+.insights-content-card :deep(.v-table__wrapper),
+.insights-content-card :deep(.v-data-table__wrapper) {
+    width: 100%;
+}
+
+.insights-content-card :deep(.v-table th),
+.insights-content-card :deep(.v-data-table th) {
+    color: rgb(var(--v-theme-tertiary)) !important;
+    background: rgb(var(--v-theme-secondary)) !important;
+
+    font-size: 0.65rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+.insights-content-card :deep(.v-table td),
+.insights-content-card :deep(.v-data-table td) {
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+
+    color: rgb(var(--v-theme-on-surface));
+
+    font-size: 0.73rem;
+}
+
+.insights-content-card :deep(.v-table tbody tr:hover),
+.insights-content-card :deep(.v-data-table tbody tr:hover) {
+    background: rgb(var(--v-theme-on-hover-background));
+}
+
+/* =========================================================
+ * RESPONSIVIDADE
+ * ======================================================= */
+
+@media (max-width: 1450px) {
+    .insights-page-header__top {
+        padding-inline: 36px;
+    }
+
+    .insights-content-card > :deep(.v-window) {
+        padding-inline: 12px;
+    }
+}
+
+@media (max-width: 1260px) {
+    .insights-page-header__top {
+        gap: 24px;
+
+        padding-inline: 32px;
+    }
+
+    .insights-content-card > :deep(.v-window) {
+        padding-inline: 12px;
+    }
+}
+
+@media (max-width: 1180px) {
+    .insights-page-header__desktop-actions {
+        display: none !important;
+    }
+
+    .insights-mobile-actions-trigger,
+    .insights-page-header__actions :deep(.insights-mobile-actions-trigger) {
+        display: inline-grid !important;
+    }
+}
+
+@media (max-width: 960px) {
+    .insights-page-header__top {
+        padding: 28px 22px 24px;
+    }
+
+    .insights-content-card > :deep(.v-window) {
+        padding: 22px 12px 22px;
+    }
+}
+
+@media (max-width: 700px) {
+    .insights-page-header__top {
+        gap: 18px;
+    }
+
+    .insights-page-header__titles h1 {
+        font-size: 1.75rem;
+    }
+
+    .insights-page-header__titles > span {
+        max-width: calc(100vw - 150px);
+
+        margin-top: 7px;
+
+        font-size: 0.72rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .insights-page {
+        width: calc(100% + 48px);
+        margin: -24px;
+    }
+
+    .insights-page-header__top {
+        padding: 22px 14px 18px;
+    }
+
+    .insights-page-header__titles h1 {
+        font-size: 1.55rem;
+    }
+
+    .insights-page-header__titles > span {
+        display: none;
+    }
+
+    .insights-content-card > :deep(.v-window) {
+        padding: 18px 14px 28px;
+    }
+
+    .insights-content-card :deep(.v-card:not(.insights-content-card)),
+    .insights-content-card :deep(.v-table),
+    .insights-content-card :deep(.v-data-table) {
+        border-radius: 8px;
+    }
+}
+</style>

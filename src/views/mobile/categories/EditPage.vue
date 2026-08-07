@@ -98,7 +98,7 @@
                                 </div>
                             </a>
 
-                            <icon-selection-sheet :all-icon-infos="ALL_CATEGORY_ICONS"
+                            <icon-selection-sheet icon-type="category" :all-icon-infos="ALL_CATEGORY_ICONS"
                                                   :color="category.color"
                                                   v-model:show="showIconSelectionSheet"
                                                   v-model="category.icon"

@@ -1,10 +1,10 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
-                <v-layout>
-                    <v-navigation-drawer :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-6 my-4">
+    <v-row class="management-page match-height">
+        <v-col class="management-page__column" cols="12">
+            <v-card class="management-shell" variant="flat">
+                <v-layout class="management-layout">
+                    <v-navigation-drawer class="management-sidebar" :permanent="alwaysShowNav" v-model="showNav">
+                        <div class="management-sidebar__section">
                             <span class="text-subtitle-2">{{ tt('Total tags') }}</span>
                             <p class="transaction-tags-statistic-item-value mt-1">
                                 <span v-if="!loading || totalAvailableTagsCount > 0">{{ displayTotalAvailableTagsCount }}</span>
@@ -13,9 +13,9 @@
                                 </span>
                             </p>
                         </div>
-                        <v-divider />
+                        <v-divider class="management-sidebar__divider" />
                         <v-tabs show-arrows
-                                class="scrollable-vertical-tabs"
+                                class="management-sidebar__tabs scrollable-vertical-tabs"
                                 style="max-height: calc(100% - 88px)"
                                 direction="vertical"
                                 :prev-icon="mdiMenuUp" :next-icon="mdiMenuDown"
@@ -32,24 +32,38 @@
                             </template>
                         </v-tabs>
                     </v-navigation-drawer>
-                    <v-main>
+                    <v-main class="management-main">
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="tagListPage">
-                                <v-card variant="flat" min-height="780">
+                                <v-card class="management-content-card" variant="flat" min-height="780">
                                     <template #title>
-                                        <div class="title-and-toolbar d-flex align-center">
-                                            <v-btn class="me-3 d-md-none" density="compact" color="default" variant="plain"
+                                        <div class="management-page-header">
+                                            <div class="management-page-header__top">
+                                            <div class="management-page-header__identity">
+                                            <v-btn class="d-md-none" density="compact" color="default" variant="plain"
                                                    :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
+                                                <v-icon :icon="mdiMenu" size="22" />
                                             </v-btn>
-                                            <span>{{ tt('Transaction Tags') }}</span>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
+                                            <div class="management-page-header__titles">
+                                                <h1>{{ tt('Transaction Tags') }}</h1>
+                                                <span>{{ displayTotalAvailableTagsCount }} {{ tt('Tags') }}</span>
+                                            </div>
+                                            </div>
+                                            </div>
+                                            <div class="management-page-toolbar">
+                                                <div class="management-search">
+                                                    <v-text-field density="compact" variant="outlined" hide-details clearable
+                                                                  :prepend-inner-icon="mdiMagnify" :disabled="loading || updating || hasEditingTag"
+                                                                  :placeholder="tt('Search tags')" v-model="searchKeyword" />
+                                                </div>
+                                            <div class="management-page-header__actions">
+                                            <v-btn color="primary" variant="flat"
                                                    :disabled="loading || updating || hasEditingTag" @click="add">{{ tt('Add') }}</v-btn>
-                                            <v-btn class="ms-3" color="primary" variant="tonal"
+                                            <v-btn color="default" variant="outlined"
                                                    :disabled="loading || updating || hasEditingTag" @click="saveSortResult"
                                                    v-if="displayOrderModified">{{ tt('Save Display Order') }}</v-btn>
-                                            <v-btn density="compact" color="default" variant="text" size="24"
-                                                   class="ms-2" :icon="true" :disabled="loading || updating || hasEditingTag"
+                                            <v-btn density="comfortable" color="default" variant="text"
+                                                   :icon="true" :disabled="loading || updating || hasEditingTag"
                                                    :loading="loading" @click="reload">
                                                 <template #loader>
                                                     <v-progress-circular indeterminate size="20"/>
@@ -57,8 +71,7 @@
                                                 <v-icon :icon="mdiRefresh" size="24" />
                                                 <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                                             </v-btn>
-                                            <v-spacer/>
-                                            <v-btn density="comfortable" color="default" variant="text" class="ms-2"
+                                            <v-btn density="comfortable" color="default" variant="text"
                                                    :disabled="loading || updating || hasEditingTag" :icon="true">
                                                 <v-icon :icon="mdiDotsVertical" />
                                                 <v-menu activator="parent">
@@ -102,10 +115,12 @@
                                                     </v-list>
                                                 </v-menu>
                                             </v-btn>
+                                            </div>
+                                            </div>
                                         </div>
                                     </template>
 
-                                    <v-table class="transaction-tags-table table-striped" :hover="!loading">
+                                    <v-table class="management-table transaction-tags-table table-striped" :hover="!loading">
                                         <thead>
                                         <tr>
                                             <th>
@@ -142,6 +157,7 @@
                                                         @change="onMove">
                                             <template #item="{ element }">
                                                 <tr class="transaction-tags-table-row-tag" v-if="showHidden || !element.hidden"
+                                                    v-show="tagMatchesSearch(element)"
                                                     @mouseenter="hoveredTagId = element.id" @mouseleave="hoveredTagId = ''">
                                                     <td>
                                                         <div class="d-flex align-center">
@@ -307,15 +323,15 @@
         </v-col>
     </v-row>
 
-    <v-dialog width="640" v-model="showTagMoveToDialog">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="management-dialog" width="640" max-width="calc(100vw - 24px)" v-model="showTagMoveToDialog">
+        <v-card class="management-dialog__card">
             <template #title>
-                <div class="d-flex align-center">
-                    <h4 class="text-h4">{{ tt('Move to...') }}</h4>
+                <div class="management-dialog__header">
+                    <h4>{{ tt('Move to...') }}</h4>
                 </div>
             </template>
-            <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto">
-                <v-table hover density="comfortable" class="w-100 table-striped">
+            <v-card-text class="management-dialog__body">
+                <v-table hover density="comfortable" class="management-table w-100 table-striped">
                     <tbody>
                     <tr class="cursor-pointer" :key="tagGroup.id" v-for="tagGroup in allTagGroupsWithDefault" v-show="activeTagGroupId !== tagGroup.id">
                         <td @click="moveTagToGroup(currentMovingTag, tagGroup.id)">
@@ -325,9 +341,9 @@
                     </tbody>
                 </v-table>
             </v-card-text>
-            <v-card-text class="overflow-y-visible">
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
-                    <v-btn color="secondary" variant="tonal" :disabled="loading || updating" @click="showTagMoveToDialog = false">{{ tt('Close') }}</v-btn>
+            <v-card-text class="management-dialog__footer">
+                <div class="management-dialog__footer-actions">
+                    <v-btn color="default" variant="outlined" :disabled="loading || updating" @click="showTagMoveToDialog = false">{{ tt('Close') }}</v-btn>
                 </div>
             </v-card-text>
         </v-card>
@@ -364,6 +380,7 @@ import { TransactionTag } from '@/models/transaction_tag.ts';
 import { getAvailableTagCount } from '@/lib/tag.ts';
 
 import {
+    mdiMagnify,
     mdiRefresh,
     mdiMenuUp,
     mdiMenuDown,
@@ -420,6 +437,7 @@ const snackbar = useTemplateRef<SnackBarType>('snackbar');
 
 const updating = ref<boolean>(false);
 const activeTab = ref<string>('tagListPage');
+const searchKeyword = ref<string | null>('');
 const alwaysShowNav = ref<boolean>(display.mdAndUp.value);
 const showNav = ref<boolean>(display.mdAndUp.value);
 const hoveredTagId = ref<string>('');
@@ -430,6 +448,11 @@ const tagRemoving = ref<Record<string, boolean>>({});
 const currentMovingTag = ref<TransactionTag | null>(null);
 const currentMoveTargetGroupId = ref<string>(DEFAULT_TAG_GROUP_ID);
 const showTagMoveToDialog = ref<boolean>(false);
+
+function tagMatchesSearch(tag: TransactionTag): boolean {
+    const keyword = (searchKeyword.value || '').trim().toLocaleLowerCase();
+    return !keyword || tag.name.toLocaleLowerCase().includes(keyword);
+}
 
 const totalAvailableTagsCount = computed<number>(() => transactionTagsStore.allAvailableTagsCount);
 const displayTotalAvailableTagsCount = computed<string>(() => formatNumberToLocalizedNumerals(transactionTagsStore.allAvailableTagsCount));

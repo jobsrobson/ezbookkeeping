@@ -6,11 +6,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Theme') }}</label>
                                 <v-select
                                     item-title="name"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Theme')"
                                     :placeholder="tt('Theme')"
                                     :items="allThemes"
                                     v-model="currentTheme"
@@ -18,12 +18,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Timezone') }}</label>
                                 <v-autocomplete
                                     item-title="displayNameWithUtcOffset"
                                     item-value="name"
                                     auto-select-first
                                     persistent-placeholder
-                                    :label="tt('Timezone')"
                                     :placeholder="tt('Timezone')"
                                     :items="allTimezones"
                                     :no-data-text="tt('No results')"
@@ -32,11 +32,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Auto-update Exchange Rates Data') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Auto-update Exchange Rates Data')"
                                     :placeholder="tt('Auto-update Exchange Rates Data')"
                                     :items="enableDisableOptions"
                                     v-model="isAutoUpdateExchangeRatesData"
@@ -44,11 +44,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Account Balance') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Account Balance')"
                                     :placeholder="tt('Show Account Balance')"
                                     :items="enableDisableOptions"
                                     v-model="showAccountBalance"
@@ -66,11 +66,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Chart Color Scheme') }}</label>
                                 <v-text-field
                                     class="always-cursor-pointer"
                                     persistent-placeholder
                                     :readonly="true"
-                                    :label="tt('Chart Color Scheme')"
                                     :placeholder="tt('Chart Color Scheme')"
                                     :model-value="chartColorSchemeContent"
                                     @click="chartColorSchemeDialog?.open().catch(()=>{})"
@@ -88,11 +88,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Add Transaction Button') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Add Transaction Button')"
                                     :placeholder="tt('Show Add Transaction Button')"
                                     :items="enableDisableOptions"
                                     v-model="showAddTransactionButtonInDesktopNavbar"
@@ -110,11 +110,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Amount') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Amount')"
                                     :placeholder="tt('Show Amount')"
                                     :items="enableDisableOptions"
                                     v-model="showAmountInHomePage"
@@ -122,11 +122,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Timezone Used for Statistics') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Timezone Used for Statistics')"
                                     :placeholder="tt('Timezone Used for Statistics')"
                                     :items="allTimezoneTypesUsedForStatistics"
                                     v-model="timezoneUsedForStatisticsInHomePage"
@@ -134,6 +134,7 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Accounts Included in Overview Statistics') }}</label>
                                 <v-text-field
                                     class="always-cursor-pointer"
                                     item-title="displayName"
@@ -142,7 +143,6 @@
                                     :loading="loadingAccounts"
                                     :readonly="true"
                                     :disabled="!hasAnyAccount"
-                                    :label="tt('Accounts Included in Overview Statistics')"
                                     :placeholder="tt('Accounts Included in Overview Statistics')"
                                     :model-value="accountsIncludedInHomePageOverviewDisplayContent"
                                     @click="showAccountsIncludedInHomePageOverviewDialog = true"
@@ -150,6 +150,7 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Transaction Categories Included in Overview Statistics') }}</label>
                                 <v-text-field
                                     class="always-cursor-pointer"
                                     item-title="displayName"
@@ -158,7 +159,6 @@
                                     :loading="loadingTransactionCategories"
                                     :readonly="true"
                                     :disabled="!hasAnyTransactionCategory"
-                                    :label="tt('Transaction Categories Included in Overview Statistics')"
                                     :placeholder="tt('Transaction Categories Included in Overview Statistics')"
                                     :model-value="transactionCategoriesIncludedInHomePageOverviewDisplayContent"
                                     @click="showTransactionCategoriesIncludedInHomePageOverviewDialog = true"
@@ -176,42 +176,42 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Transactions Per Page') }}</label>
                                 <v-select
                                     persistent-placeholder
-                                    :label="tt('Transactions Per Page')"
                                     :placeholder="tt('Transactions Per Page')"
                                     :items="[ 5, 10, 15, 20, 25, 30, 50 ]"
                                     v-model="itemsCountInTransactionListPage"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Monthly Total Amount') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Monthly Total Amount')"
                                     :placeholder="tt('Show Monthly Total Amount')"
                                     :items="enableDisableOptions"
                                     v-model="showTotalAmountInTransactionListPage"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Transaction Tags') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Transaction Tags')"
                                     :placeholder="tt('Show Transaction Tags')"
                                     :items="enableDisableOptions"
                                     v-model="showTagInTransactionListPage"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Keyword Search Matching Mode') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Keyword Search Matching Mode')"
                                     :placeholder="tt('Default Keyword Search Matching Mode')"
                                     :items="allKeywordMatchModes"
                                     v-model="defaultKeywordMatchModeInTransactionListPage"
@@ -229,11 +229,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Automatically Save Draft') }}</label>
                                 <v-select
                                     item-title="name"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Automatically Save Draft')"
                                     :placeholder="tt('Automatically Save Draft')"
                                     :items="allAutoSaveTransactionDraftTypes"
                                     v-model="autoSaveTransactionDraft"
@@ -241,11 +241,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Automatically Add Geolocation') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Automatically Add Geolocation')"
                                     :placeholder="tt('Automatically Add Geolocation')"
                                     :items="enableDisableOptions"
                                     v-model="isAutoGetCurrentGeoLocation"
@@ -253,11 +253,11 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Transaction Picture Upload Quality') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Transaction Picture Upload Quality')"
                                     :placeholder="tt('Transaction Picture Upload Quality')"
                                     :items="allImageUploadQualityTypes"
                                     v-model="transactionPictureQuality"
@@ -275,11 +275,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Always Require Confirmation of Clipboard Content Before Submission') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Always Require Confirmation of Clipboard Content Before Submission')"
                                     :placeholder="tt('Always Require Confirmation of Clipboard Content Before Submission')"
                                     :items="enableDisableOptions"
                                     v-model="isAlwaysRequireConfirmationOfClipboardContentBeforeSubmission"
@@ -297,11 +297,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Auto Upload AI Recognition Image as Transaction Picture') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Auto Upload AI Recognition Image as Transaction Picture')"
                                     :placeholder="tt('Auto Upload AI Recognition Image as Transaction Picture')"
                                     :items="enableDisableOptions"
                                     v-model="isAutoUploadTransactionPictureForAIRecognition"
@@ -319,11 +319,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Remember Last Selected File Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Remember Last Selected File Type')"
                                     :placeholder="tt('Remember Last Selected File Type')"
                                     :items="enableDisableOptions"
                                     v-model="rememberLastSelectedFileTypeInImportTransactionDialog"
@@ -341,22 +341,22 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Date Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Date Range')"
                                     :placeholder="tt('Default Date Range')"
                                     :items="allInsightsExplorerDefaultDateRanges"
                                     v-model="insightsExplorerDefaultDateRangeType"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Show Transaction Tags') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Show Transaction Tags')"
                                     :placeholder="tt('Show Transaction Tags')"
                                     :items="enableDisableOptions"
                                     v-model="showTagInInsightsExplorerPage"
@@ -374,6 +374,7 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Accounts Included in Total') }}</label>
                                 <v-text-field
                                     class="always-cursor-pointer"
                                     item-title="displayName"
@@ -382,42 +383,41 @@
                                     :loading="loadingAccounts"
                                     :readonly="true"
                                     :disabled="!hasAnyVisibleAccount"
-                                    :label="tt('Accounts Included in Total')"
                                     :placeholder="tt('Accounts Included in Total')"
                                     :model-value="accountsIncludedInTotalDisplayContent"
                                     @click="showAccountsIncludedInTotalDialog = true"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Account Category Order') }}</label>
                                 <v-text-field
                                     class="always-cursor-pointer"
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :readonly="true"
-                                    :label="tt('Account Category Order')"
                                     :placeholder="tt('Account Category Order')"
                                     :model-value="accountCategorysDisplayOrderContent"
                                     @click="accountCategorysDisplayOrderDialog?.open().catch(()=>{})"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Hide Categories Without Accounts') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
-                                    :label="tt('Hide Categories Without Accounts')"
                                     :placeholder="tt('Hide Categories Without Accounts')"
                                     :items="enableDisableOptions"
                                     v-model="hideCategoriesWithoutAccounts"
                                 />
                             </v-col>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Date Range for Reconciliation Statement Button') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Default Date Range for Reconciliation Statement Button')"
                                     :placeholder="tt('Default Date Range for Reconciliation Statement Button')"
                                     :items="allReconciliationStatementDateRanges"
                                     v-model="reconciliationStatementButtonDefaultDateRangeTypeInDesktop"
@@ -435,11 +435,11 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Sort by') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
-                                    :label="tt('Sort by')"
                                     :placeholder="tt('Sort by')"
                                     :items="allCurrencySortingTypes"
                                     v-model="currencySortByInExchangeRatesPage"

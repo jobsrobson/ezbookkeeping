@@ -96,6 +96,8 @@ type Account struct {
 type AccountExtend struct {
 	LastReconciledTime      *int64 `json:"lastReconciledTime"`
 	CreditCardStatementDate *int   `json:"creditCardStatementDate"`
+	CreditCardDueDate       *int   `json:"creditCardDueDate"`
+	CreditCardLimit         *int64 `json:"creditCardLimit"`
 }
 
 // AccountCreateRequest represents all parameters of account creation request
@@ -110,6 +112,8 @@ type AccountCreateRequest struct {
 	BalanceTime             int64                   `json:"balanceTime"`
 	Comment                 string                  `json:"comment" binding:"max=255"`
 	CreditCardStatementDate int                     `json:"creditCardStatementDate" binding:"min=0,max=28"`
+	CreditCardDueDate       int                     `json:"creditCardDueDate" binding:"min=0,max=28"`
+	CreditCardLimit         string                  `json:"creditCardLimit"`
 	SubAccounts             []*AccountCreateRequest `json:"subAccounts" binding:"omitempty"`
 	ClientSessionId         string                  `json:"clientSessionId"`
 }
@@ -127,6 +131,8 @@ type AccountModifyRequest struct {
 	LastReconciledTime      *int64                  `json:"lastReconciledTime" binding:"omitempty"`
 	Comment                 string                  `json:"comment" binding:"max=255"`
 	CreditCardStatementDate int                     `json:"creditCardStatementDate" binding:"min=0,max=28"`
+	CreditCardDueDate       int                     `json:"creditCardDueDate" binding:"min=0,max=28"`
+	CreditCardLimit         string                  `json:"creditCardLimit"`
 	Hidden                  bool                    `json:"hidden"`
 	SubAccounts             []*AccountModifyRequest `json:"subAccounts" binding:"omitempty"`
 	ClientSessionId         string                  `json:"clientSessionId"`
@@ -184,6 +190,8 @@ type AccountInfoResponse struct {
 	LastReconciledTime      *int64                   `json:"lastReconciledTime,omitempty"`
 	Comment                 string                   `json:"comment"`
 	CreditCardStatementDate *int                     `json:"creditCardStatementDate,omitempty"`
+	CreditCardDueDate       *int                     `json:"creditCardDueDate,omitempty"`
+	CreditCardLimit         *string                  `json:"creditCardLimit,omitempty"`
 	DisplayOrder            int32                    `json:"displayOrder"`
 	IsAsset                 bool                     `json:"isAsset,omitempty"`
 	IsLiability             bool                     `json:"isLiability,omitempty"`
@@ -204,6 +212,8 @@ func (a *Account) GetLastReconciledTime() int64 {
 func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 	var lastReconciledTime *int64
 	var creditCardStatementDate *int
+	var creditCardDueDate *int
+	var creditCardLimit *string
 
 	if a.Extend != nil {
 		lastReconciledTime = a.Extend.LastReconciledTime
@@ -212,6 +222,11 @@ func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 	if a.ParentAccountId == LevelOneAccountParentId && a.Category == ACCOUNT_CATEGORY_CREDIT_CARD {
 		if a.Extend != nil {
 			creditCardStatementDate = a.Extend.CreditCardStatementDate
+			creditCardDueDate = a.Extend.CreditCardDueDate
+			if a.Extend.CreditCardLimit != nil {
+				value := utils.Int64ToString(*a.Extend.CreditCardLimit)
+				creditCardLimit = &value
+			}
 		} else {
 			creditCardStatementDate = &defaultCreditCardAccountStatementDate
 		}
@@ -230,6 +245,8 @@ func (a *Account) ToAccountInfoResponse() *AccountInfoResponse {
 		Comment:                 a.Comment,
 		LastReconciledTime:      lastReconciledTime,
 		CreditCardStatementDate: creditCardStatementDate,
+		CreditCardDueDate:       creditCardDueDate,
+		CreditCardLimit:         creditCardLimit,
 		DisplayOrder:            a.DisplayOrder,
 		IsAsset:                 assetAccountCategory[a.Category],
 		IsLiability:             liabilityAccountCategory[a.Category],

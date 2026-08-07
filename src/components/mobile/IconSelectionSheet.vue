@@ -15,7 +15,7 @@
                      :style="`grid-template-columns: repeat(${itemPerRow}, minmax(0, 1fr));`"
                      :key="idx" v-for="(row, idx) in allIconRows">
                     <div class="text-align-center" :key="iconInfo.id" v-for="iconInfo in row">
-                        <ItemIcon icon-type="fixed" :icon-id="iconInfo.icon" :color="color" @click="onIconClicked(iconInfo)">
+                        <ItemIcon :icon-type="iconType" :icon-id="iconInfo.id" :color="color" @click="onIconClicked(iconInfo)">
                             <f7-badge color="default" class="right-bottom-icon" v-if="currentValue && currentValue === iconInfo.id">
                                 <f7-icon f7="checkmark_alt"></f7-icon>
                             </f7-badge>
@@ -41,6 +41,7 @@ const props = defineProps<{
     show: boolean;
     columnCount?: number;
     color: string;
+    iconType: 'account' | 'category';
     allIconInfos: Record<string, IconInfo>;
 }>();
 

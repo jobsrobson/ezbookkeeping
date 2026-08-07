@@ -1,9 +1,11 @@
 <template>
     <div class="layout-wrapper">
         <router-link to="/">
-            <div class="auth-logo d-flex align-start gap-x-3">
-                <img alt="logo" class="login-page-logo" :src="APPLICATION_LOGO_PATH" />
-                <h1 class="font-weight-medium leading-normal text-2xl">{{ tt('global.app.title') }}</h1>
+            <div class="auth-logo d-flex align-start">
+                <img alt="Bookkeeping" class="login-brand-logo"
+                     src="/img/bookkeeping-logo-light.svg" v-if="!isDarkMode"/>
+                <img alt="Bookkeeping" class="login-brand-logo"
+                     src="/img/bookkeeping-logo-dark.svg" v-else/>
             </div>
         </router-link>
         <v-row no-gutters class="auth-wrapper">
@@ -23,8 +25,8 @@
                 <div class="d-flex align-center justify-center h-100">
                     <v-card variant="flat" class="w-100 mt-0 px-4 pt-12" max-width="500">
                         <v-card-text>
-                            <h4 class="text-h4 mb-2">{{ tt('Welcome to ezBookkeeping') }}</h4>
-                            <p class="mb-0" v-if="isInternalAuthEnabled()">{{ tt('Please log in with your ezBookkeeping account') }}</p>
+                            <h4 class="text-h4 mb-2">{{ tt('Welcome to Bookkeeping') }}</h4>
+                            <p class="mb-0" v-if="isInternalAuthEnabled()">{{ tt('Please log in with your Bookkeeping account') }}</p>
                             <p class="mt-1 mb-0" v-if="tips">{{ tips }}</p>
                         </v-card-text>
 
@@ -157,7 +159,7 @@
 
                                 <v-col cols="12" class="text-center text-sm">
                                     <span>Powered by </span>
-                                    <a href="https://github.com/mayswind/ezbookkeeping" target="_blank">ezBookkeeping</a>&nbsp;<span>{{ version }}</span>
+                                    <a href="https://github.com/mayswind/ezbookkeeping" target="_blank">Bookkeeping</a>&nbsp;<span>{{ version }}</span>
                                 </v-col>
                             </v-row>
                         </v-card-text>
@@ -185,7 +187,6 @@ import { useLoginPageBase } from '@/views/base/LoginPageBase.ts';
 import { useRootStore } from '@/stores/index.ts';
 
 import { ThemeType } from '@/core/theme.ts';
-import { APPLICATION_LOGO_PATH } from '@/consts/asset.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
 
 import { generateRandomUUID } from '@/lib/misc.ts';

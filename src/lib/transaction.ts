@@ -211,6 +211,13 @@ export function setTransactionModelByTransaction(transaction: Transaction, trans
 
         transaction.comment = transaction2.comment;
 
+        transaction.installmentGroupId = transaction2.installmentGroupId;
+        transaction.installmentNumber = transaction2.installmentNumber;
+        transaction.installmentCount = transaction2.installmentCount;
+        transaction.installmentSummary = transaction2.installmentSummary;
+        transaction.subscription = transaction2.subscription;
+        transaction.subscriptionTemplateId = transaction2.subscriptionTemplateId;
+
         if (setContextData) {
             transaction.setGeoLocation(transaction2.geoLocation);
         }

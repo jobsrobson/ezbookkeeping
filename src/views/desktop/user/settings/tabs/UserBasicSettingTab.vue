@@ -54,30 +54,31 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Nickname') }}</label>
                                 <v-text-field
                                     type="text"
                                     autocomplete="nickname"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Nickname')"
                                     :placeholder="tt('Your nickname')"
                                     v-model="newProfile.nickname"
                                 />
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('E-mail') }}</label>
                                 <v-text-field
                                     type="email"
                                     autocomplete="email"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('E-mail')"
                                     :placeholder="tt('Your email address')"
                                     v-model="newProfile.email"
                                 />
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Account') }}</label>
                                 <two-column-select primary-key-field="id" primary-value-field="category"
                                                    primary-title-field="name"
                                                    primary-icon-field="icon" primary-icon-type="account"
@@ -88,7 +89,6 @@
                                                    secondary-icon-field="icon" secondary-icon-type="account" secondary-color-field="color"
                                                    :disabled="loading || saving || !allVisibleAccounts.length"
                                                    :enable-filter="true" :filter-placeholder="tt('Find account')" :filter-no-items-text="tt('No available account')"
-                                                   :label="tt('Default Account')"
                                                    :placeholder="tt('Default Account')"
                                                    :items="allVisibleCategorizedAccounts"
                                                    :no-item-text="Account.findAccountNameById(allAccounts, newProfile.defaultAccountId, tt('Unspecified'))"
@@ -97,12 +97,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Use Last Reconciled Time') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="value"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Use Last Reconciled Time')"
                                     :placeholder="tt('Use Last Reconciled Time')"
                                     :items="enableDisableOptions"
                                     v-model="newProfile.useLastReconciledTime"
@@ -118,12 +118,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Editable Transaction Range') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Editable Transaction Range')"
                                     :placeholder="tt('Editable Transaction Range')"
                                     :items="allTransactionEditScopeTypes"
                                     v-model="newProfile.transactionEditScope"
@@ -137,27 +137,27 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ languageTitle }}</label>
                                 <language-select :disabled="loading || saving"
-                                                 :label="languageTitle"
                                                  :placeholder="languageTitle"
                                                  :include-system-default="true"
                                                  :use-model-value="true" v-model="newProfile.language" />
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Default Currency') }}</label>
                                 <currency-select :disabled="loading || saving"
-                                                 :label="tt('Default Currency')"
                                                  :placeholder="tt('Default Currency')"
                                                  v-model="newProfile.defaultCurrency" />
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('First Day of Week') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('First Day of Week')"
                                     :placeholder="tt('First Day of Week')"
                                     :items="allWeekDays"
                                     v-model="newProfile.firstDayOfWeek"
@@ -165,10 +165,10 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Fiscal Year Start Date') }}</label>
                                 <fiscal-year-start-select
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Fiscal Year Start Date')"
                                     :placeholder="tt('Fiscal Year Start Date')"
                                     :numeral-system="newProfile.numeralSystem"
                                     v-model="newProfile.fiscalYearStart"
@@ -182,12 +182,12 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Calendar Display Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Calendar Display Type')"
                                     :placeholder="tt('Calendar Display Type')"
                                     :items="allCalendarDisplayTypes"
                                     v-model="newProfile.calendarDisplayType"
@@ -195,12 +195,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Date Display Type') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Date Display Type')"
                                     :placeholder="tt('Date Display Type')"
                                     :items="allDateDisplayTypes"
                                     v-model="newProfile.dateDisplayType"
@@ -208,12 +208,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Long Date Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Long Date Format')"
                                     :placeholder="tt('Long Date Format')"
                                     :items="allLongDateFormats"
                                     v-model="newProfile.longDateFormat"
@@ -221,12 +221,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Short Date Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Short Date Format')"
                                     :placeholder="tt('Short Date Format')"
                                     :items="allShortDateFormats"
                                     v-model="newProfile.shortDateFormat"
@@ -234,12 +234,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Long Time Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Long Time Format')"
                                     :placeholder="tt('Long Time Format')"
                                     :items="allLongTimeFormats"
                                     v-model="newProfile.longTimeFormat"
@@ -247,12 +247,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Short Time Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Short Time Format')"
                                     :placeholder="tt('Short Time Format')"
                                     :items="allShortTimeFormats"
                                     v-model="newProfile.shortTimeFormat"
@@ -260,12 +260,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Fiscal Year Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Fiscal Year Format')"
                                     :placeholder="tt('Fiscal Year Format')"
                                     :items="allFiscalYearFormats"
                                     v-model="newProfile.fiscalYearFormat"
@@ -279,12 +279,12 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Currency Display Mode') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Currency Display Mode')"
                                     :placeholder="tt('Currency Display Mode')"
                                     :items="allCurrencyDisplayTypes"
                                     v-model="newProfile.currencyDisplayType"
@@ -292,12 +292,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Numeral System') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Numeral System')"
                                     :placeholder="tt('Numeral System')"
                                     :items="allNumeralSystemTypes"
                                     v-model="newProfile.numeralSystem"
@@ -305,12 +305,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Digit Grouping') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Digit Grouping')"
                                     :placeholder="tt('Digit Grouping')"
                                     :items="allDigitGroupingTypes"
                                     v-model="newProfile.digitGrouping"
@@ -318,12 +318,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Digit Grouping Symbol') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving || !supportDigitGroupingSymbol"
-                                    :label="tt('Digit Grouping Symbol')"
                                     :placeholder="tt('Digit Grouping Symbol')"
                                     :items="allDigitGroupingSymbols"
                                     v-model="newProfile.digitGroupingSymbol"
@@ -331,12 +331,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Decimal Separator') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Decimal Separator')"
                                     :placeholder="tt('Decimal Separator')"
                                     :items="allDecimalSeparators"
                                     v-model="newProfile.decimalSeparator"
@@ -350,12 +350,12 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Geographic Location Format') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Geographic Location Format')"
                                     :placeholder="tt('Geographic Location Format')"
                                     :items="allCoordinateDisplayTypes"
                                     v-model="newProfile.coordinateDisplayType"
@@ -369,12 +369,12 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Expense Amount Color') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Expense Amount Color')"
                                     :placeholder="tt('Expense Amount Color')"
                                     :items="allExpenseAmountColorTypes"
                                     v-model="newProfile.expenseAmountColor"
@@ -382,12 +382,12 @@
                             </v-col>
 
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Income Amount Color') }}</label>
                                 <v-select
                                     item-title="displayName"
                                     item-value="type"
                                     persistent-placeholder
                                     :disabled="loading || saving"
-                                    :label="tt('Income Amount Color')"
                                     :placeholder="tt('Income Amount Color')"
                                     :items="allIncomeAmountColorTypes"
                                     v-model="newProfile.incomeAmountColor"

@@ -125,27 +125,31 @@ const (
 
 // Transaction represents transaction data stored in database
 type Transaction struct {
-	TransactionId        int64             `xorm:"PK"`
-	Uid                  int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
-	Deleted              bool              `xorm:"INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
-	Type                 TransactionDbType `xorm:"INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
-	CategoryId           int64             `xorm:"INDEX(IDX_transaction_uid_deleted_category_id_time) NOT NULL"`
-	AccountId            int64             `xorm:"INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
-	TransactionTime      int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) NOT NULL"`
-	TimezoneUtcOffset    int16             `xorm:"NOT NULL"`
-	Amount               int64             `xorm:"NOT NULL"`
-	RelatedId            int64             `xorm:"NOT NULL"`
-	RelatedAccountId     int64             `xorm:"NOT NULL"`
-	RelatedAccountAmount int64             `xorm:"NOT NULL"`
-	HideAmount           bool              `xorm:"NOT NULL"`
-	Comment              string            `xorm:"VARCHAR(255) NOT NULL"`
-	GeoLongitude         float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
-	GeoLatitude          float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
-	CreatedIp            string            `xorm:"VARCHAR(39)"`
-	ScheduledCreated     bool
-	CreatedUnixTime      int64
-	UpdatedUnixTime      int64
-	DeletedUnixTime      int64
+	TransactionId          int64             `xorm:"PK"`
+	Uid                    int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
+	Deleted                bool              `xorm:"INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
+	Type                   TransactionDbType `xorm:"INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
+	CategoryId             int64             `xorm:"INDEX(IDX_transaction_uid_deleted_category_id_time) NOT NULL"`
+	AccountId              int64             `xorm:"INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
+	TransactionTime        int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) NOT NULL"`
+	TimezoneUtcOffset      int16             `xorm:"NOT NULL"`
+	Amount                 int64             `xorm:"NOT NULL"`
+	RelatedId              int64             `xorm:"NOT NULL"`
+	RelatedAccountId       int64             `xorm:"NOT NULL"`
+	RelatedAccountAmount   int64             `xorm:"NOT NULL"`
+	HideAmount             bool              `xorm:"NOT NULL"`
+	Comment                string            `xorm:"VARCHAR(255) NOT NULL"`
+	GeoLongitude           float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
+	GeoLatitude            float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
+	CreatedIp              string            `xorm:"VARCHAR(39)"`
+	ScheduledCreated       bool
+	InstallmentGroupId     int64 `xorm:"INDEX(IDX_transaction_uid_deleted_installment_group_id)"`
+	InstallmentNumber      int16
+	InstallmentCount       int16
+	SubscriptionTemplateId int64 `xorm:"INDEX"`
+	CreatedUnixTime        int64
+	UpdatedUnixTime        int64
+	DeletedUnixTime        int64
 }
 
 // TransactionWithAccountBalance represents a transaction item with account balance
@@ -177,6 +181,8 @@ type TransactionCreateRequest struct {
 	Comment              string                         `json:"comment" binding:"max=255"`
 	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
 	ClientSessionId      string                         `json:"clientSessionId"`
+	InstallmentCount     int16                          `json:"installmentCount" binding:"min=0,max=120"`
+	Subscription         bool                           `json:"subscription"`
 }
 
 // TransactionModifyRequest represents all parameters of transaction modification request
@@ -401,26 +407,50 @@ type TransactionGeoLocationResponse struct {
 
 // TransactionInfoResponse represents a view-object of transaction
 type TransactionInfoResponse struct {
-	Id                   int64                                    `json:"id,string"`
-	TimeSequenceId       int64                                    `json:"timeSequenceId,string"`
-	Type                 TransactionType                          `json:"type"`
-	CategoryId           int64                                    `json:"categoryId,string"`
-	Category             *TransactionCategoryInfoResponse         `json:"category,omitempty"`
-	Time                 int64                                    `json:"time"`
-	UtcOffset            int16                                    `json:"utcOffset"`
-	SourceAccountId      int64                                    `json:"sourceAccountId,string"`
-	SourceAccount        *AccountInfoResponse                     `json:"sourceAccount,omitempty"`
-	DestinationAccountId int64                                    `json:"destinationAccountId,string,omitempty"`
-	DestinationAccount   *AccountInfoResponse                     `json:"destinationAccount,omitempty"`
-	SourceAmount         int64                                    `json:"sourceAmount"`
-	DestinationAmount    int64                                    `json:"destinationAmount,omitempty"`
-	HideAmount           bool                                     `json:"hideAmount"`
-	TagIds               []string                                 `json:"tagIds"`
-	Tags                 []*TransactionTagInfoResponse            `json:"tags,omitempty"`
-	Pictures             TransactionPictureInfoBasicResponseSlice `json:"pictures,omitempty"`
-	Comment              string                                   `json:"comment"`
-	GeoLocation          *TransactionGeoLocationResponse          `json:"geoLocation,omitempty"`
-	Editable             bool                                     `json:"editable"`
+	Id                     int64                                    `json:"id,string"`
+	TimeSequenceId         int64                                    `json:"timeSequenceId,string"`
+	Type                   TransactionType                          `json:"type"`
+	CategoryId             int64                                    `json:"categoryId,string"`
+	Category               *TransactionCategoryInfoResponse         `json:"category,omitempty"`
+	Time                   int64                                    `json:"time"`
+	UtcOffset              int16                                    `json:"utcOffset"`
+	SourceAccountId        int64                                    `json:"sourceAccountId,string"`
+	SourceAccount          *AccountInfoResponse                     `json:"sourceAccount,omitempty"`
+	DestinationAccountId   int64                                    `json:"destinationAccountId,string,omitempty"`
+	DestinationAccount     *AccountInfoResponse                     `json:"destinationAccount,omitempty"`
+	SourceAmount           int64                                    `json:"sourceAmount"`
+	DestinationAmount      int64                                    `json:"destinationAmount,omitempty"`
+	HideAmount             bool                                     `json:"hideAmount"`
+	TagIds                 []string                                 `json:"tagIds"`
+	Tags                   []*TransactionTagInfoResponse            `json:"tags,omitempty"`
+	Pictures               TransactionPictureInfoBasicResponseSlice `json:"pictures,omitempty"`
+	Comment                string                                   `json:"comment"`
+	GeoLocation            *TransactionGeoLocationResponse          `json:"geoLocation,omitempty"`
+	Editable               bool                                     `json:"editable"`
+	InstallmentGroupId     int64                                    `json:"installmentGroupId,string,omitempty"`
+	InstallmentNumber      int16                                    `json:"installmentNumber,omitempty"`
+	InstallmentCount       int16                                    `json:"installmentCount,omitempty"`
+	InstallmentSummary     *TransactionInstallmentSummaryResponse   `json:"installmentSummary,omitempty"`
+	Subscription           bool                                     `json:"subscription,omitempty"`
+	SubscriptionTemplateId int64                                    `json:"subscriptionTemplateId,string,omitempty"`
+}
+
+// TransactionInstallmentItemResponse represents one installment in a purchase plan.
+type TransactionInstallmentItemResponse struct {
+	TransactionId int64 `json:"transactionId,string"`
+	Number        int16 `json:"number"`
+	Time          int64 `json:"time"`
+	DueTime       int64 `json:"dueTime"`
+	Amount        int64 `json:"amount"`
+	Paid          bool  `json:"paid"`
+}
+
+// TransactionInstallmentSummaryResponse represents the complete installment purchase plan.
+type TransactionInstallmentSummaryResponse struct {
+	TotalAmount     int64                                 `json:"totalAmount"`
+	PaidAmount      int64                                 `json:"paidAmount"`
+	RemainingAmount int64                                 `json:"remainingAmount"`
+	Items           []*TransactionInstallmentItemResponse `json:"items"`
 }
 
 // TransactionCountResponse represents transaction count response
@@ -632,21 +662,26 @@ func (t *Transaction) ToTransactionInfoResponse(tagIds []int64, editable bool) *
 	}
 
 	return &TransactionInfoResponse{
-		Id:                   t.TransactionId,
-		TimeSequenceId:       t.TransactionTime,
-		Type:                 transactionType,
-		CategoryId:           t.CategoryId,
-		Time:                 utils.GetUnixTimeFromTransactionTime(t.TransactionTime),
-		UtcOffset:            t.TimezoneUtcOffset,
-		SourceAccountId:      sourceAccountId,
-		DestinationAccountId: destinationAccountId,
-		SourceAmount:         sourceAmount,
-		DestinationAmount:    destinationAmount,
-		HideAmount:           t.HideAmount,
-		TagIds:               utils.Int64ArrayToStringArray(tagIds),
-		Comment:              t.Comment,
-		GeoLocation:          geoLocation,
-		Editable:             editable,
+		Id:                     t.TransactionId,
+		TimeSequenceId:         t.TransactionTime,
+		Type:                   transactionType,
+		CategoryId:             t.CategoryId,
+		Time:                   utils.GetUnixTimeFromTransactionTime(t.TransactionTime),
+		UtcOffset:              t.TimezoneUtcOffset,
+		SourceAccountId:        sourceAccountId,
+		DestinationAccountId:   destinationAccountId,
+		SourceAmount:           sourceAmount,
+		DestinationAmount:      destinationAmount,
+		HideAmount:             t.HideAmount,
+		TagIds:                 utils.Int64ArrayToStringArray(tagIds),
+		Comment:                t.Comment,
+		GeoLocation:            geoLocation,
+		Editable:               editable && t.InstallmentGroupId == 0,
+		InstallmentGroupId:     t.InstallmentGroupId,
+		InstallmentNumber:      t.InstallmentNumber,
+		InstallmentCount:       t.InstallmentCount,
+		Subscription:           t.SubscriptionTemplateId > 0,
+		SubscriptionTemplateId: t.SubscriptionTemplateId,
 	}
 }
 

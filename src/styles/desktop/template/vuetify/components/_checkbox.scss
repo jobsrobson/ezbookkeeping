@@ -13,7 +13,7 @@
             .v-icon.custom-checkbox-checked,
             .v-icon.custom-checkbox-indeterminate {
                 // ℹ️ Using filter: drop-shadow() instead of box-shadow because box-shadow creates white background for SVG;Usingfilter
-                filter: drop-shadow(rgba(var(--v-shadow-key-umbra-color), 16%) 0 2px 4px);
+                filter: none;
             }
         }
     }

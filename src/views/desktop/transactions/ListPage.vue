@@ -1,10 +1,16 @@
 <template>
-    <v-row class="match-height">
-        <v-col cols="12">
-            <v-card>
-                <v-layout>
-                    <v-navigation-drawer :permanent="alwaysShowNav" v-model="showNav">
-                        <div class="mx-6 my-4">
+    <v-row class="transaction-page match-height">
+        <v-col class="transaction-page__column" cols="12">
+            <v-card class="transaction-shell" variant="flat">
+                <v-layout class="transaction-layout">
+                    <v-navigation-drawer
+                        class="transaction-sidebar"
+                        :permanent="alwaysShowNav"
+                        :temporary="!alwaysShowNav"
+                        width="256"
+                        v-model="showNav"
+                    >
+                        <div class="transaction-sidebar__section transaction-sidebar__section--view">
                             <btn-vertical-group :disabled="loading" :buttons="TransactionListPageType.values().map(item => {
                                 return {
                                     name: tt(item.name),
@@ -12,9 +18,9 @@
                                 }
                             })" v-model="queryPageType" />
                         </div>
-                        <v-divider />
-                        <div class="mx-6 mt-4">
-                            <span class="text-subtitle-2">{{ tt('Transaction Type') }}</span>
+                        <v-divider class="transaction-sidebar__divider" />
+                        <div class="transaction-sidebar__section">
+                            <span class="transaction-sidebar__label">{{ tt('Transaction Type') }}</span>
                             <v-select
                                 item-title="displayName"
                                 item-value="type"
@@ -31,8 +37,8 @@
                                 v-model="queryType"
                             />
                         </div>
-                        <div class="mx-6 mt-4" v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
-                            <span class="text-subtitle-2">{{ tt('Transactions Per Page') }}</span>
+                        <div class="transaction-sidebar__section" v-if="pageType === TransactionListPageType.List.type || pageType === TransactionListPageType.Gallery.type">
+                            <span class="transaction-sidebar__label">{{ tt('Transactions Per Page') }}</span>
                             <v-select class="mt-2" density="compact"
                                       item-title="name"
                                       item-value="value"
@@ -41,7 +47,7 @@
                                       v-model="countPerPage"
                             />
                         </div>
-                        <v-tabs show-arrows class="my-4" direction="vertical"
+                        <v-tabs show-arrows class="transaction-sidebar__tabs" direction="vertical"
                                 :disabled="loading" v-model="recentDateRangeIndex">
                             <v-tab class="tab-text-truncate" :key="idx" :value="idx" v-for="(recentDateRange, idx) in recentMonthDateRanges"
                                    @click="changeDateFilter(recentDateRange)">
@@ -49,136 +55,452 @@
                             </v-tab>
                         </v-tabs>
                     </v-navigation-drawer>
-                    <v-main>
+                    <v-main class="transaction-main">
                         <v-window class="d-flex flex-grow-1 disable-tab-transition w-100-window-container" v-model="activeTab">
                             <v-window-item value="transactionPage">
-                                <v-card variant="flat" min-height="920">
+                                <v-card class="transaction-content-card" variant="flat" min-height="920">
                                     <template #title>
-                                        <div class="title-and-toolbar d-flex align-center text-no-wrap">
-                                            <v-btn class="me-3 d-md-none" density="compact" color="default" variant="plain"
-                                                   :ripple="false" :icon="true" @click="showNav = !showNav">
-                                                <v-icon :icon="mdiMenu" size="24" />
-                                            </v-btn>
-                                            <span>{{ tt('Transaction List') }}</span>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
-                                                   :disabled="loading || !canAddTransaction" @click="add()">
-                                                {{ tt('Add') }}
-                                                <v-menu activator="parent" max-height="500" :open-on-hover="true" v-if="isTransactionFromAITextRecognitionEnabled() || isTransactionFromAIImageRecognitionEnabled() || (allTransactionTemplates && allTransactionTemplates.length)">
-                                                    <v-list>
-                                                        <v-list-item key="AIClipboardTextRecognition"
-                                                                     :title="tt('AI Clipboard Text Recognition')"
-                                                                     :prepend-icon="mdiMagicStaff"
-                                                                     v-if="isTransactionFromAITextRecognitionEnabled()"
-                                                                     @click="addByRecognizingClipboardText"></v-list-item>
-                                                        <v-list-item key="AIImageRecognition"
-                                                                     :title="tt('AI Image Recognition')"
-                                                                     :prepend-icon="mdiMagicStaff"
-                                                                     v-if="isTransactionFromAIImageRecognitionEnabled()"
-                                                                     @click="addByRecognizingImage"></v-list-item>
-                                                        <v-list-item :key="template.id"
-                                                                     :title="template.name"
-                                                                     :prepend-icon="mdiTextBoxOutline"
-                                                                     v-for="template in allTransactionTemplates"
-                                                                     @click="add(template)"></v-list-item>
-                                                    </v-list>
-                                                </v-menu>
-                                            </v-btn>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
-                                                   :disabled="loading" @click="importTransaction"
-                                                   v-if="isDataImportingEnabled()">
-                                                {{ tt('Import') }}
-                                                <v-menu activator="parent" :open-on-hover="true" v-if="isDataExportingEnabled()">
-                                                    <v-list>
-                                                        <v-list-item :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1"
-                                                                     @click="exportTransactions('csv')">
-                                                            <v-list-item-title>{{ tt('Export to CSV (Comma-separated values) File') }}</v-list-item-title>
-                                                        </v-list-item>
-                                                        <v-list-item :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1"
-                                                                     @click="exportTransactions('tsv')">
-                                                            <v-list-item-title>{{ tt('Export to TSV (Tab-separated values) File') }}</v-list-item-title>
-                                                        </v-list-item>
-                                                    </v-list>
-                                                </v-menu>
-                                            </v-btn>
-                                            <v-btn class="ms-3" color="default" variant="outlined"
-                                                   :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1" v-if="!isDataImportingEnabled() && isDataExportingEnabled()">
-                                                {{ tt('Export') }}
-                                                <v-menu activator="parent">
-                                                    <v-list>
-                                                        <v-list-item :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1"
-                                                                     @click="exportTransactions('csv')">
-                                                            <v-list-item-title>{{ tt('Export to CSV (Comma-separated values) File') }}</v-list-item-title>
-                                                        </v-list-item>
-                                                        <v-list-item :disabled="loading || exportingData || !transactions || !transactions.length || transactions.length < 1"
-                                                                     @click="exportTransactions('tsv')">
-                                                            <v-list-item-title>{{ tt('Export to TSV (Tab-separated values) File') }}</v-list-item-title>
-                                                        </v-list-item>
-                                                    </v-list>
-                                                </v-menu>
-                                            </v-btn>
-                                            <v-btn density="compact" color="default" variant="text" size="24"
-                                                   class="ms-2" :icon="true" :loading="loading" @click="reload(true, false)">
-                                                <template #loader>
-                                                    <v-progress-circular indeterminate size="20"/>
-                                                </template>
-                                                <v-icon :icon="mdiRefresh" size="24" />
-                                                <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
-                                            </v-btn>
-                                            <v-spacer/>
-                                            <div class="transaction-keyword-filter ms-2">
-                                                <v-text-field density="compact" :disabled="loading"
-                                                              :prepend-inner-icon="mdiMagnify"
-                                                              :append-inner-icon="searchKeyword !== query.keyword ? mdiCheck : undefined"
-                                                              :placeholder="tt('Search transaction description')"
-                                                              v-model="searchKeyword"
-                                                              @click:append-inner="changeKeywordFilter(searchKeyword)"
-                                                              @keyup.enter="changeKeywordFilter(searchKeyword)"
-                                                />
+                                        <div class="transaction-page-header">
+                                            <div class="transaction-page-header__top">
+                                                <div class="transaction-page-header__identity">
+                                                    <v-btn
+                                                        class="d-md-none"
+                                                        density="compact"
+                                                        color="default"
+                                                        variant="plain"
+                                                        :ripple="false"
+                                                        :icon="true"
+                                                        @click="showNav = !showNav"
+                                                    >
+                                                        <v-icon :icon="mdiMenu" size="22" />
+                                                    </v-btn>
+
+                                                    <div class="transaction-page-header__titles">
+                                                        <h1>{{ tt('Transaction List') }}</h1>
+                                                        <span v-if="totalCount > 0">
+                                                            {{ formatNumberToLocalizedNumerals(totalCount) }}
+                                                            {{ tt('Transactions') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="transaction-page-header__actions">
+                                                    <div class="transaction-search transaction-search--desktop">
+                                                        <v-text-field
+                                                            density="compact"
+                                                            variant="outlined"
+                                                            hide-details
+                                                            :disabled="loading"
+                                                            :prepend-inner-icon="mdiMagnify"
+                                                            :append-inner-icon="searchKeyword !== query.keyword ? mdiCheck : undefined"
+                                                            :placeholder="tt('Search transaction description')"
+                                                            v-model="searchKeyword"
+                                                            @click:append-inner="changeKeywordFilter(searchKeyword)"
+                                                            @keyup.enter="changeKeywordFilter(searchKeyword)"
+                                                        />
+                                                    </div>
+
+                                                    <v-menu
+                                                        v-model="showCompactSearch"
+                                                        location="bottom end"
+                                                        :close-on-content-click="false"
+                                                        width="320"
+                                                        max-width="calc(100vw - 24px)"
+                                                    >
+                                                        <template #activator="{ props }">
+                                                            <v-btn
+                                                                class="transaction-search-trigger"
+                                                                density="comfortable"
+                                                                color="default"
+                                                                variant="text"
+                                                                :icon="true"
+                                                                v-bind="props"
+                                                            >
+                                                                <v-icon :icon="mdiMagnify" size="21" />
+                                                                <v-tooltip activator="parent">
+                                                                    {{ tt('Search') }}
+                                                                </v-tooltip>
+                                                            </v-btn>
+                                                        </template>
+
+                                                        <v-card class="transaction-search-popover" elevation="0">
+                                                            <v-card-text>
+                                                                <v-text-field
+                                                                    autofocus
+                                                                    density="comfortable"
+                                                                    variant="outlined"
+                                                                    hide-details
+                                                                    clearable
+                                                                    :disabled="loading"
+                                                                    :prepend-inner-icon="mdiMagnify"
+                                                                    :append-inner-icon="searchKeyword !== query.keyword ? mdiCheck : undefined"
+                                                                    :placeholder="tt('Search transaction description')"
+                                                                    v-model="searchKeyword"
+                                                                    @click:append-inner="applyCompactSearch"
+                                                                    @keyup.enter="applyCompactSearch"
+                                                                />
+                                                            </v-card-text>
+                                                        </v-card>
+                                                    </v-menu>
+
+                                                    <div class="transaction-page-header__desktop-actions">
+                                                        <v-btn
+                                                            color="primary"
+                                                            variant="flat"
+                                                            :disabled="loading || !canAddTransaction"
+                                                            @click="add()"
+                                                        >
+                                                            {{ tt('Add') }}
+
+                                                            <v-menu
+                                                                activator="parent"
+                                                                max-height="500"
+                                                                :open-on-hover="true"
+                                                                v-if="
+                                                                    isTransactionFromAITextRecognitionEnabled() ||
+                                                                    isTransactionFromAIImageRecognitionEnabled() ||
+                                                                    (allTransactionTemplates && allTransactionTemplates.length)
+                                                                "
+                                                            >
+                                                                <v-list>
+                                                                    <v-list-item
+                                                                        key="AIClipboardTextRecognition"
+                                                                        :title="tt('AI Clipboard Text Recognition')"
+                                                                        :prepend-icon="mdiMagicStaff"
+                                                                        v-if="isTransactionFromAITextRecognitionEnabled()"
+                                                                        @click="addByRecognizingClipboardText"
+                                                                    />
+                                                                    <v-list-item
+                                                                        key="AIImageRecognition"
+                                                                        :title="tt('AI Image Recognition')"
+                                                                        :prepend-icon="mdiMagicStaff"
+                                                                        v-if="isTransactionFromAIImageRecognitionEnabled()"
+                                                                        @click="addByRecognizingImage"
+                                                                    />
+                                                                    <v-list-item
+                                                                        :key="template.id"
+                                                                        :title="template.name"
+                                                                        :prepend-icon="mdiTextBoxOutline"
+                                                                        v-for="template in allTransactionTemplates"
+                                                                        @click="add(template)"
+                                                                    />
+                                                                </v-list>
+                                                            </v-menu>
+                                                        </v-btn>
+
+                                                        <v-btn
+                                                            color="default"
+                                                            variant="outlined"
+                                                            :disabled="loading"
+                                                            @click="importTransaction"
+                                                            v-if="isDataImportingEnabled()"
+                                                        >
+                                                            {{ tt('Import') }}
+
+                                                            <v-menu
+                                                                activator="parent"
+                                                                :open-on-hover="true"
+                                                                v-if="isDataExportingEnabled()"
+                                                            >
+                                                                <v-list>
+                                                                    <v-list-item
+                                                                        :disabled="
+                                                                            loading ||
+                                                                            exportingData ||
+                                                                            !transactions ||
+                                                                            transactions.length < 1
+                                                                        "
+                                                                        @click="exportTransactions('csv')"
+                                                                    >
+                                                                        <v-list-item-title>
+                                                                            {{ tt('Export to CSV (Comma-separated values) File') }}
+                                                                        </v-list-item-title>
+                                                                    </v-list-item>
+                                                                    <v-list-item
+                                                                        :disabled="
+                                                                            loading ||
+                                                                            exportingData ||
+                                                                            !transactions ||
+                                                                            transactions.length < 1
+                                                                        "
+                                                                        @click="exportTransactions('tsv')"
+                                                                    >
+                                                                        <v-list-item-title>
+                                                                            {{ tt('Export to TSV (Tab-separated values) File') }}
+                                                                        </v-list-item-title>
+                                                                    </v-list-item>
+                                                                </v-list>
+                                                            </v-menu>
+                                                        </v-btn>
+
+                                                        <v-btn
+                                                            color="default"
+                                                            variant="outlined"
+                                                            :disabled="
+                                                                loading ||
+                                                                exportingData ||
+                                                                !transactions ||
+                                                                transactions.length < 1
+                                                            "
+                                                            v-if="!isDataImportingEnabled() && isDataExportingEnabled()"
+                                                        >
+                                                            {{ tt('Export') }}
+
+                                                            <v-menu activator="parent">
+                                                                <v-list>
+                                                                    <v-list-item
+                                                                        :disabled="
+                                                                            loading ||
+                                                                            exportingData ||
+                                                                            !transactions ||
+                                                                            transactions.length < 1
+                                                                        "
+                                                                        @click="exportTransactions('csv')"
+                                                                    >
+                                                                        <v-list-item-title>
+                                                                            {{ tt('Export to CSV (Comma-separated values) File') }}
+                                                                        </v-list-item-title>
+                                                                    </v-list-item>
+                                                                    <v-list-item
+                                                                        :disabled="
+                                                                            loading ||
+                                                                            exportingData ||
+                                                                            !transactions ||
+                                                                            transactions.length < 1
+                                                                        "
+                                                                        @click="exportTransactions('tsv')"
+                                                                    >
+                                                                        <v-list-item-title>
+                                                                            {{ tt('Export to TSV (Tab-separated values) File') }}
+                                                                        </v-list-item-title>
+                                                                    </v-list-item>
+                                                                </v-list>
+                                                            </v-menu>
+                                                        </v-btn>
+
+                                                        <v-btn
+                                                            density="comfortable"
+                                                            color="default"
+                                                            variant="text"
+                                                            :icon="true"
+                                                            :loading="loading"
+                                                            @click="reload(true, false)"
+                                                        >
+                                                            <template #loader>
+                                                                <v-progress-circular indeterminate size="19" />
+                                                            </template>
+                                                            <v-icon :icon="mdiRefresh" size="21" />
+                                                            <v-tooltip activator="parent">
+                                                                {{ tt('Refresh') }}
+                                                            </v-tooltip>
+                                                        </v-btn>
+                                                    </div>
+
+                                                    <v-btn
+                                                        class="transaction-mobile-actions-trigger"
+                                                        density="comfortable"
+                                                        color="default"
+                                                        variant="text"
+                                                        :icon="true"
+                                                    >
+                                                        <v-icon :icon="mdiDotsVertical" size="22" />
+
+                                                        <v-menu activator="parent" location="bottom end">
+                                                            <v-list>
+                                                                <v-list-item
+                                                                    :disabled="loading || !canAddTransaction"
+                                                                    :title="tt('Add')"
+                                                                    @click="add()"
+                                                                />
+
+                                                                <v-list-item
+                                                                    v-if="isTransactionFromAITextRecognitionEnabled()"
+                                                                    :prepend-icon="mdiMagicStaff"
+                                                                    :title="tt('AI Clipboard Text Recognition')"
+                                                                    @click="addByRecognizingClipboardText"
+                                                                />
+
+                                                                <v-list-item
+                                                                    v-if="isTransactionFromAIImageRecognitionEnabled()"
+                                                                    :prepend-icon="mdiMagicStaff"
+                                                                    :title="tt('AI Image Recognition')"
+                                                                    @click="addByRecognizingImage"
+                                                                />
+
+                                                                <v-list-item
+                                                                    v-if="isDataImportingEnabled()"
+                                                                    :disabled="loading"
+                                                                    :title="tt('Import')"
+                                                                    @click="importTransaction"
+                                                                />
+
+                                                                <v-divider
+                                                                    class="my-2"
+                                                                    v-if="isDataExportingEnabled()"
+                                                                />
+
+                                                                <v-list-item
+                                                                    v-if="isDataExportingEnabled()"
+                                                                    :disabled="
+                                                                        loading ||
+                                                                        exportingData ||
+                                                                        !transactions ||
+                                                                        transactions.length < 1
+                                                                    "
+                                                                    :title="tt('Export to CSV (Comma-separated values) File')"
+                                                                    @click="exportTransactions('csv')"
+                                                                />
+
+                                                                <v-list-item
+                                                                    v-if="isDataExportingEnabled()"
+                                                                    :disabled="
+                                                                        loading ||
+                                                                        exportingData ||
+                                                                        !transactions ||
+                                                                        transactions.length < 1
+                                                                    "
+                                                                    :title="tt('Export to TSV (Tab-separated values) File')"
+                                                                    @click="exportTransactions('tsv')"
+                                                                />
+
+                                                                <v-divider class="my-2" />
+
+                                                                <v-list-item
+                                                                    :disabled="loading"
+                                                                    :prepend-icon="mdiRefresh"
+                                                                    :title="tt('Refresh')"
+                                                                    @click="reload(true, false)"
+                                                                />
+                                                            </v-list>
+                                                        </v-menu>
+                                                    </v-btn>
+                                                </div>
                                             </div>
                                         </div>
                                     </template>
 
-                                    <v-card-text class="pt-0">
-                                        <div class="transaction-list-datetime-range d-flex align-center">
-                                            <span class="text-body-1">{{ tt('Date Range') }}</span>
-                                            <span class="text-body-1 transaction-list-datetime-range-text ms-2"
-                                                  v-if="!query.minTime && !query.maxTime">
-                                                <span class="text-sm">{{ tt('All') }}</span>
-                                            </span>
-                                            <span class="text-body-1 transaction-list-datetime-range-text ms-2"
-                                                  v-else-if="query.minTime || query.maxTime">
-                                                <v-btn class="button-icon-with-direction me-1" size="x-small"
-                                                       density="compact" color="default" variant="outlined"
-                                                       :icon="mdiArrowLeft" :disabled="loading"
-                                                       @click="shiftDateRange(query.minTime, query.maxTime, -1)"/>
-                                                <span class="text-sm">{{ `${queryMinTime} - ${queryMaxTime}` }}</span>
-                                                <v-btn class="button-icon-with-direction ms-1" size="x-small"
-                                                       density="compact" color="default" variant="outlined"
-                                                       :icon="mdiArrowRight" :disabled="loading"
-                                                       @click="shiftDateRange(query.minTime, query.maxTime, 1)"/>
-                                            </span>
-                                            <v-spacer/>
-                                            <div class="skeleton-no-margin d-flex align-center" v-if="showTotalAmountInTransactionListPage && currentMonthTotalAmount">
-                                                <span class="ms-2 text-subtitle-1">{{ queryAllFilterAccountIdsCount ? tt('Total Inflows') : tt('Total Income') }}</span>
-                                                <span class="text-income ms-2" v-if="loading">
-                                                    <v-skeleton-loader type="text" style="width: 60px" :loading="true"></v-skeleton-loader>
+                                    <v-card-text class="transaction-summary-panel">
+                                        <div class="transaction-summary">
+                                            <div class="transaction-summary__range">
+                                                <span class="transaction-summary__label">
+                                                    
                                                 </span>
-                                                <span class="text-income ms-2" v-else-if="!loading">
-                                                    {{ currentMonthTotalAmount.income }}
-                                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.incomeIsZero && currentMonthTotalAmount.incomeInDefaultCurrency !== currentMonthTotalAmount.income">
-                                                        <span>{{ currentMonthTotalAmount.incomeInDefaultCurrency }}</span>
-                                                    </v-tooltip>
-                                                </span>
-                                                <span class="text-subtitle-1 ms-3">{{ queryAllFilterAccountIdsCount ? tt('Total Outflows') : tt('Total Expense') }}</span>
-                                                <span class="text-expense ms-2" v-if="loading">
-                                                    <v-skeleton-loader type="text" style="width: 60px" :loading="true"></v-skeleton-loader>
-                                                </span>
-                                                <span class="text-expense ms-2" v-else-if="!loading">
-                                                    {{ currentMonthTotalAmount.expense }}
-                                                    <v-tooltip activator="parent" v-if="!currentMonthTotalAmount.expenseIsZero && currentMonthTotalAmount.expenseInDefaultCurrency !== currentMonthTotalAmount.expense">
-                                                        <span>{{ currentMonthTotalAmount.expenseInDefaultCurrency }}</span>
-                                                    </v-tooltip>
-                                                </span>
+
+                                                <div
+                                                    class="transaction-summary__date-selector"
+                                                    v-if="!query.minTime && !query.maxTime"
+                                                >
+                                                    <span>{{ tt('All') }}</span>
+                                                </div>
+
+                                                <div
+                                                    class="transaction-summary__date-selector"
+                                                    v-else-if="query.minTime || query.maxTime"
+                                                >
+                                                    <v-btn
+                                                        class="button-icon-with-direction"
+                                                        size="x-small"
+                                                        density="compact"
+                                                        color="default"
+                                                        variant="text"
+                                                        :icon="mdiArrowLeft"
+                                                        :disabled="loading"
+                                                        @click="shiftDateRange(query.minTime, query.maxTime, -1)"
+                                                    />
+
+                                                    <span class="transaction-summary__date-text">
+                                                        {{ `${queryMinTime} - ${queryMaxTime}` }}
+                                                    </span>
+
+                                                    <v-btn
+                                                        class="button-icon-with-direction"
+                                                        size="x-small"
+                                                        density="compact"
+                                                        color="default"
+                                                        variant="text"
+                                                        :icon="mdiArrowRight"
+                                                        :disabled="loading"
+                                                        @click="shiftDateRange(query.minTime, query.maxTime, 1)"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="transaction-summary__totals"
+                                                v-if="
+                                                    showTotalAmountInTransactionListPage &&
+                                                    currentMonthTotalAmount
+                                                "
+                                            >
+                                                <div class="transaction-summary__total">
+                                                    <span class="transaction-summary__total-label">
+                                                        {{
+                                                            queryAllFilterAccountIdsCount
+                                                                ? tt('Total Inflows')
+                                                                : tt('Total Income')
+                                                        }}
+                                                    </span>
+
+                                                    <span class="text-income" v-if="loading">
+                                                        <v-skeleton-loader
+                                                            type="text"
+                                                            width="70"
+                                                            :loading="true"
+                                                        />
+                                                    </span>
+
+                                                    <span class="transaction-summary__total-value text-income" v-else>
+                                                        {{ currentMonthTotalAmount.income }}
+
+                                                        <v-tooltip
+                                                            activator="parent"
+                                                            v-if="
+                                                                !currentMonthTotalAmount.incomeIsZero &&
+                                                                currentMonthTotalAmount.incomeInDefaultCurrency !==
+                                                                    currentMonthTotalAmount.income
+                                                            "
+                                                        >
+                                                            <span>
+                                                                {{ currentMonthTotalAmount.incomeInDefaultCurrency }}
+                                                            </span>
+                                                        </v-tooltip>
+                                                    </span>
+                                                </div>
+
+                                                <div class="transaction-summary__total">
+                                                    <span class="transaction-summary__total-label">
+                                                        {{
+                                                            queryAllFilterAccountIdsCount
+                                                                ? tt('Total Outflows')
+                                                                : tt('Total Expense')
+                                                        }}
+                                                    </span>
+
+                                                    <span class="text-expense" v-if="loading">
+                                                        <v-skeleton-loader
+                                                            type="text"
+                                                            width="70"
+                                                            :loading="true"
+                                                        />
+                                                    </span>
+
+                                                    <span class="transaction-summary__total-value text-expense" v-else>
+                                                        {{ currentMonthTotalAmount.expense }}
+
+                                                        <v-tooltip
+                                                            activator="parent"
+                                                            v-if="
+                                                                !currentMonthTotalAmount.expenseIsZero &&
+                                                                currentMonthTotalAmount.expenseInDefaultCurrency !==
+                                                                    currentMonthTotalAmount.expense
+                                                            "
+                                                        >
+                                                            <span>
+                                                                {{ currentMonthTotalAmount.expenseInDefaultCurrency }}
+                                                            </span>
+                                                        </v-tooltip>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     </v-card-text>
@@ -226,6 +548,61 @@
                                                                 </div>
                                                             </v-list-item-title>
                                                         </v-list-item>
+                                                    </v-list>
+                                                </v-menu>
+                                            </th>
+                                            <th class="transaction-table-column-description text-no-wrap">{{ tt('Description') }}</th>
+                                            <th class="transaction-table-column-amount text-no-wrap">
+                                                <v-menu ref="amountFilterMenu" class="transaction-amount-menu"
+                                                        eager location="bottom" max-height="500"
+                                                        :close-on-content-click="false"
+                                                        v-model="amountMenuState"
+                                                        @update:model-value="scrollAmountMenuToSelectedItem">
+                                                    <template #activator="{ props }">
+                                                        <div class="d-flex align-center cursor-pointer"
+                                                             :class="{ 'readonly': loading, 'text-primary': query.amountFilter }" v-bind="props">
+                                                            <span>{{ tt('Amount') }}</span>
+                                                            <v-icon :icon="mdiMenuDown" />
+                                                        </div>
+                                                    </template>
+                                                    <v-list :selected="[query.amountFilter.split(':')[0]]">
+                                                        <v-list-item key="" value="" class="text-sm" density="compact"
+                                                                     :class="{ 'list-item-selected': !query.amountFilter }"
+                                                                     :append-icon="(!query.amountFilter && !currentAmountFilterType ? mdiCheck : undefined)">
+                                                            <v-list-item-title class="cursor-pointer"
+                                                                               @click="changeAmountFilter('')">
+                                                                <div class="d-flex align-center">
+                                                                    <span class="text-sm ms-3">{{ tt('All') }}</span>
+                                                                </div>
+                                                            </v-list-item-title>
+                                                        </v-list-item>
+                                                        <template :key="filterType.type"
+                                                                  v-for="filterType in AmountFilterType.values()">
+                                                            <v-list-item class="text-sm" density="compact"
+                                                                         :value="filterType.type"
+                                                                         :class="{ 'list-item-selected': query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) }"
+                                                                         :append-icon="(query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type ? mdiCheck : undefined)">
+                                                                <v-list-item-title class="cursor-pointer"
+                                                                                   @click="currentAmountFilterType = filterType.type">
+                                                                    <div class="d-flex align-center">
+                                                                        <span class="text-sm ms-3">{{ tt(filterType.name) }}</span>
+                                                                        <span class="text-sm ms-4" v-if="query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type">{{ queryAmount }}</span>
+                                                                        <amount-input class="transaction-amount-filter-value ms-4" density="compact"
+                                                                                      :currency="selectedAccountDefaultCurrency"
+                                                                                      v-model="currentAmountFilterValue1"
+                                                                                      v-if="currentAmountFilterType === filterType.type"/>
+                                                                        <span class="ms-2 me-2" v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2">~</span>
+                                                                        <amount-input class="transaction-amount-filter-value" density="compact"
+                                                                                      :currency="selectedAccountDefaultCurrency"
+                                                                                      v-model="currentAmountFilterValue2"
+                                                                                      v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2"/>
+                                                                        <v-btn class="ms-2" density="compact" color="primary" variant="tonal"
+                                                                               @click="changeAmountFilter(filterType.type)"
+                                                                               v-if="currentAmountFilterType === filterType.type">{{ tt('Apply') }}</v-btn>
+                                                                    </div>
+                                                                </v-list-item-title>
+                                                            </v-list-item>
+                                                        </template>
                                                     </v-list>
                                                 </v-menu>
                                             </th>
@@ -329,60 +706,8 @@
                                                     </v-list>
                                                 </v-menu>
                                             </th>
-                                            <th class="transaction-table-column-amount text-no-wrap">
-                                                <v-menu ref="amountFilterMenu" class="transaction-amount-menu"
-                                                        eager location="bottom" max-height="500"
-                                                        :close-on-content-click="false"
-                                                        v-model="amountMenuState"
-                                                        @update:model-value="scrollAmountMenuToSelectedItem">
-                                                    <template #activator="{ props }">
-                                                        <div class="d-flex align-center cursor-pointer"
-                                                             :class="{ 'readonly': loading, 'text-primary': query.amountFilter }" v-bind="props">
-                                                            <span>{{ tt('Amount') }}</span>
-                                                            <v-icon :icon="mdiMenuDown" />
-                                                        </div>
-                                                    </template>
-                                                    <v-list :selected="[query.amountFilter.split(':')[0]]">
-                                                        <v-list-item key="" value="" class="text-sm" density="compact"
-                                                                     :class="{ 'list-item-selected': !query.amountFilter }"
-                                                                     :append-icon="(!query.amountFilter && !currentAmountFilterType ? mdiCheck : undefined)">
-                                                            <v-list-item-title class="cursor-pointer"
-                                                                               @click="changeAmountFilter('')">
-                                                                <div class="d-flex align-center">
-                                                                    <span class="text-sm ms-3">{{ tt('All') }}</span>
-                                                                </div>
-                                                            </v-list-item-title>
-                                                        </v-list-item>
-                                                        <template :key="filterType.type"
-                                                                  v-for="filterType in AmountFilterType.values()">
-                                                            <v-list-item class="text-sm" density="compact"
-                                                                         :value="filterType.type"
-                                                                         :class="{ 'list-item-selected': query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) }"
-                                                                         :append-icon="(query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type ? mdiCheck : undefined)">
-                                                                <v-list-item-title class="cursor-pointer"
-                                                                                   @click="currentAmountFilterType = filterType.type">
-                                                                    <div class="d-flex align-center">
-                                                                        <span class="text-sm ms-3">{{ tt(filterType.name) }}</span>
-                                                                        <span class="text-sm ms-4" v-if="query.amountFilter && query.amountFilter.startsWith(`${filterType.type}:`) && currentAmountFilterType !== filterType.type">{{ queryAmount }}</span>
-                                                                        <amount-input class="transaction-amount-filter-value ms-4" density="compact"
-                                                                                      :currency="selectedAccountDefaultCurrency"
-                                                                                      v-model="currentAmountFilterValue1"
-                                                                                      v-if="currentAmountFilterType === filterType.type"/>
-                                                                        <span class="ms-2 me-2" v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2">~</span>
-                                                                        <amount-input class="transaction-amount-filter-value" density="compact"
-                                                                                      :currency="selectedAccountDefaultCurrency"
-                                                                                      v-model="currentAmountFilterValue2"
-                                                                                      v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2"/>
-                                                                        <v-btn class="ms-2" density="compact" color="primary" variant="tonal"
-                                                                               @click="changeAmountFilter(filterType.type)"
-                                                                               v-if="currentAmountFilterType === filterType.type">{{ tt('Apply') }}</v-btn>
-                                                                    </div>
-                                                                </v-list-item-title>
-                                                            </v-list-item>
-                                                        </template>
-                                                    </v-list>
-                                                </v-menu>
-                                            </th>
+                                            
+                                            
                                             <th class="transaction-table-column-account text-no-wrap">
                                                 <v-menu ref="accountFilterMenu" class="transaction-account-menu"
                                                         eager location="bottom" max-height="500"
@@ -518,7 +843,7 @@
                                                     </v-list>
                                                 </v-menu>
                                             </th>
-                                            <th class="transaction-table-column-description text-no-wrap">{{ tt('Description') }}</th>
+                                            
                                         </tr>
                                         </thead>
 
@@ -543,11 +868,12 @@
                                                 v-if="pageType === TransactionListPageType.List.type && (idx === 0 || (idx > 0 && (transaction.gregorianCalendarYearDashMonthDashDay !== transactions[idx - 1]!.gregorianCalendarYearDashMonthDashDay)))">
                                                 <td :colspan="showTagInTransactionListPage ? 6 : 5" class="font-weight-bold">
                                                     <div class="d-flex align-center">
-                                                        <span>{{ getDisplayLongDate(transaction) }}</span>
-                                                        <v-chip class="ms-1" color="default" size="x-small"
-                                                                v-if="transaction.displayDayOfWeek">
-                                                            {{ getWeekdayLongName(transaction.displayDayOfWeek) }}
-                                                        </v-chip>
+                                                        <span>
+                                                            {{ getDisplayLongDate(transaction) }}
+                                                            <template v-if="transaction.displayDayOfWeek">
+                                                                · {{ getWeekdayLongName(transaction.displayDayOfWeek) }}
+                                                            </template>
+                                                        </span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -558,6 +884,22 @@
                                                         <span>{{ getDisplayTime(transaction) }}</span>
                                                         <span class="text-caption" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimezone(transaction) }}</span>
                                                         <v-tooltip activator="parent" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimeInDefaultTimezone(transaction) }}</v-tooltip>
+                                                    </div>
+                                                </td>
+                                                <td class="transaction-table-column-description text-truncate">
+                                                    {{ transaction.comment }}
+                                                    <v-chip class="me-1" size="x-small" v-if="transaction.installmentCount > 1">
+                                                        {{ tt('Installment') }} {{ transaction.installmentNumber }}/{{ transaction.installmentCount }}
+                                                    </v-chip>
+                                                    <v-chip class="me-1" size="x-small" v-if="transaction.subscription">{{ tt('Subscription') }}</v-chip>
+                                                    
+                                                </td>
+                                                <td class="transaction-table-column-amount" :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
+                                                    <div v-if="transaction.sourceAccount">
+                                                        <span>{{ getDisplayAmount(transaction) }}</span>
+                                                        <v-tooltip activator="parent" v-if="!transaction.hideAmount && getDisplayAmountCurrency(transaction) !== userDefaultCurrency">
+                                                            {{ getDisplayAmount(transaction, true) }}
+                                                        </v-tooltip>
                                                     </div>
                                                 </td>
                                                 <td class="transaction-table-column-category">
@@ -578,14 +920,7 @@
                                                         </span>
                                                     </div>
                                                 </td>
-                                                <td class="transaction-table-column-amount" :class="{ 'text-expense': transaction.type === TransactionType.Expense, 'text-income': transaction.type === TransactionType.Income }">
-                                                    <div v-if="transaction.sourceAccount">
-                                                        <span>{{ getDisplayAmount(transaction) }}</span>
-                                                        <v-tooltip activator="parent" v-if="!transaction.hideAmount && getDisplayAmountCurrency(transaction) !== userDefaultCurrency">
-                                                            {{ getDisplayAmount(transaction, true) }}
-                                                        </v-tooltip>
-                                                    </div>
-                                                </td>
+                                                
                                                 <td class="transaction-table-column-account">
                                                     <div class="d-flex align-center">
                                                         <span v-if="transaction.sourceAccount">{{ transaction.sourceAccount.name }}</span>
@@ -602,9 +937,7 @@
                                                             :text="tt('None')"
                                                             v-if="!transaction.tagIds || !transaction.tagIds.length"/>
                                                 </td>
-                                                <td class="transaction-table-column-description text-truncate">
-                                                    {{ transaction.comment }}
-                                                </td>
+                                                
                                             </tr>
                                         </tbody>
                                     </v-table>
@@ -808,7 +1141,8 @@ import {
     mdiPound,
     mdiMagicStaff,
     mdiTextBoxOutline,
-    mdiTextBoxEditOutline
+    mdiTextBoxEditOutline,
+    mdiDotsVertical
 } from '@mdi/js';
 
 interface TransactionListProps {
@@ -935,6 +1269,7 @@ const currentPage = ref<number>(1);
 const temporaryCountPerPage = ref<number | null>(null);
 const totalCount = ref<number>(1);
 const searchKeyword = ref<string>('');
+const showCompactSearch = ref<boolean>(false);
 const currentAmountFilterType = ref<string>('');
 const currentAmountFilterValue1 = ref<number>(0);
 const currentAmountFilterValue2 = ref<number>(0);
@@ -1586,6 +1921,11 @@ function changeMultipleTagsFilter(changed: boolean): void {
     updateUrlWhenChanged(changed);
 }
 
+function applyCompactSearch(): void {
+    changeKeywordFilter(searchKeyword.value);
+    showCompactSearch.value = false;
+}
+
 function changeKeywordFilter(keyword: string): void {
     if (query.value.keyword === keyword) {
         return;
@@ -2025,4 +2365,1160 @@ init(props);
 .transaction-gallery-container {
     color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity));
 }
+
+
+/* =========================================================
+   Cabeçalho moderno da lista de transações
+   ========================================================= */
+
+.transaction-page-header {
+    width: 100%;
+    padding: 2px 0 6px;
+}
+
+.transaction-page-header__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    width: 100%;
+}
+
+.transaction-page-header__identity,
+.transaction-page-header__actions,
+.transaction-page-header__desktop-actions {
+    display: flex;
+    align-items: center;
+}
+
+.transaction-page-header__identity {
+    min-width: 0;
+    gap: 10px;
+}
+
+.transaction-page-header__titles {
+    min-width: 0;
+}
+
+.transaction-page-header__titles h1 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+}
+
+.transaction-page-header__titles > span {
+    display: block;
+    margin-top: 3px;
+    color: rgba(var(--v-theme-on-surface), 0.48);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.transaction-page-header__actions {
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.transaction-page-header__desktop-actions {
+    gap: 8px;
+}
+
+.transaction-search {
+    width: clamp(230px, 28vw, 360px);
+}
+
+.transaction-search .v-field {
+    border-radius: 12px;
+    background: rgba(var(--v-theme-on-surface), 0.018);
+}
+
+.transaction-search .v-field__outline {
+    --v-field-border-opacity: 0.1;
+}
+
+.transaction-search-trigger,
+.transaction-mobile-actions-trigger {
+    display: none !important;
+}
+
+.transaction-search-popover {
+    border: 1px solid rgba(var(--v-border-color), 0.1);
+    border-radius: 16px !important;
+}
+
+.transaction-search-popover .v-card-text {
+    padding: 12px;
+}
+
+/* =========================================================
+   Resumo de data e valores
+   ========================================================= */
+
+.transaction-summary-panel {
+    padding-top: 4px !important;
+    padding-bottom: 16px !important;
+}
+
+.transaction-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 56px;
+    padding: 10px 14px;
+    border: 1px solid rgba(var(--v-border-color), 0.075);
+    border-radius: 14px;
+    background: rgba(var(--v-theme-on-surface), 0.018);
+}
+
+.transaction-summary__range {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 10px;
+}
+
+.transaction-summary__label,
+.transaction-summary__total-label {
+    color: rgba(var(--v-theme-on-surface), 0.5);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+}
+
+.transaction-summary__date-selector {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 4px;
+}
+
+.transaction-summary__date-text {
+    overflow: hidden;
+    max-width: 430px;
+    color: rgba(var(--v-theme-on-surface), 0.74);
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-summary__totals {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.transaction-summary__total {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-summary__total-value {
+    font-size: 0.86rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   Ajustes visuais da tabela
+   ========================================================= */
+
+.transaction-table {
+    border-top: 1px solid rgba(var(--v-border-color), 0.065);
+}
+
+.transaction-table thead th {
+    height: 48px !important;
+    color: rgba(var(--v-theme-on-surface), 0.58) !important;
+    font-size: 0.68rem !important;
+    font-weight: 650 !important;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: rgba(var(--v-theme-on-surface), 0.015);
+}
+
+.transaction-table-row-data td {
+    height: 48px !important;
+}
+
+.transaction-list-row-date td {
+    background: rgba(var(--v-theme-on-surface), 0.018);
+}
+
+/* CALENDAR VIEW */
+
+.dp--outer-menu-wrap {
+    margin-top: 25px !important;
+    border: none !important;
+    border-radius: 6px !important;
+}
+.dp--calendar-header {
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.dp--theme-dark {
+    --dp-background-color: rgba(var(--v-theme-surface), var(--v-surface-opacity));
+    --dp-text-color: #fff;
+    --dp-hover-color: #484848;
+    --dp-hover-text-color: #fff;
+    --dp-hover-icon-color: #959595;
+    --dp-primary-color: #005cb2;
+    --dp-primary-disabled-color: #61a8ea;
+    --dp-primary-text-color: #fff;
+    --dp-secondary-color: #a9a9a9;
+    --dp-border-color: #2d2d2d;
+    --dp-menu-border-color: #2d2d2d;
+    --dp-border-color-hover: #aaaeb7;
+    --dp-border-color-focus: #aaaeb7;
+    --dp-disabled-color: #737373;
+    --dp-disabled-color-text: #d0d0d0;
+    --dp-scroll-bar-background: #212121;
+    --dp-scroll-bar-color: #484848;
+    --dp-success-color: #00701a;
+    --dp-success-color-disabled: #428f59;
+    --dp-icon-color: #959595;
+    --dp-danger-color: #e53935;
+    --dp-marker-color: #e53935;
+    --dp-tooltip-color: #3e3e3e;
+    --dp-highlight-color: #005cb233;
+    --dp-range-between-dates-background-color: var(--dp-hover-color, #484848);
+    --dp-range-between-dates-text-color: var(--dp-hover-text-color, #fff);
+    --dp-range-between-border-color: var(--dp-hover-color, #fff);
+    --dp-loader: 5px solid #005cb2;
+}
+.dp--menu {
+    background: var(--dp-background-color);
+    border-radius: var(--dp-border-radius);
+    min-width: var(--dp-menu-min-width);
+    font-family: var(--dp-font-family);
+    font-size: var(--dp-font-size);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    border: none !important;
+    box-sizing: border-box;
+}
+.dp--cell-inner {
+    text-align: center;
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+    border-radius: var(--dp-cell-border-radius);
+    height: var(--dp-cell-size);
+    padding: var(--dp-cell-padding);
+    width: var(--dp-cell-size);
+    box-sizing: border-box;
+    border: 1px solid #0000;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    position: relative;
+}
+.dp--active {
+    background: rgba(var(--v-theme-primary), 0.1);
+    color: var(--dp-primary-text-color);
+}
+.transaction-calendar-container {
+    margin-bottom: 0 !important;
+}
+
+/* =========================================================
+   Responsividade
+   ========================================================= */
+
+@media (max-width: 1350px) {
+    .transaction-search--desktop {
+        display: none;
+    }
+
+    .transaction-search-trigger {
+        display: inline-grid !important;
+    }
+}
+
+@media (max-width: 1050px) {
+    .transaction-page-header__desktop-actions {
+        display: none;
+    }
+
+    .transaction-mobile-actions-trigger {
+        display: inline-grid !important;
+    }
+
+    .transaction-calendar-container {
+        margin-right: 20px !important;
+        margin-left: 20px !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .transaction-page-header__top {
+        gap: 10px;
+    }
+
+    .transaction-page-header__titles h1 {
+        font-size: 1.05rem;
+    }
+
+    .transaction-page-header__titles > span {
+        display: none;
+    }
+
+    .transaction-summary {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .transaction-summary__range {
+        justify-content: space-between;
+    }
+
+    .transaction-summary__totals {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .transaction-summary__total {
+        justify-content: space-between;
+    }
+
+    .transaction-summary__date-text {
+        max-width: min(65vw, 430px);
+    }
+}
+
+@media (max-width: 600px) {
+    .transaction-page-header__actions {
+        gap: 2px;
+    }
+
+    .transaction-summary-panel {
+        padding-inline: 12px !important;
+    }
+
+    .transaction-summary {
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .transaction-summary__range {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .transaction-summary__date-selector {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .transaction-summary__date-text {
+        max-width: calc(100vw - 160px);
+        text-align: center;
+    }
+
+    .transaction-summary__totals {
+        grid-template-columns: 1fr;
+    }
+
+    .transaction-summary__total {
+        padding: 8px 10px;
+    }
+}
+
+
+/* =========================================================
+ * SUBPÁGINA RAMP — PADRÃO FINAL
+ * ======================================================= */
+
+@media screen and (min-width: 1250px) {
+    .layout-navbar {
+        display: none !important;
+    }
+}
+
+.transaction-page {
+    width: calc(100% + 48px);
+    min-width: 0;
+    min-height: 100vh;
+    margin: -24px;
+    background: rgb(var(--v-theme-background));
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+}
+
+.transaction-page,
+.transaction-page *,
+.transaction-page *::before,
+.transaction-page *::after {
+    box-sizing: border-box;
+}
+
+.transaction-page__column {
+    padding: 0 !important;
+}
+
+.transaction-shell {
+    min-height: 100vh;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: rgb(var(--v-theme-background)) !important;
+    box-shadow: none !important;
+}
+
+.transaction-layout {
+    min-height: 100vh;
+    background: rgb(var(--v-theme-background));
+}
+
+/* Sidebar */
+
+.transaction-sidebar.v-navigation-drawer {
+    border-right: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.transaction-sidebar .v-navigation-drawer__content {
+    padding: 10px;
+}
+
+.transaction-sidebar__section {
+    padding: 14px;
+}
+
+.transaction-sidebar__section--view {
+    padding-top: 6px;
+}
+
+.transaction-sidebar__divider {
+    margin: 4px 14px !important;
+    border-color: rgb(var(--v-theme-muted-border)) !important;
+    opacity: 0 !important;
+}
+
+.transaction-sidebar__label {
+    display: block;
+    margin-bottom: 8px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.transaction-sidebar__section .v-select {
+    margin-top: 0 !important;
+}
+
+/* Tabs verticais */
+
+.transaction-sidebar__tabs {
+    width: 100%;
+    min-width: 0;
+    margin: 12px 0 0 !important;
+    padding: 0 14px 14px;
+    background: transparent !important;
+}
+
+.transaction-sidebar__tabs .v-slide-group__container,
+.transaction-sidebar__tabs .v-slide-group__content {
+    width: 100%;
+    min-width: 0;
+}
+
+.transaction-sidebar__tabs .v-slide-group__content {
+    gap: 3px;
+}
+
+.transaction-sidebar__tabs .v-tab {
+    position: relative;
+    width: 100%;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    justify-content: flex-start !important;
+    padding: 0 12px 0 14px !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    color: rgb(var(--v-theme-tertiary)) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+    font-family: "Lausanne", "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.79rem !important;
+    font-weight: 500 !important;
+    letter-spacing: -0.01em;
+    transition: color 130ms ease, background-color 130ms ease;
+}
+
+.transaction-sidebar__tabs .v-tab .v-btn__content {
+    width: 100%;
+    min-width: 0;
+    justify-content: flex-start !important;
+    overflow: hidden;
+    text-align: left;
+}
+
+.transaction-sidebar__tabs .v-tab .text-truncate {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.transaction-sidebar__tabs .v-tab .v-btn__overlay,
+.transaction-sidebar__tabs .v-tab .v-btn__underlay {
+    background: transparent !important;
+    opacity: 0 !important;
+}
+
+.transaction-sidebar__tabs .v-tab:hover {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+    background: rgb(var(--v-theme-verticalbutton-hover)) !important;
+}
+
+.transaction-sidebar__tabs .v-tab.v-tab--selected,
+.transaction-sidebar__tabs .v-tab.v-tab-item--selected {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+    background: rgb(var(--v-theme-verticalbutton-selected)) !important;
+    font-weight: 600 !important;
+}
+
+.transaction-sidebar__tabs .v-tab.text-primary {
+    color: rgb(var(--v-theme-on-verticalbutton-background)) !important;
+}
+
+.transaction-sidebar__tabs .v-tab__slider {
+    position: absolute !important;
+    top: 9px !important;
+    bottom: 9px !important;
+    left: 4px !important;
+    right: auto !important;
+    width: 2px !important;
+    height: auto !important;
+    border-radius: 999px;
+    background: rgb(var(--v-theme-highlight)) !important;
+}
+
+.transaction-sidebar__tabs
+    .v-tab:not(.v-tab--selected):not(.v-tab-item--selected)
+    .v-tab__slider {
+    opacity: 0 !important;
+}
+
+.transaction-sidebar__tabs .v-tab:focus-visible {
+    outline: 2px solid rgb(var(--v-theme-primary));
+    outline-offset: -2px;
+}
+
+/* Conteúdo */
+
+.transaction-main {
+    min-width: 0;
+    background: rgb(var(--v-theme-background));
+}
+
+.transaction-content-card {
+    min-width: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.transaction-content-card > .v-card-item {
+    min-height: auto;
+    padding: 0 !important;
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-content-card > .v-card-item .v-card-title {
+    width: 100%;
+    white-space: normal;
+}
+
+/* Header em duas faixas no desktop */
+
+.transaction-page-header {
+    width: 100%;
+    padding: 36px 40px 0;
+    border-bottom: 1px solid rgb(var(--v-theme-muted-border));
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-page-header__top {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.transaction-page-header__identity {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 100%;
+    align-items: center;
+    gap: 12px;
+}
+
+.transaction-page-header__titles h1 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: clamp(1.8rem, 3vw, 2.65rem);
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.transaction-page-header__titles > span {
+    display: block;
+    margin-top: 10px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.76rem;
+    font-weight: 500;
+}
+
+.transaction-page-header__actions {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 20px;
+}
+
+.transaction-page-header__desktop-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.transaction-search {
+    width: min(100%, 360px);
+}
+
+.transaction-search .v-field {
+    min-height: 40px !important;
+    border: 1px solid rgb(var(--v-theme-border)) !important;
+    border-radius: 6px !important;
+    background: rgb(var(--v-theme-background)) !important;
+    box-shadow: none !important;
+}
+
+.transaction-search .v-field:hover {
+    border-color: rgb(var(--v-theme-on-hover-border)) !important;
+    background: rgb(var(--v-theme-on-hover-background)) !important;
+}
+
+.transaction-search .v-field--focused {
+    border-color: rgb(var(--v-theme-on-background)) !important;
+}
+
+.transaction-search .v-field__outline,
+.transaction-search .v-field__overlay {
+    display: none !important;
+}
+
+.transaction-search .v-field__input {
+    min-height: 38px !important;
+    padding-block: 0 !important;
+    font-size: 0.78rem !important;
+}
+
+.transaction-search-popover {
+    border: 1px solid rgb(var(--v-theme-muted-border)) !important;
+    border-radius: 8px !important;
+    background: rgb(var(--v-theme-surface)) !important;
+    box-shadow: none !important;
+}
+
+.transaction-search-trigger,
+.transaction-mobile-actions-trigger {
+    display: none !important;
+}
+
+.transaction-page-header__desktop-actions > .v-btn,
+.transaction-search-trigger,
+.transaction-mobile-actions-trigger,
+.transaction-page-header__identity > .v-btn {
+    min-width: 40px !important;
+    height: 40px !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    text-transform: none !important;
+}
+
+.transaction-page-header__desktop-actions > .v-btn.v-btn--variant-outlined {
+    border-color: rgb(var(--v-theme-border)) !important;
+    background: rgb(var(--v-theme-background)) !important;
+}
+
+.transaction-page-header__desktop-actions > .v-btn:hover,
+.transaction-search-trigger:hover,
+.transaction-mobile-actions-trigger:hover {
+    background: rgb(var(--v-theme-on-hover-background)) !important;
+}
+
+/* Resumo */
+
+.transaction-summary-panel {
+    margin: 24px 40px 0;
+    padding: 0 !important;
+}
+
+.transaction-summary {
+    min-height: 64px;
+    padding: 16px 18px;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 8px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-summary__label,
+.transaction-summary__total-label {
+    color: rgb(var(--v-theme-tertiary));
+}
+
+.transaction-summary__total {
+    border-radius: 6px;
+    background: rgb(var(--v-theme-background));
+}
+
+/* Tabela, calendário e galeria */
+
+.transaction-calendar-container,
+.transaction-gallery-container {
+    margin: 16px 40px 40px;
+    padding: 24px !important;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-table {
+    width: calc(100% - 80px);
+    margin: 16px 40px 40px;
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgb(var(--v-theme-surface));
+}
+
+.transaction-table thead th {
+    background: rgb(var(--v-theme-table-header-color)) !important;
+}
+
+.transaction-table thead th .text-primary {
+    color: inherit !important;
+}
+
+.transaction-table-row-data:hover td {
+    background: rgb(var(--v-theme-on-hover-background)) !important;
+}
+
+/* Responsividade */
+
+@media (max-width: 1260px) {
+    .transaction-page {
+        width: calc(100% + 48px);
+        margin: -24px;
+    }
+
+    .transaction-page-header {
+        padding-inline: 28px;
+    }
+
+    .transaction-summary-panel,
+    .transaction-calendar-container,
+    .transaction-gallery-container {
+        margin-inline: 28px;
+    }
+
+    .transaction-table {
+        width: calc(100% - 56px);
+        margin-inline: 28px;
+    }
+}
+
+@media (max-width: 1350px) {
+    .transaction-page-header {
+        position: relative;
+        padding-bottom: 28px;
+    }
+
+    .transaction-page-header__top {
+        flex-wrap: nowrap;
+        align-items: center;
+        padding-right: 92px;
+    }
+
+    .transaction-page-header__identity {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .transaction-page-header__actions {
+        position: absolute;
+        top: 30px;
+        right: 28px;
+        display: flex;
+        width: auto;
+        min-width: 0;
+        flex: 0 0 auto;
+        gap: 4px;
+        padding: 0;
+    }
+
+    .transaction-page-header__desktop-actions,
+    .transaction-search--desktop {
+        display: none !important;
+    }
+
+    .transaction-search-trigger,
+    .transaction-mobile-actions-trigger {
+        display: inline-grid !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .transaction-page-header {
+        padding: 24px 20px;
+    }
+
+    .transaction-page-header__top {
+        gap: 12px;
+        padding-right: 88px;
+    }
+
+    .transaction-page-header__actions {
+        top: 18px;
+        right: 20px;
+    }
+
+    .transaction-page-header__titles h1 {
+        font-size: 1.55rem;
+    }
+
+    .transaction-page-header__titles > span {
+        display: none;
+    }
+
+    .transaction-summary-panel,
+    .transaction-calendar-container,
+    .transaction-gallery-container {
+        margin-inline: 18px;
+    }
+
+    .transaction-table {
+        width: calc(100% - 36px);
+        margin-inline: 18px;
+    }
+}
+
+@media (max-width: 600px) {
+    .transaction-page-header {
+        padding: 20px 14px;
+    }
+
+    .transaction-page-header__top {
+        padding-right: 78px;
+    }
+
+    .transaction-page-header__actions {
+        top: 14px;
+        right: 14px;
+        gap: 0;
+    }
+
+    .transaction-page-header__titles h1 {
+        font-size: 1.35rem;
+    }
+
+    .transaction-summary-panel,
+    .transaction-calendar-container,
+    .transaction-gallery-container {
+        margin-inline: 12px;
+    }
+
+    .transaction-table {
+        width: calc(100% - 24px);
+        margin: 12px 12px 24px;
+        border-radius: 8px;
+    }
+
+    .transaction-summary {
+        border-radius: 7px;
+    }
+}
+
+
+/* =========================================================
+ * CORREÇÃO DEFINITIVA DO LAYOUT RESPONSIVO
+ *
+ * Deve permanecer no final do <style>, pois neutraliza
+ * regras antigas e duplicadas existentes acima.
+ * ======================================================= */
+
+.transaction-page.v-row {
+    --transaction-content-left: 56px;
+    --transaction-content-right: 24px;
+
+    width: calc(100% + 48px) !important;
+    max-width: none !important;
+    min-width: 0;
+    margin: -24px !important;
+
+    background: rgb(var(--v-theme-background));
+}
+
+.transaction-page > .transaction-page__column {
+    width: 100%;
+    min-width: 0;
+    padding: 0 !important;
+}
+
+.transaction-shell,
+.transaction-layout,
+.transaction-main,
+.transaction-main > .v-window,
+.transaction-main .v-window__container,
+.transaction-main .v-window-item,
+.transaction-content-card {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+}
+
+.transaction-main {
+    overflow-x: hidden;
+}
+
+/*
+ * Remove qualquer padding interno oculto do v-card usado
+ * pelo slot #title.
+ */
+.transaction-content-card > .v-card-item {
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.transaction-content-card > .v-card-item > .v-card-item__content,
+.transaction-content-card > .v-card-item .v-card-title {
+    width: 100%;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/*
+ * O fundo do header sempre ocupa toda a largura.
+ * Somente o conteúdo interno recebe os gutters.
+ */
+.transaction-page-header {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+
+    padding-left:
+        var(--transaction-content-left) !important;
+    padding-right:
+        var(--transaction-content-right) !important;
+
+    background: rgb(var(--v-theme-surface)) !important;
+}
+
+/*
+ * Conteúdo abaixo do header.
+ */
+.transaction-summary-panel {
+    margin-left:
+        var(--transaction-content-left) !important;
+    margin-right:
+        var(--transaction-content-right) !important;
+}
+
+.transaction-calendar-container,
+.transaction-gallery-container {
+    margin-left:
+        var(--transaction-content-left) !important;
+    margin-right:
+        var(--transaction-content-right) !important;
+}
+
+.transaction-table {
+    width: auto !important;
+    max-width: none !important;
+
+    margin-left:
+        var(--transaction-content-left) !important;
+    margin-right:
+        var(--transaction-content-right) !important;
+}
+
+/*
+ * Remove a borda interna criada pelo navigation drawer.
+ * A sidebar já possui sua própria borda declarada no CSS.
+ */
+.transaction-sidebar .v-navigation-drawer__border {
+    display: none !important;
+}
+
+/* Desktop largo */
+@media (min-width: 1451px) {
+    .transaction-page.v-row {
+        --transaction-content-left: 25px;
+        --transaction-content-right: 25px;
+    }
+}
+
+/* Desktop intermediário */
+@media (min-width: 1261px) and (max-width: 1450px) {
+    .transaction-page.v-row {
+        --transaction-content-left: 25px;
+        --transaction-content-right: 25px;
+    }
+}
+
+/*
+ * Entre 960 e 1260px a sidebar ainda é permanente.
+ * Mantemos um gutter real à esquerda sem desperdiçar
+ * espaço no lado direito.
+ */
+@media (min-width: 960px) and (max-width: 1260px) {
+    .transaction-page.v-row {
+        --transaction-content-left: 25px;
+        --transaction-content-right: 25px;
+    }
+}
+
+/*
+ * Abaixo de 960px:
+ *
+ * - mantém o bleed de -24px para anular o padding externo;
+ * - o header volta a encostar nas laterais;
+ * - o drawer temporário não reserva nenhuma coluna;
+ * - a borda vertical desaparece;
+ * - o conteúdo interno continua com respiro.
+ */
+@media (max-width: 959.98px) {
+    .transaction-page.v-row {
+        --transaction-content-left: 20px;
+        --transaction-content-right: 20px;
+
+        width: calc(100% + 48px) !important;
+        max-width: none !important;
+        margin: -24px !important;
+    }
+
+    .transaction-layout {
+        --v-layout-left: 0px !important;
+        --v-layout-right: 0px !important;
+    }
+
+    .transaction-main {
+        width: 100% !important;
+        max-width: 100% !important;
+
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        padding-inline-start: 0 !important;
+    }
+
+
+    /*
+     * Header estrutural full-width.
+     * O padding abaixo é apenas do conteúdo interno.
+     */
+    .transaction-page-header {
+        width: 100% !important;
+        margin: 0 !important;
+
+        padding-left:
+            var(--transaction-content-left) !important;
+        padding-right:
+            var(--transaction-content-right) !important;
+
+        border-left: 0 !important;
+        border-right: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    .transaction-sidebar.v-navigation-drawer {
+        width: 256px !important;
+        border-right: 0 !important;
+    }
+
+    .transaction-sidebar .v-navigation-drawer__border {
+        display: none !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .transaction-page.v-row {
+        --transaction-content-left: 14px;
+        --transaction-content-right: 14px;
+    }
+
+    .transaction-page-header {
+        padding-left:
+            var(--transaction-content-left) !important;
+        padding-right:
+            var(--transaction-content-right) !important;
+    }
+
+    .transaction-summary-panel {
+        margin-left:
+            var(--transaction-content-left) !important;
+        margin-right:
+            var(--transaction-content-right) !important;
+    }
+
+    .transaction-calendar-container,
+    .transaction-gallery-container,
+    .transaction-table {
+        margin-left:
+            var(--transaction-content-left) !important;
+        margin-right:
+            var(--transaction-content-right) !important;
+    }
+}
+
+@media (max-width: 959.98px) {
+    .transaction-content-card > .transaction-summary-panel {
+        width: auto !important;
+        max-width: none !important;
+
+        margin-top: 24px !important;
+        margin-right: 20px !important;
+        margin-left: 20px !important;
+
+        padding: 0 !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .transaction-content-card > .transaction-summary-panel {
+        margin-right: 14px !important;
+        margin-left: 14px !important;
+    }
+}
+
 </style>

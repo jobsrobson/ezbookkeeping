@@ -1,7 +1,7 @@
 {
     "global": {
         "app": {
-            "title": "ezBookkeeping"
+            "title": "Bookkeeping"
         }
     },
     "language": {
@@ -160,22 +160,22 @@
             "clearTransactionsTagsTip": "Această acțiune NU poate fi anulată. Toate etichetele vor fi șterse de pe {count} tranzacții.",
             "accountActivationAndResendValidationEmailTip": "Linkul de activare a contului a fost trimis la adresa ta de email: {email}. Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare.",
             "resendValidationEmailTip": "Dacă nu primești mesajul, te rugăm să introduci din nou parola și să faci clic pe butonul de mai jos pentru a retrimite emailul de validare la: {email}",
-            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola ezBookkeeping pentru verificare."
+            "oauth2bindTip": "Te autentifici în contul de utilizator {userName} folosind {providerName}. Te rugăm să introduci parola Bookkeeping pentru verificare."
         }
     },
     "dataExport": {
-        "defaultExportFilename": "ezBookkeeping_export_date",
-        "exportFilename": "ezBookkeeping_{nickname}_export_date",
-        "defaultExportStatisticsFileName": "ezBookkeeping_date_statistici",
-        "exportStatisticsFileName": "ezBookkeeping_{nickname}_date_statistici",
-        "defaultExportReconciliationStatementsFileName": "ezBookkeeping_situatii_reconciliere",
-        "exportReconciliationStatementsFileName": "ezBookkeeping_{nickname}_situatii_reconciliere",
-        "defaultInsightsExplorerQueryFileName": "ezBookkeeping_insights_explorer_query",
-        "insightsExplorerQueryFileName": "ezBookkeeping_{nickname}_insights_explorer_query",
-        "defaultImportDataMappingFileName": "ezBookkeeping_asociere_date_import",
-        "defaultImportHandlingScript": "ezBookkeeping_script_procesare",
-        "defaultImportReplaceRuleFileName": "ezBookkeeping_regula_inlocuire_import",
-        "defaultImportCheckResultFileName": "ezBookkeeping_rezultat_verificare_import"
+        "defaultExportFilename": "Bookkeeping_export_date",
+        "exportFilename": "Bookkeeping_{nickname}_export_date",
+        "defaultExportStatisticsFileName": "Bookkeeping_date_statistici",
+        "exportStatisticsFileName": "Bookkeeping_{nickname}_date_statistici",
+        "defaultExportReconciliationStatementsFileName": "Bookkeeping_situatii_reconciliere",
+        "exportReconciliationStatementsFileName": "Bookkeeping_{nickname}_situatii_reconciliere",
+        "defaultInsightsExplorerQueryFileName": "Bookkeeping_insights_explorer_query",
+        "insightsExplorerQueryFileName": "Bookkeeping_{nickname}_insights_explorer_query",
+        "defaultImportDataMappingFileName": "Bookkeeping_asociere_date_import",
+        "defaultImportHandlingScript": "Bookkeeping_script_procesare",
+        "defaultImportReplaceRuleFileName": "Bookkeeping_regula_inlocuire_import",
+        "defaultImportCheckResultFileName": "Bookkeeping_rezultat_verificare_import"
     },
     "calendar": {
         "Gregorian": "Gregorian",
@@ -1691,8 +1691,8 @@
     "Change Language": "Schimbă limba",
     "Date is too early": "Data este prea timpurie",
     "User Canceled": "Anulat de utilizator",
-    "Welcome to ezBookkeeping": "Bun venit la ezBookkeeping",
-    "Please log in with your ezBookkeeping account": "Te rugăm să te autentifici cu contul ezBookkeeping",
+    "Welcome to Bookkeeping": "Bun venit la Bookkeeping",
+    "Please log in with your Bookkeeping account": "Te rugăm să te autentifici cu contul Bookkeeping",
     "Unlock Application": "Deblochează aplicația",
     "Please enter your PIN code or use WebAuthn to unlock application": "Te rugăm să introduci codul PIN sau să folosești WebAuthn pentru a debloca aplicația",
     "Please enter your PIN code to unlock application": "Te rugăm să introduci codul PIN pentru a debloca aplicația",
@@ -2118,13 +2118,13 @@
     "Filter Description": "Filtrează după descriere",
     "How to import this file?": "Cum se importă acest fișier?",
     "How to export this file?": "Cum se exportă acest fișier?",
-    "ezBookkeeping File Format": "Format fișier ezBookkeeping",
+    "Bookkeeping File Format": "Format fișier Bookkeeping",
     "Custom File Format": "Format fișier personalizat",
     "General Data Exchange Format": "Format general de schimb de date",
     "General Bank Statement Format": "Format general pentru extras de cont",
     "Other Bank/Payment App Statement File": "Alt fișier extras bancă/aplicație de plată",
     "Other Finance App File Format": "Format fișier altă aplicație financiară",
-    "ezbookkeeping Data Export File": "Fișier export date ezBookkeeping",
+    "Bookkeeping Data Export File": "Fișier export date Bookkeeping",
     "Excel Workbook File": "Fișier registru Excel",
     "Excel Workbook File (.xlsx)": "Fișier registru Excel (.xlsx)",
     "Excel 97-2003 Workbook File (.xls)": "Fișier registru Excel 97-2003 (.xls)",

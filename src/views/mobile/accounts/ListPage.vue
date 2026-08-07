@@ -163,6 +163,8 @@
 
         <f7-actions close-by-outside-click close-on-escape :opened="showAccountMoreActionSheet" @actions:closed="showAccountMoreActionSheet = false">
             <f7-actions-group v-if="accountForMoreActionSheet && accountForMoreActionSheet.type === AccountType.SingleAccount.type">
+                <f7-actions-button @click="showInvoices(accountForMoreActionSheet)"
+                                   v-if="accountForMoreActionSheet.category === AccountCategory.CreditCard.type && accountForMoreActionSheet.creditCardStatementDate">{{ tt('Invoices') }}</f7-actions-button>
                 <f7-actions-button @click="showReconciliationStatement(accountForMoreActionSheet)">{{ tt('Reconciliation Statement') }}</f7-actions-button>
                 <f7-actions-button @click="updateLastReconciledTime(accountForMoreActionSheet)" v-if="useLastReconciledTime">{{ tt('Mark as Reconciled') }}</f7-actions-button>
             </f7-actions-group>
@@ -371,6 +373,12 @@ function showReconciliationStatement(account: Account | null): void {
     }
 
     props.f7router.navigate('/account/reconciliation_statements?accountId=' + account.id);
+    showAccountMoreActionSheet.value = false;
+    accountForMoreActionSheet.value = null;
+}
+
+function showInvoices(account: Account): void {
+    props.f7router.navigate('/account/invoices?accountId=' + account.id);
     showAccountMoreActionSheet.value = false;
     accountForMoreActionSheet.value = null;
 }

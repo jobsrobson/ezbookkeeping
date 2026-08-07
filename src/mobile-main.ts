@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import '@fontsource-variable/google-sans-flex/wght.css';
 import { createPinia } from 'pinia';
 import { createI18n } from 'vue-i18n';
 

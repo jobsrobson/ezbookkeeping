@@ -10,7 +10,7 @@
     &.v-selection-control--dirty {
         .v-selection-control__input {
             .custom-radio-checked {
-                filter: drop-shadow(rgba(var(--v-shadow-key-umbra-color), 16%) 0 2px 4px);
+                filter: none;
             }
         }
     }

@@ -10,12 +10,12 @@
                     <v-card-text>
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Current Password') }}</label>
                                 <v-text-field
                                     autocomplete="current-password"
                                     ref="currentPasswordInput"
                                     type="password"
                                     :disabled="updatingPassword"
-                                    :label="tt('Current Password')"
                                     :placeholder="tt('Current Password')"
                                     v-model="currentPassword"
                                     @keyup.enter="newPasswordInput?.focus()"
@@ -25,12 +25,12 @@
 
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('New Password') }}</label>
                                 <v-text-field
                                     autocomplete="new-password"
                                     ref="newPasswordInput"
                                     type="password"
                                     :disabled="updatingPassword"
-                                    :label="tt('New Password')"
                                     :placeholder="tt('New Password')"
                                     v-model="newPassword"
                                     @keyup.enter="confirmPasswordInput?.focus()"
@@ -40,11 +40,11 @@
 
                         <v-row>
                             <v-col cols="12" md="6">
+                                <label class="settings-field-label">{{ tt('Confirm Password') }}</label>
                                 <v-text-field
                                     ref="confirmPasswordInput"
                                     type="password"
                                     :disabled="updatingPassword"
-                                    :label="tt('Confirm Password')"
                                     :placeholder="tt('Re-enter the password')"
                                     v-model="confirmPassword"
                                     @keyup.enter="updatePassword"
@@ -66,17 +66,18 @@
         <v-col cols="12" v-if="isOAuth2Enabled() && (loadingExternalAuth || (thirdPartyLoginList && thirdPartyLoginList.length))">
             <v-card :class="{ 'disabled': loadingExternalAuth }">
                 <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Third-Party Login') }}</span>
-                        <v-btn density="compact" color="default" variant="text" size="24"
-                               class="ms-2" :icon="true" :loading="loadingExternalAuth" @click="reloadExternalAuth(false)">
-                            <template #loader>
-                                <v-progress-circular indeterminate size="20"/>
-                            </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
-                            <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
-                        </v-btn>
-                    </div>
+                    <span>{{ tt('Third-Party Login') }}</span>
+                </template>
+                <template #append>
+                    <v-btn density="comfortable" color="default" variant="text"
+                           class="settings-card-refresh" :icon="true"
+                           :loading="loadingExternalAuth" @click="reloadExternalAuth(false)">
+                        <template #loader>
+                            <v-progress-circular indeterminate size="20"/>
+                        </template>
+                        <v-icon :icon="mdiRefresh" size="20" />
+                        <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
+                    </v-btn>
                 </template>
 
                 <v-table class="table-striped text-no-wrap" :hover="!loadingExternalAuth">
@@ -129,16 +130,19 @@
         <v-col cols="12">
             <v-card :class="{ 'disabled': loadingSession }">
                 <template #title>
-                    <div class="d-flex align-center">
-                        <span>{{ tt('Device & Sessions') }}</span>
-                        <v-btn class="ms-3" density="compact" color="default" variant="outlined"
+                    <span>{{ tt('Device & Sessions') }}</span>
+                </template>
+                <template #append>
+                    <div class="settings-card-actions">
+                        <v-btn class="settings-card-action-button" density="comfortable" color="default" variant="outlined"
                                @click="generateToken" v-if="isAPITokenEnabled() || isMCPServerEnabled()">{{ tt('Generate Token') }}</v-btn>
-                        <v-btn density="compact" color="default" variant="text" size="24"
-                               class="ms-2" :icon="true" :loading="loadingSession" @click="reloadSessions(false)">
+                        <v-btn density="comfortable" color="default" variant="text"
+                               class="settings-card-refresh" :icon="true"
+                               :loading="loadingSession" @click="reloadSessions(false)">
                             <template #loader>
                                 <v-progress-circular indeterminate size="20"/>
                             </template>
-                            <v-icon :icon="mdiRefresh" size="24" />
+                            <v-icon :icon="mdiRefresh" size="20" />
                             <v-tooltip activator="parent">{{ tt('Refresh') }}</v-tooltip>
                         </v-btn>
                     </div>

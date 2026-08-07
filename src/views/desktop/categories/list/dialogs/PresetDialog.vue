@@ -1,12 +1,12 @@
 <template>
-    <v-dialog width="800" :persistent="submitting" v-model="showState">
-        <v-card class="pa-sm-1 pa-md-2">
+    <v-dialog class="management-dialog" width="800" max-width="calc(100vw - 24px)" :persistent="submitting" v-model="showState">
+        <v-card class="management-dialog__card">
             <template #title>
-                <div class="d-flex align-center">
-                    <h4 class="text-h4">{{ tt('Default Categories') }}</h4>
+                <div class="management-dialog__header">
+                    <h4>{{ tt('Default Categories') }}</h4>
                 </div>
             </template>
-            <v-card-text class="preset-transaction-categories flex-grow-1 overflow-y-auto">
+            <v-card-text class="management-dialog__body preset-transaction-categories">
                 <template :key="categoryType" v-for="(categories, categoryType) in allPresetCategories">
                     <div class="d-flex align-center mb-1">
                         <h4>{{ getCategoryTypeName(parseInt(categoryType)) }}</h4>
@@ -39,13 +39,13 @@
                     </v-expansion-panels>
                 </template>
             </v-card-text>
-            <v-card-text>
-                <div class="w-100 d-flex justify-center flex-wrap mt-sm-1 mt-md-2 gap-4">
-                    <v-btn :disabled="submitting" @click="save">
+            <v-card-text class="management-dialog__footer">
+                <div class="management-dialog__footer-actions">
+                    <v-btn color="primary" variant="flat" :disabled="submitting" @click="save">
                         {{ tt('Save') }}
                         <v-progress-circular indeterminate size="22" class="ms-2" v-if="submitting"></v-progress-circular>
                     </v-btn>
-                    <v-btn color="secondary" density="default" variant="tonal"
+                    <v-btn color="default" density="default" variant="outlined"
                            :disabled="submitting" @click="showState = false">{{ tt('Cancel') }}</v-btn>
                 </div>
             </v-card-text>

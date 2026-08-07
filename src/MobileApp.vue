@@ -42,10 +42,10 @@ const tokensStore = useTokensStore();
 const exchangeRatesStore = useExchangeRatesStore();
 
 const f7params = ref<Framework7Parameters>({
-    name: 'ezBookkeeping',
+    name: 'Bookkeeping',
     theme: 'ios',
     colors: {
-        primary: '#c67e48'
+        primary: '#fd621b'
     },
     routes: routes,
     darkMode: (() => {
@@ -124,13 +124,13 @@ function setThemeColorMeta(darkMode: boolean | undefined): void {
         if (hasBackdrop.value) {
             document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#0b0b0b');
         } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#121212');
+            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#1b1e20');
         }
     } else {
         if (hasBackdrop.value) {
             document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#949495');
         } else {
-            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#f6f6f8');
+            document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#f1f2f6');
         }
     }
 }

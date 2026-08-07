@@ -53,6 +53,7 @@ type TransactionTemplate struct {
 	Comment                    string `xorm:"VARCHAR(255) NOT NULL"`
 	DisplayOrder               int32  `xorm:"INDEX(IDX_transaction_template_uid_deleted_template_type_order) NOT NULL"`
 	Hidden                     bool   `xorm:"NOT NULL"`
+	Subscription               bool   `xorm:"NOT NULL DEFAULT 0"`
 	CreatedUnixTime            int64
 	UpdatedUnixTime            int64
 	DeletedUnixTime            int64
@@ -221,6 +222,7 @@ func (t *TransactionTemplate) toTransactionInfoResponse(utcOffset int16) *Transa
 		HideAmount:           t.HideAmount,
 		TagIds:               tagIds,
 		Comment:              t.Comment,
+		Subscription:         t.Subscription,
 		GeoLocation:          nil,
 		Editable:             true,
 	}

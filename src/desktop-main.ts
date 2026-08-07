@@ -1,4 +1,5 @@
 import { createApp, ref } from 'vue';
+import '@fontsource-variable/google-sans-flex/wght.css';
 import { createPinia } from 'pinia';
 import { type I18n, type Composer, createI18n } from 'vue-i18n';
 
@@ -314,160 +315,269 @@ const vuetify = createVuetify({
             touch: false
         }
     },
+    
     theme: {
-        defaultTheme: 'light',
-        themes: {
-            light: {
-                dark: false,
-                colors: {
-                    'primary': '#c67e48',
-                    'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
-                    'secondary': '#8c8c8c',
-                    'secondary-darken-1': '#595754',
-                    'on-secondary': '#ffffff',
-                    'success': '#4cd964',
-                    'success-darken-1': '#40b654',
-                    'on-success': '#ffffff',
-                    'info': '#2196f3',
-                    'info-darken-1': '#1e85d7',
-                    'on-info': '#ffffff',
-                    'warning': '#ff9500',
-                    'warning-darken-1': '#de8201',
-                    'on-warning': '#ffffff',
-                    'error': '#ff3b30',
-                    'error-darken-1': '#e1342b',
-                    'on-error': '#ffffff',
-                    'teal': '#009688',
-                    'background': '#faf8f4',
-                    'on-background': '#413935',
-                    'surface': '#fff',
-                    'on-surface': '#413935',
-                    'notification-background': '#ffffff',
-                    'on-notification-background': '#000',
-                    'grey': '#8c8c8c',
-                    'grey-50': '#fafafa',
-                    'grey-100': '#f0f2f8',
-                    'grey-200': '#eeeeee',
-                    'grey-300': '#e0e0e0',
-                    'grey-400': '#bdbdbd',
-                    'grey-500': '#9e9e9e',
-                    'grey-600': '#757575',
-                    'grey-700': '#616161',
-                    'grey-800': '#424242',
-                    'grey-900': '#212121',
-                    'perfect-scrollbar-thumb': '#dedcda',
-                    'skin-bordered-background': '#fff',
-                    'skin-bordered-surface': '#fff',
-                    'expansion-panel-text-custom-bg': '#fafafa'
-                },
-                variables: {
-                    'code-color': '#ff8000',
-                    'overlay-scrim-background': '#413935',
-                    'tooltip-background': '#212121',
-                    'tooltip-color': '#ffffff',
-                    'overlay-scrim-opacity': 0.5,
-                    'hover-opacity': 0.04,
-                    'focus-opacity': 0.1,
-                    'selected-opacity': 0.08,
-                    'activated-opacity': 0.16,
-                    'pressed-opacity': 0.14,
-                    'dragged-opacity': 0.1,
-                    'disabled-opacity': 0.4,
-                    'border-color': '#413f3b',
-                    'border-opacity': 0.12,
-                    'table-header-color': '#fdfcf9',
-                    'high-emphasis-opacity': 0.9,
-                    'medium-emphasis-opacity': 0.7,
+    defaultTheme: 'light',
 
-                    // 👉 shadows
-                    'shadow-key-umbra-color': '#413935',
-                    'shadow-xs-opacity': '0.16',
-                    'shadow-sm-opacity': '0.18',
-                    'shadow-md-opacity': '0.20',
-                    'shadow-lg-opacity': '0.22',
-                    'shadow-xl-opacity': '0.24',
+    themes: {
+        light: {
+            dark: false,
+
+            colors: {
+                default: '#000000',
+                'default-darken': '#000000',
+                'on-default': '#ffffff',
+
+                primary: '#00ff9c',
+                'primary-darken-1': '#00E68C',
+                'on-primary': '#003822',
+
+                primarymuted: '#B8D9CC',
+                'primary-muted-darken-1': '#92b4a6',
+                'on-primary-muted': '#003822',
+
+                secondary: '#f1f1ef',
+                'secondary-darken-1': '#dbdbdb',
+                'on-secondary': '#2c2d2a',
+
+                tertiary: '#66736E',
+                'tertiary-darken-1': '#4F5A56',
+                'on-tertiary': '#FFFFFF',
+
+                highlight: '#05633f',
+
+                income: '#268A67',
+                expense: '#ff5500',
+
+                border: '#d5d2ca',
+                'on-hover-border': '#9a9891',
+                'on-hover-background': '#fbfaf7',
+                'muted-border': '#e7e5df',
+
+                verticalbutton: '#f8f7f4',
+                'on-verticalbutton-background': '#1a1909',
+                'verticalbutton-hover': '#f4f2f0',
+                'verticalbutton-selected': '#d8d7d5',
+
+                'sidebar-selected': '#ebe7e4',
+                'sidebar-hover': '#f4f2f0',
+                'on-sidebar-selected': '#252521',
+                'on-sidebar-selected-text': '#252521',
+
+                success: '#268A67',
+                'success-darken-1': '#1F7055',
+                'on-success': '#FFFFFF',
+
+                info: '#426B8A',
+                'info-darken-1': '#355871',
+                'on-info': '#FFFFFF',
+
+                warning: '#A66A2C',
+                'warning-darken-1': '#875522',
+                'on-warning': '#FFFFFF',
+
+                error: '#C4514F',
+                'error-darken-1': '#A64140',
+                'on-error': '#FFFFFF',
+
+                teal: '#2E7768',
+
+                background: '#fbfaf7',
+                'on-background': '#1C211F',
+
+                surface: '#ffffff',
+                'on-surface': '#1C211F',
+
+                'notification-background': '#FFFFFF',
+                'on-notification-background': '#1C211F',
+
+                grey: '#737A77',
+                'grey-50': '#F8F8F5',
+                'grey-100': '#F0F1ED',
+                'grey-200': '#E3E5E0',
+                'grey-300': '#D1D4CE',
+                'grey-400': '#AEB4AF',
+                'grey-500': '#858D88',
+                'grey-600': '#69716C',
+                'grey-700': '#505753',
+                'grey-800': '#343A37',
+                'grey-900': '#1C211F',
+
+                'perfect-scrollbar-thumb': '#C7CBC6',
+
+                'skin-bordered-background': '#FFFFFF',
+                'skin-bordered-surface': '#FFFFFF',
+
+                'expansion-panel-text-custom-bg': '#F6F6F2'
+            },
+
+            variables: {
+                'sidebar-bg': '#f4f3ef',
+                'code-color': '#255C4E',
+
+                'overlay-scrim-background': '#17201D',
+                'tooltip-background': '#202724',
+                'tooltip-color': '#FFFFFF',
+
+                'overlay-scrim-opacity': 0.46,
+
+                'hover-opacity': 0.04,
+                'focus-opacity': 0.08,
+                'selected-opacity': 0.07,
+                'activated-opacity': 0.1,
+                'pressed-opacity': 0.1,
+                'dragged-opacity': 0.08,
+                'disabled-opacity': 0.4,
+
+                'border-color': '#59635E',
+                'border-opacity': 0.1,
+
+                'table-header-color': '#F6F6F2',
+
+                'high-emphasis-opacity': 0.92,
+                'medium-emphasis-opacity': 0.66,
+
+                'shadow-key-umbra-color': '#000000',
+                'shadow-xs-opacity': '0',
+                'shadow-sm-opacity': '0',
+                'shadow-md-opacity': '0',
+                'shadow-lg-opacity': '0',
+                'shadow-xl-opacity': '0'
+            }
+        },
+
+        dark: {
+            dark: true,
+
+            colors: {
+                default: '#ffffff',
+                'default-darken': '#e8e8e5',
+                'on-default': '#111512',
+
+                primary: '#00ff9c',
+                'primary-darken-1': '#00E68C',
+                'on-primary': '#003822',
+
+                primarymuted: '#294A3E',
+                'primary-muted-darken-1': '#213D33',
+                'on-primary-muted': '#B8F5DC',
+
+                secondary: '#292A27',
+                'secondary-darken-1': '#343532',
+                'on-secondary': '#F1F1EF',
+
+                tertiary: '#9AA6A1',
+                'tertiary-darken-1': '#7F8B86',
+                'on-tertiary': '#111512',
+
+                highlight: '#00C779',
+
+                income: '#00C779',
+                expense: '#FF7040',
+
+                border: '#3D413E',
+                'on-hover-border': '#666B67',
+                'on-hover-background': '#242522',
+                'muted-border': '#30322F',
+
+                verticalbutton: '#222320',
+                'on-verticalbutton-background': '#F1F1ED',
+                'verticalbutton-hover': '#2A2B28',
+                'verticalbutton-selected': '#363936',
+
+                'sidebar-selected': '#30312E',
+                'sidebar-hover': '#292A27',
+                'on-sidebar-selected': '#F1F1ED',
+                'on-sidebar-selected-text': '#F1F1ED',
+
+                success: '#48B991',
+                'success-darken-1': '#389876',
+                'on-success': '#071D15',
+
+                info: '#6E9EC2',
+                'info-darken-1': '#5684A6',
+                'on-info': '#0B1821',
+
+                warning: '#D69A57',
+                'warning-darken-1': '#B77E3E',
+                'on-warning': '#211407',
+
+                error: '#E0716F',
+                'error-darken-1': '#C45C5A',
+                'on-error': '#260B0A',
+
+                teal: '#4DA38F',
+
+                background: '#171815',
+                'on-background': '#E8E9E5',
+
+                surface: '#1D1E1B',
+                'on-surface': '#E8E9E5',
+
+                'notification-background': '#242522',
+                'on-notification-background': '#E8E9E5',
+
+                grey: '#969D98',
+                'grey-50': '#1B1C19',
+                'grey-100': '#222320',
+                'grey-200': '#2C2E2A',
+                'grey-300': '#3B3E3A',
+                'grey-400': '#565B57',
+                'grey-500': '#737A75',
+                'grey-600': '#969D98',
+                'grey-700': '#B5BAB5',
+                'grey-800': '#D1D4CF',
+                'grey-900': '#ECEDE9',
+
+                'perfect-scrollbar-thumb': '#484C48',
+
+                'skin-bordered-background': '#171815',
+                'skin-bordered-surface': '#1D1E1B',
+
+                'expansion-panel-text-custom-bg': '#222320'
+            },
+
+            variables: {
+                'sidebar-bg': '#1A1B18',
+                'code-color': '#73C9AC',
+
+                'overlay-scrim-background': '#000000',
+                'tooltip-background': '#ECEDE9',
+                'tooltip-color': '#171815',
+
+                'overlay-scrim-opacity': 0.62,
+
+                'hover-opacity': 0.06,
+                'focus-opacity': 0.10,
+                'selected-opacity': 0.09,
+                'activated-opacity': 0.12,
+                'pressed-opacity': 0.12,
+                'dragged-opacity': 0.10,
+                'disabled-opacity': 0.4,
+
+                'border-color': '#A8AEA9',
+                'border-opacity': 0.14,
+
+                'table-header-color': '#222320',
+
+                'high-emphasis-opacity': 0.94,
+                'medium-emphasis-opacity': 0.68,
+
+                'shadow-key-umbra-color': '#000000',
+                'shadow-xs-opacity': '0',
+                'shadow-sm-opacity': '0',
+                'shadow-md-opacity': '0',
+                'shadow-lg-opacity': '0',
+                'shadow-xl-opacity': '0'
+            }
+                    },
                 }
             },
-            dark: {
-                dark: true,
-                colors: {
-                    'primary': '#c67e48',
-                    'primary-darken-1': '#b67443',
-                    'on-primary': '#ffffff',
-                    'secondary': '#9d9b99',
-                    'secondary-darken-1': '#3e3d3c',
-                    'on-secondary': '#fff',
-                    'success': '#4cd964',
-                    'success-darken-1': '#40b654',
-                    'on-success': '#ffffff',
-                    'info': '#2196f3',
-                    'info-darken-1': '#1e85d7',
-                    'on-info': '#ffffff',
-                    'warning': '#ff9500',
-                    'warning-darken-1': '#de8201',
-                    'on-warning': '#ffffff',
-                    'error': '#ff3b30',
-                    'error-darken-1': '#e1342b',
-                    'on-error': '#ffffff',
-                    'teal': '#009688',
-                    'background': '#060504',
-                    'on-background': '#fcf0e3',
-                    'surface': '#1a1a1a',
-                    'on-surface': '#fcf0e3',
-                    'notification-background': '#1e1e1e',
-                    'on-notification-background': '#fff',
-                    'grey': '#4d4c4b',
-                    'grey-50': '#212121',
-                    'grey-100': '#424242',
-                    'grey-200': '#616161',
-                    'grey-300': '#757575',
-                    'grey-400': '#909090',
-                    'grey-500': '#a2a2a2',
-                    'grey-600': '#b4b4b4',
-                    'grey-700': '#c6c6c6',
-                    'grey-800': '#d8d8d8',
-                    'grey-900': '#eaeaea',
-                    'perfect-scrollbar-thumb': '#725b4a',
-                    'skin-bordered-background': '#4b3b2d',
-                    'skin-bordered-surface': '#4b3b2d',
-                    'expansion-panel-text-custom-bg': '#503f33'
-                },
-                variables: {
-                    'code-color': '#ff8000',
-                    'overlay-scrim-background': '#1a1a1a',
-                    'tooltip-background': '#333333',
-                    'tooltip-color': '#eeeeee',
-                    'overlay-scrim-opacity': 0.6,
-                    'hover-opacity': 0.04,
-                    'focus-opacity': 0.1,
-                    'selected-opacity': 0.08,
-                    'activated-opacity': 0.16,
-                    'pressed-opacity': 0.14,
-                    'disabled-opacity': 0.4,
-                    'dragged-opacity': 0.1,
-                    'border-color': '#edece9',
-                    'border-opacity': 0.12,
-                    'table-header-color': '#242322',
-                    'high-emphasis-opacity': 0.9,
-                    'medium-emphasis-opacity': 0.7,
-
-                    // 👉 Shadows
-                    'shadow-key-umbra-color': '#383736',
-                    'shadow-xs-opacity': '0.20',
-                    'shadow-sm-opacity': '0.22',
-                    'shadow-md-opacity': '0.24',
-                    'shadow-lg-opacity': '0.26',
-                    'shadow-xl-opacity': '0.28',
-                }
-            }
-        }
-    },
     locale: {
         rtl: getRtlLocales(),
         adapter: ((i18nGlobal: Composer) => {
             const instance: LocaleInstance = {
-                name: 'ezBookkeeping i18n',
+                name: 'Bookkeeping i18n',
                 decimalSeparator: ref<string>(DecimalSeparator.Default.symbol), // should never use vuetify to format numbers
                 messages: i18nGlobal.messages,
                 current: i18nGlobal.locale,
@@ -508,7 +618,7 @@ const vuetify = createVuetify({
     }
 });
 
-// key is in the original i18n text of vuetify (in vuetify/lib/locale/en.js), value is the text in the ezBookkeeping i18n files
+// key is in the original i18n text of vuetify (in vuetify/lib/locale/en.js), value is the text in the Bookkeeping i18n files
 const vuetifyI18nTextKeyMap: Record<string, string> = {
     'open': 'Open',
     'close': 'Close'

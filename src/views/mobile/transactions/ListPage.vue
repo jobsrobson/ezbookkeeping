@@ -268,6 +268,10 @@
                                             </div>
                                         </div>
                                         <div class="item-text">
+                                            <div class="transaction-description" v-if="transaction.installmentCount > 1">
+                                                <span>{{ tt('Installment') }} {{ transaction.installmentNumber }}/{{ transaction.installmentCount }}</span>
+                                            </div>
+                                            <div class="transaction-description" v-if="transaction.subscription"><span>{{ tt('Subscription') }}</span></div>
                                             <div class="transaction-description" v-if="transaction.comment">
                                                 <span>{{ transaction.comment }}</span>
                                             </div>

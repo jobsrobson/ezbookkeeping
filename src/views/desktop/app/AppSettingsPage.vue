@@ -1,29 +1,35 @@
 <template>
-    <div>
-        <v-tabs show-arrows v-model="activeTab">
-            <v-tab value="basicSetting" @click="pushRouter('basicSetting')">
-                <v-icon size="20" start :icon="mdiCogOutline"/>
-                {{ tt('Basic') }}
-            </v-tab>
-            <v-tab value="applicationLockSetting" @click="pushRouter('applicationLockSetting')">
-                <v-icon size="20" start :icon="mdiLockOpenOutline"/>
-                {{ tt('Application Lock') }}
-            </v-tab>
-            <v-tab value="statisticsSetting" @click="pushRouter('statisticsSetting')">
-                <v-icon size="20" start :icon="mdiChartPieOutline"/>
-                {{ tt('Statistics') }}
-            </v-tab>
-            <v-tab value="cloudSyncSetting" @click="pushRouter('cloudSyncSetting')">
-                <v-icon size="20" start :icon="mdiCloudOutline"/>
-                {{ tt('Settings Sync') }}
-            </v-tab>
-            <v-tab value="browserCacheSetting" @click="pushRouter('browserCacheSetting')">
-                <v-icon size="20" start :icon="mdiDatabaseClockOutline"/>
-                {{ tt('Browser Cache Management') }}
-            </v-tab>
-        </v-tabs>
+    <div class="user-settings-page">
+        <header class="user-settings-header">
+            <div class="user-settings-header__top">
+                <div class="user-settings-header__identity">
+                    <div class="user-settings-header__titles">
+                        <h1>{{ tt('Application Settings') }}</h1>
+                        <span>{{ activeTabTitle }}</span>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-        <v-window class="mt-4 disable-tab-transition" v-model="activeTab">
+        <nav class="user-settings-tabs" :aria-label="tt('Application Settings')">
+            <button type="button" class="user-settings-tab"
+                    :class="{ 'user-settings-tab--active': activeTab === 'basicSetting' }"
+                    @click="pushRouter('basicSetting')">{{ tt('Basic') }}</button>
+            <button type="button" class="user-settings-tab"
+                    :class="{ 'user-settings-tab--active': activeTab === 'applicationLockSetting' }"
+                    @click="pushRouter('applicationLockSetting')">{{ tt('Application Lock') }}</button>
+            <button type="button" class="user-settings-tab"
+                    :class="{ 'user-settings-tab--active': activeTab === 'statisticsSetting' }"
+                    @click="pushRouter('statisticsSetting')">{{ tt('Statistics') }}</button>
+            <button type="button" class="user-settings-tab"
+                    :class="{ 'user-settings-tab--active': activeTab === 'cloudSyncSetting' }"
+                    @click="pushRouter('cloudSyncSetting')">{{ tt('Settings Sync') }}</button>
+            <button type="button" class="user-settings-tab"
+                    :class="{ 'user-settings-tab--active': activeTab === 'browserCacheSetting' }"
+                    @click="pushRouter('browserCacheSetting')">{{ tt('Browser Cache Management') }}</button>
+        </nav>
+
+        <v-window class="user-settings-content disable-tab-transition" v-model="activeTab">
             <v-window-item value="basicSetting">
                 <app-basic-setting-tab/>
             </v-window-item>
@@ -54,18 +60,10 @@ import AppStatisticsSettingTab from './settings/tabs/AppStatisticsSettingTab.vue
 import AppCloudSyncSettingTab from './settings/tabs/AppCloudSyncSettingTab.vue';
 import AppBrowserCacheSettingTab from './settings/tabs/AppBrowserCacheSettingTab.vue';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter, onBeforeRouteUpdate } from 'vue-router';
 
 import { useI18n } from '@/locales/helpers.ts';
-
-import {
-    mdiCogOutline,
-    mdiLockOpenOutline,
-    mdiChartPieOutline,
-    mdiCloudOutline,
-    mdiDatabaseClockOutline
-} from '@mdi/js';
 
 const props = defineProps<{
     initTab?: string;
@@ -93,7 +91,23 @@ const activeTab = ref<string>((() => {
     return queryActiveTab;
 })());
 
+const activeTabTitle = computed<string>(() => {
+    switch (activeTab.value) {
+    case 'applicationLockSetting':
+        return tt('Application Lock');
+    case 'statisticsSetting':
+        return tt('Statistics');
+    case 'cloudSyncSetting':
+        return tt('Settings Sync');
+    case 'browserCacheSetting':
+        return tt('Browser Cache Management');
+    default:
+        return tt('Basic Settings');
+    }
+});
+
 const pushRouter = (tab: string) => {
+    activeTab.value = tab;
     router.push(`/app/settings?tab=${tab}`);
 };
 

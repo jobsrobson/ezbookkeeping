@@ -29,6 +29,12 @@ export class Transaction implements TransactionInfoResponse {
     public tagIds: string[];
     public comment: string;
     public editable: boolean;
+    public installmentGroupId: string;
+    public installmentNumber: number;
+    public installmentCount: number;
+    public installmentSummary?: TransactionInstallmentSummary;
+    public subscription: boolean;
+    public subscriptionTemplateId: string;
 
     private _pictures?: TransactionPicture[];
     private _geoLocation?: TransactionGeoLocation;
@@ -42,7 +48,7 @@ export class Transaction implements TransactionInfoResponse {
     private _gregorianCalendarDayOfMonth?: number = undefined; // only for displaying transaction in transaction list
     private _displayDayOfWeek?: WeekDay = undefined; // only for displaying transaction in transaction list
 
-    protected constructor(id: string, timeSequenceId: string, type: number, categoryId: string, time: number, timeZone: string | undefined, utcOffset: number, sourceAccountId: string, destinationAccountId: string, sourceAmount: number, destinationAmount: number, hideAmount: boolean, tagIds: string[], comment: string, editable: boolean) {
+    protected constructor(id: string, timeSequenceId: string, type: number, categoryId: string, time: number, timeZone: string | undefined, utcOffset: number, sourceAccountId: string, destinationAccountId: string, sourceAmount: number, destinationAmount: number, hideAmount: boolean, tagIds: string[], comment: string, editable: boolean, installmentGroupId: string = '', installmentNumber: number = 0, installmentCount: number = 0, installmentSummary?: TransactionInstallmentSummary, subscription: boolean = false, subscriptionTemplateId: string = '') {
         this.id = id;
         this.timeSequenceId = timeSequenceId;
         this.type = type;
@@ -57,6 +63,12 @@ export class Transaction implements TransactionInfoResponse {
         this.tagIds = tagIds;
         this.comment = comment;
         this.editable = editable;
+        this.installmentGroupId = installmentGroupId;
+        this.installmentNumber = installmentNumber;
+        this.installmentCount = installmentCount;
+        this.installmentSummary = installmentSummary;
+        this.subscription = subscription;
+        this.subscriptionTemplateId = subscriptionTemplateId;
         this.setCategoryId(categoryId);
     }
 
@@ -244,7 +256,9 @@ export class Transaction implements TransactionInfoResponse {
             pictureIds: this.getPictureIds(),
             comment: this.comment,
             geoLocation: this.getNormalizedGeoLocation(),
-            clientSessionId: clientSessionId
+            clientSessionId: clientSessionId,
+            installmentCount: this.installmentCount,
+            subscription: this.subscription
         };
     }
 
@@ -330,7 +344,13 @@ export class Transaction implements TransactionInfoResponse {
             transactionResponse.hideAmount,
             transactionResponse.tagIds,
             transactionResponse.comment,
-            transactionResponse.editable
+            transactionResponse.editable,
+            transactionResponse.installmentGroupId,
+            transactionResponse.installmentNumber,
+            transactionResponse.installmentCount,
+            transactionResponse.installmentSummary,
+            transactionResponse.subscription,
+            transactionResponse.subscriptionTemplateId || ''
         );
 
         if (transactionResponse.category) {
@@ -544,6 +564,8 @@ export interface TransactionCreateRequest {
     readonly comment: string;
     readonly geoLocation?: TransactionGeoLocationRequest;
     readonly clientSessionId: string;
+    readonly installmentCount?: number;
+    readonly subscription?: boolean;
 }
 
 export interface TransactionModifyRequest {
@@ -641,6 +663,7 @@ export interface TransactionListInMonthByPageRequest {
 export interface TransactionAllListRequest {
     readonly startTime: number;
     readonly endTime: number;
+    readonly accountIds?: string;
     readonly withPictures?: boolean;
 }
 
@@ -651,6 +674,22 @@ export interface TransactionReconciliationStatementRequest {
 }
 
 export type TransactionGeoLocationResponse = Coordinate;
+
+export interface TransactionInstallmentItem {
+    readonly transactionId: string;
+    readonly number: number;
+    readonly time: number;
+    readonly dueTime: number;
+    readonly amount: number;
+    readonly paid: boolean;
+}
+
+export interface TransactionInstallmentSummary {
+    readonly totalAmount: number;
+    readonly paidAmount: number;
+    readonly remainingAmount: number;
+    readonly items: TransactionInstallmentItem[];
+}
 
 export interface TransactionInfoResponse {
     readonly id: string;
@@ -673,6 +712,12 @@ export interface TransactionInfoResponse {
     readonly comment: string;
     readonly geoLocation?: TransactionGeoLocationResponse;
     readonly editable: boolean;
+    readonly installmentGroupId?: string;
+    readonly installmentNumber?: number;
+    readonly installmentCount?: number;
+    readonly installmentSummary?: TransactionInstallmentSummary;
+    readonly subscription?: boolean;
+    readonly subscriptionTemplateId?: string;
 }
 
 export interface TransactionStatisticRequest {
