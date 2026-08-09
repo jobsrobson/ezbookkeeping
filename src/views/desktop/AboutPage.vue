@@ -6,7 +6,7 @@
                     <div class="about-page__header-identity">
                         <div class="about-page__header-titles">
                             <h1>{{ tt('About') }}</h1>
-                            <span>Your personal finance experience</span>
+                            <span>{{ tt('Your personal finance experience') }}</span>
                         </div>
                     </div>
                 </div>
@@ -17,8 +17,8 @@
             <section class="about-overview-card">
                 <div class="about-overview-card__intro">
                     <span class="about-eyebrow">Bookkeeping fork</span>
-                    <img class="about-logo about-logo--light" src="/img/bookkeeping-logo-light.svg" alt="Bookkeeping"/>
-                    <img class="about-logo about-logo--dark" src="/img/bookkeeping-logo-dark.svg" alt="Bookkeeping"/>
+                    <img class="about-logo about-logo--light" src="/img/bookkeeping-logo-light.png" alt="Bookkeeping"/>
+                    <img class="about-logo about-logo--dark" src="/img/bookkeeping-logo-dark.png" alt="Bookkeeping"/>
                     <p class="about-overview-card__description">
                         An independent fork focused on a refined, practical bookkeeping experience.
                     </p>

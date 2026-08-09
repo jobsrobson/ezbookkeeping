@@ -9,3 +9,99 @@ go build -o ezbookkeeping-dev .
 npm run serve 
 
 
+COMPILAÇÃO
+
+Instruções para compilar para ARM64, subir a imagem no Git, baixar no B11 e atualizar o container.
+
+Entre no projeto:
+
+cd /home/jobsr/Documents/GitHub/ezbookkeeping
+
+Garanta que o builder ARM64 está selecionado:
+
+docker buildx use arm64-builder
+docker buildx inspect --bootstrap
+
+Você deve ver linux/arm64 em Platforms. Se algum dia você zerar o Docker e ARM64 sumir, reinstale o binfmt:
+
+docker run --privileged --rm tonistiigi/binfmt --install arm64
+
+e recrie o builder, se necessário:
+
+docker buildx create \
+  --name arm64-builder \
+  --driver docker-container \
+  --use
+
+docker buildx inspect --bootstrap
+
+Agora compile. Como atualmente seu deploy está na série 2.0.0-arm64, use:
+
+docker buildx build \
+  --platform linux/arm64 \
+  -t ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64 \
+  --load \
+  .
+
+Confirme:
+
+docker image inspect \
+  ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64 \
+  --format 'OS={{.Os}} ARCH={{.Architecture}}'
+
+Esperado:
+
+OS=linux ARCH=arm64
+
+Depois autentique no GitHub Container Registry, caso necessário:
+
+docker login ghcr.io -u jobsrobson
+
+Use seu GitHub Personal Access Token como senha. Em seguida:
+
+docker push ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64
+
+Quando aparecer o digest no final, a nova imagem já está no GHCR.
+
+Agora vá para o B11:
+
+ssh jobsr@aml-s9xx-box
+
+Baixe a imagem nova:
+
+docker pull ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64
+
+Depois pare e remova somente o container, sem mexer nos diretórios persistentes:
+
+docker stop ezbookkeeping
+docker rm ezbookkeeping
+
+Recrie exatamente com a configuração atual do B11:
+
+docker run -d \
+  --name ezbookkeeping \
+  --restart unless-stopped \
+  -p 192.168.1.69:8080:8080 \
+  -v /opt/ezbookkeeping/data:/ezbookkeeping/data \
+  -v /opt/ezbookkeeping/storage:/ezbookkeeping/storage \
+  -v /opt/ezbookkeeping/log:/ezbookkeeping/log \
+  ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64
+
+Isso preserva seus dados porque eles ficam fora do container:
+
+/opt/ezbookkeeping/data
+/opt/ezbookkeeping/storage
+/opt/ezbookkeeping/log
+
+Confira se subiu:
+
+docker ps
+
+Logs:
+
+docker logs ezbookkeeping --tail 100
+
+E confirme a imagem:
+
+docker inspect ezbookkeeping \
+  --format 'Image={{.Config.Image}} ID={{.Image}}'

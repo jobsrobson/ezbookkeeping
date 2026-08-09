@@ -118,6 +118,7 @@ export default defineConfig(() => {
                 injectRegister: false,
                 manifestFilename: 'manifest.json',
                 manifest: {
+                    id: './',
                     name: 'Bookkeeping',
                     short_name: 'Bookkeeping',
                     description: 'A lightweight, self-hosted personal finance app with a user-friendly interface and powerful bookkeeping features.',
@@ -126,18 +127,33 @@ export default defineConfig(() => {
                     start_url: './',
                     scope: './',
                     display: 'standalone',
+                    display_override: ['window-controls-overlay', 'standalone'],
                     related_applications: [],
                     prefer_related_applications: false,
                     icons: [
                         {
                             src: 'img/bookkeeping-192.png',
                             sizes: '192x192',
-                            type: 'image/png'
+                            type: 'image/png',
+                            purpose: 'any'
                         },
                         {
                             src: 'img/bookkeeping-512.png',
                             sizes: '512x512',
-                            type: 'image/png'
+                            type: 'image/png',
+                            purpose: 'any'
+                        },
+                        {
+                            src: 'img/bookkeeping-192-sq.png',
+                            sizes: '192x192',
+                            type: 'image/png',
+                            purpose: 'maskable'
+                        },
+                        {
+                            src: 'img/bookkeeping-512-sq.png',
+                            sizes: '512x512',
+                            type: 'image/png',
+                            purpose: 'maskable'
                         }
                     ],
                     share_target: {

@@ -265,8 +265,14 @@ defineExpose({
 <style scoped>
 .management-dialog__footer {
     flex: 0 0 auto;
-    padding: 12px 16px !important;
+    padding: 16px 16px !important;
     border-top: 1px solid rgb(var(--v-theme-muted-border));
     background: rgb(var(--v-theme-surface));
 }
+
+.management-dialog__footer-actions {
+    margin-top: 16px !important;
+}
+
+
 </style>

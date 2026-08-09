@@ -140,7 +140,7 @@
                     </router-link>
                 </li>
 
-                <li class="nav-link">
+                <li class="nav-link" v-if="DEDICATED_MOBILE_VERSION_ENABLED">
                     <button
                         type="button"
                         class="nav-action"
@@ -153,6 +153,23 @@
 
                         <span class="nav-item-title">
                             {{ tt('Use on Mobile Device') }}
+                        </span>
+                    </button>
+                </li>
+
+                <li class="nav-link" v-if="isPwaInstallAvailable">
+                    <button
+                        type="button"
+                        class="nav-action"
+                        @click="installApplication"
+                    >
+                        <v-icon
+                            class="nav-item-icon"
+                            :icon="mdiDownloadOutline"
+                        />
+
+                        <span class="nav-item-title">
+                            {{ tt('Install Application') }}
                         </span>
                     </button>
                 </li>
@@ -202,7 +219,7 @@
 
                     <v-menu
                         activator="parent"
-                        width="230"
+                        width="280"
                         location="top start"
                         offset="14px"
                     >
@@ -329,7 +346,36 @@
             </div>
         </main>
 
-        <switch-to-mobile-dialog v-model:show="showMobileQrCode" />
+        <switch-to-mobile-dialog v-if="DEDICATED_MOBILE_VERSION_ENABLED" v-model:show="showMobileQrCode" />
+
+        <v-btn
+            v-if="showGlobalAddTransactionButton"
+            class="global-add-transaction-button"
+            :class="{
+                'global-add-transaction-button--dragging': isDraggingGlobalAddTransactionButton,
+                'global-add-transaction-button--jelly': isGlobalAddTransactionButtonJelly
+            }"
+            :style="globalAddTransactionButtonStyle"
+            color="primary"
+            :icon="true"
+            :aria-label="tt('Add Transaction')"
+            @click="showGlobalAddTransactionDialog"
+            @pointerdown="startDraggingGlobalAddTransactionButton"
+            @pointermove="dragGlobalAddTransactionButton"
+            @pointerup="stopDraggingGlobalAddTransactionButton"
+            @pointercancel="stopDraggingGlobalAddTransactionButton"
+        >
+            <v-icon :icon="mdiPlus" size="30" />
+
+            <v-tooltip activator="parent" location="start">
+                {{ tt('Add Transaction') }}
+            </v-tooltip>
+        </v-btn>
+
+        <transaction-edit-dialog
+            ref="globalTransactionEditDialog"
+            :type="TransactionEditPageType.Transaction"
+        />
 
         <div
             class="layout-overlay"
@@ -350,16 +396,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue';
 import { useDisplay, useTheme } from 'vuetify';
 import { useRoute, useRouter } from 'vue-router';
 
 import SnackBar from '@/components/desktop/SnackBar.vue';
+import TransactionEditDialog from '@/views/desktop/transactions/list/dialogs/EditDialog.vue';
+import { TransactionEditPageType } from '@/views/base/transactions/TransactionEditPageBase.ts';
 
 import { ThemeType } from '@/core/theme.ts';
+import { DEDICATED_MOBILE_VERSION_ENABLED } from '@/consts/platform.ts';
 
 import { getShareCacheImageBlob } from '@/lib/cache.ts';
 import logger from '@/lib/logger.ts';
+import { installPwa, isPwaInstallAvailable } from '@/lib/pwa.ts';
 import { isUserScheduledTransactionEnabled } from '@/lib/server_settings.ts';
 import {
     getSystemTheme,
@@ -384,12 +434,14 @@ import {
     mdiCompassOutline,
     mdiCreditCardClockOutline,
     mdiCreditCardOutline,
+    mdiDownloadOutline,
     mdiHomeOutline,
     mdiInformationOutline,
     mdiListBoxOutline,
     mdiLockOutline,
     mdiLogout,
     mdiMenu,
+    mdiPlus,
     mdiPlusCircle,
     mdiSwapHorizontal,
     mdiTableLarge,
@@ -401,6 +453,7 @@ import {
 } from '@mdi/js';
 
 type SnackBarType = InstanceType<typeof SnackBar>;
+type TransactionEditDialogType = InstanceType<typeof TransactionEditDialog>;
 
 interface NavigationItem {
     to: string;
@@ -416,6 +469,17 @@ interface NavigationSection {
     items: NavigationItem[];
 }
 
+interface GlobalAddTransactionButtonDragState {
+    pointerId: number;
+    startPointerX: number;
+    startPointerY: number;
+    startButtonX: number;
+    startButtonY: number;
+    buttonWidth: number;
+    buttonHeight: number;
+    moved: boolean;
+}
+
 const display = useDisplay();
 const theme = useTheme();
 const route = useRoute();
@@ -429,15 +493,39 @@ const userStore = useUserStore();
 const desktopPageStore = useDesktopPageStore();
 
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
+const globalTransactionEditDialog = useTemplateRef<TransactionEditDialogType>('globalTransactionEditDialog');
 
 const logouting = ref(false);
 const isVerticalNavScrolled = ref(false);
 const showVerticalOverlayMenu = ref(false);
 const showLoading = ref(false);
 const showMobileQrCode = ref(false);
+const globalAddTransactionButtonX = ref<number | null>(null);
+const globalAddTransactionButtonY = ref<number | null>(null);
+const relativeGlobalAddTransactionButtonX = ref<number | null>(null);
+const relativeGlobalAddTransactionButtonY = ref<number | null>(null);
+const isDraggingGlobalAddTransactionButton = ref(false);
+const isGlobalAddTransactionButtonJelly = ref(false);
+
+let globalAddTransactionButtonDragState: GlobalAddTransactionButtonDragState | null = null;
+let suppressGlobalAddTransactionButtonClick = false;
+let globalAddTransactionButtonJellyTimeout: ReturnType<typeof setTimeout> | undefined;
 
 const mdAndDown = computed(() => display.mdAndDown.value);
 const currentRoutePath = computed(() => route.path);
+const showGlobalAddTransactionButton = computed(() => route.path !== '/');
+const globalAddTransactionButtonStyle = computed(() => {
+    if (globalAddTransactionButtonX.value === null || globalAddTransactionButtonY.value === null) {
+        return {};
+    }
+
+    return {
+        left: `${globalAddTransactionButtonX.value}px`,
+        top: `${globalAddTransactionButtonY.value}px`,
+        right: 'auto',
+        bottom: 'auto'
+    };
+});
 
 const currentNickName = computed(
     () => userStore.currentUserNickname || tt('User')
@@ -659,7 +747,138 @@ function showAddDialogInTransactionListPage(): void {
     desktopPageStore.setShowAddTransactionDialogInTransactionList();
 }
 
+function installApplication(): void {
+    installPwa().catch(error => {
+        snackbar.value?.showError(error);
+    });
+}
+
+function startDraggingGlobalAddTransactionButton(event: PointerEvent): void {
+    if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) {
+        return;
+    }
+
+    const button = event.currentTarget as HTMLElement;
+    const buttonRect = button.getBoundingClientRect();
+
+    button.setPointerCapture(event.pointerId);
+    suppressGlobalAddTransactionButtonClick = false;
+    globalAddTransactionButtonDragState = {
+        pointerId: event.pointerId,
+        startPointerX: event.clientX,
+        startPointerY: event.clientY,
+        startButtonX: buttonRect.left,
+        startButtonY: buttonRect.top,
+        buttonWidth: buttonRect.width,
+        buttonHeight: buttonRect.height,
+        moved: false
+    };
+}
+
+function dragGlobalAddTransactionButton(event: PointerEvent): void {
+    const dragState = globalAddTransactionButtonDragState;
+
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    const deltaX = event.clientX - dragState.startPointerX;
+    const deltaY = event.clientY - dragState.startPointerY;
+
+    if (!dragState.moved && Math.hypot(deltaX, deltaY) < 4) {
+        return;
+    }
+
+    dragState.moved = true;
+    isDraggingGlobalAddTransactionButton.value = true;
+
+    const viewportMargin = 8;
+    const maxX = Math.max(viewportMargin, window.innerWidth - dragState.buttonWidth - viewportMargin);
+    const maxY = Math.max(viewportMargin, window.innerHeight - dragState.buttonHeight - viewportMargin);
+
+    const buttonX = Math.min(Math.max(dragState.startButtonX + deltaX, viewportMargin), maxX);
+    const buttonY = Math.min(Math.max(dragState.startButtonY + deltaY, viewportMargin), maxY);
+
+    globalAddTransactionButtonX.value = buttonX;
+    globalAddTransactionButtonY.value = buttonY;
+    relativeGlobalAddTransactionButtonX.value = maxX > viewportMargin
+        ? (buttonX - viewportMargin) / (maxX - viewportMargin)
+        : 0;
+    relativeGlobalAddTransactionButtonY.value = maxY > viewportMargin
+        ? (buttonY - viewportMargin) / (maxY - viewportMargin)
+        : 0;
+
+    event.preventDefault();
+}
+
+function stopDraggingGlobalAddTransactionButton(event: PointerEvent): void {
+    const dragState = globalAddTransactionButtonDragState;
+
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+        return;
+    }
+
+    suppressGlobalAddTransactionButtonClick = dragState.moved;
+    isDraggingGlobalAddTransactionButton.value = false;
+    globalAddTransactionButtonDragState = null;
+
+    if (dragState.moved) {
+        isGlobalAddTransactionButtonJelly.value = false;
+        clearTimeout(globalAddTransactionButtonJellyTimeout);
+
+        requestAnimationFrame(() => {
+            isGlobalAddTransactionButtonJelly.value = true;
+            globalAddTransactionButtonJellyTimeout = setTimeout(() => {
+                isGlobalAddTransactionButtonJelly.value = false;
+            }, 500);
+        });
+    }
+}
+
+function keepGlobalAddTransactionButtonInViewport(): void {
+    if (relativeGlobalAddTransactionButtonX.value === null || relativeGlobalAddTransactionButtonY.value === null) {
+        return;
+    }
+
+    const viewportMargin = 8;
+    const buttonSize = 64;
+    const maxX = Math.max(viewportMargin, window.innerWidth - buttonSize - viewportMargin);
+    const maxY = Math.max(viewportMargin, window.innerHeight - buttonSize - viewportMargin);
+
+    globalAddTransactionButtonX.value = viewportMargin
+        + relativeGlobalAddTransactionButtonX.value * (maxX - viewportMargin);
+    globalAddTransactionButtonY.value = viewportMargin
+        + relativeGlobalAddTransactionButtonY.value * (maxY - viewportMargin);
+}
+
+function showGlobalAddTransactionDialog(event: MouseEvent): void {
+    if (suppressGlobalAddTransactionButtonClick) {
+        suppressGlobalAddTransactionButtonClick = false;
+        event.preventDefault();
+        return;
+    }
+
+    globalTransactionEditDialog.value?.open({}).then(result => {
+        if (result?.message) {
+            snackbar.value?.showMessage(result.message);
+        }
+    }).catch(error => {
+        if (error) {
+            snackbar.value?.showError(error);
+        }
+    });
+}
+
 clearShareImageCache();
+
+onMounted(() => {
+    window.addEventListener('resize', keepGlobalAddTransactionButtonInViewport);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', keepGlobalAddTransactionButtonInViewport);
+    clearTimeout(globalAddTransactionButtonJellyTimeout);
+});
 </script>
 
 <style>
@@ -677,6 +896,56 @@ clearShareImageCache();
     --sidebar-hover-bg: rgba(var(--v-theme-on-background), 0.06);
     --sidebar-active-bg: rgb(var(--v-theme-sidebar-selected));
     --sidebar-border: rgba(var(--v-border-color), 0.2);
+}
+
+.global-add-transaction-button {
+    position: fixed !important;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1000;
+    width: 64px !important;
+    height: 64px !important;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18) !important;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.global-add-transaction-button--dragging {
+    cursor: grabbing;
+    animation: global-add-transaction-button-drag 350ms ease-in-out infinite alternate;
+}
+
+.global-add-transaction-button--jelly {
+    animation: global-add-transaction-button-jelly 500ms ease-out;
+}
+
+@keyframes global-add-transaction-button-drag {
+    from {
+        transform: scale(1.03, 0.97) rotate(-1deg);
+    }
+
+    to {
+        transform: scale(0.97, 1.03) rotate(1deg);
+    }
+}
+
+@keyframes global-add-transaction-button-jelly {
+    0%, 100% {
+        transform: scale(1, 1);
+    }
+
+    30% {
+        transform: scale(1.12, 0.88);
+    }
+
+    55% {
+        transform: scale(0.94, 1.06);
+    }
+
+    75% {
+        transform: scale(1.03, 0.97);
+    }
 }
 
 /* =========================================================

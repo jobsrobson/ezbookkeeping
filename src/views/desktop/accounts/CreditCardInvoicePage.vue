@@ -52,6 +52,23 @@
                             />
                         </v-card>
                     </v-menu>
+
+                    <v-btn
+                        class="invoice-toolbar-icon-button"
+                        density="comfortable"
+                        color="default"
+                        variant="text"
+                        :icon="true"
+                        :disabled="!accountId"
+                        :aria-label="tt('More options')"
+                    >
+                        <v-icon :icon="mdiDotsVertical" />
+                        <v-menu activator="parent" location="bottom end">
+                            <v-list>
+                                <v-list-item :prepend-icon="mdiCalendarSync" :title="tt('Automatic Debit')" @click="openAutoPaymentDialog" />
+                            </v-list>
+                        </v-menu>
+                    </v-btn>
                 </div>
             </div>
 
@@ -98,79 +115,71 @@
         />
 
         <section class="invoice-workspace">
-            <div
+            <section
                 v-show="activeTab === 'invoice'"
                 v-if="selectedAccount"
-                class="invoice-summary-grid"
+                class="invoice-overview-card"
             >
-                <article class="invoice-card-block invoice-card-block--main">
-                    <div class="invoice-card-block__heading">
+                <div class="invoice-overview-card__main">
+                    <div class="invoice-overview-card__header">
+                        <div class="invoice-overview-card__eyebrow">
+                            <span>{{ tt('Invoice Total') }}</span>
+                            <v-chip v-if="invoicePaid" color="success" size="small" variant="tonal">{{ tt('Paid') }}</v-chip>
+                            <v-chip v-else-if="invoicePartiallyPaid" color="warning" size="small" variant="tonal">{{ tt('Partially Paid') }}</v-chip>
+                        </div>
+                        <div class="invoice-overview-card__icon">
+                            <v-icon :icon="mdiCreditCardClockOutline" size="20" />
+                        </div>
+                    </div>
+
+                    <strong class="invoice-overview-card__total">{{ formattedTotal }}</strong>
+
+                    <div v-if="invoicePartiallyPaid" class="invoice-overview-card__payment-summary">
                         <div>
-                            <span class="invoice-label">
-                                {{ tt('Invoice Total') }}
-                            </span>
-
-                            <strong class="invoice-total-value">
-                                {{ formattedTotal }}
-                            </strong>
+                            <span>{{ tt('Already Paid') }}</span>
+                            <strong>{{ formatTransactionAmount(paidAmount) }}</strong>
                         </div>
-
-                        <div class="invoice-card-block__icon">
-                            <v-icon
-                                :icon="mdiCreditCardClockOutline"
-                                size="20"
-                            />
+                        <div>
+                            <span>{{ tt('Remaining') }}</span>
+                            <strong>{{ formatTransactionAmount(remainingAmount) }}</strong>
                         </div>
                     </div>
 
-                    <div class="invoice-main-meta">
-                        <span>{{ selectedAccount.name }}</span>
-                        <span>{{ selectedMonthLabel }}</span>
+                    <div class="invoice-overview-card__footer">
+                        <div class="invoice-overview-card__account">
+                            <strong>{{ selectedAccount.name }}</strong>
+                            <span>{{ selectedMonthLabel }}</span>
+                        </div>
+                        <v-btn v-if="!invoicePaid" size="small" color="primary" variant="flat" :disabled="loading || invoiceTotal <= 0" @click="openPayInvoiceDialog">
+                            {{ tt('Pay Invoice') }}
+                        </v-btn>
                     </div>
-                </article>
+                </div>
 
-                <article class="invoice-card-block">
-                    <div class="invoice-card-block__icon">
-                        <v-icon
-                            :icon="mdiCalendarRange"
-                            size="19"
-                        />
-                    </div>
-
-                    <span class="invoice-label">
-                        {{ tt('Statement Period') }}
-                    </span>
-
-                    <strong class="invoice-card-block__value">
-                        {{ formatDate(period.start) }}
-                    </strong>
-
-                    <small>
-                        {{ tt('Until') }} {{ formatDate(period.end) }}
-                    </small>
-                </article>
-
-                <article class="invoice-card-block">
-                    <div class="invoice-card-block__icon invoice-card-block__icon--due">
-                        <v-icon
-                            :icon="mdiCalendarCheckOutline"
-                            size="19"
-                        />
+                <div class="invoice-overview-card__details">
+                    <div class="invoice-overview-detail">
+                        <div class="invoice-overview-detail__icon">
+                            <v-icon :icon="mdiCalendarRange" size="19" />
+                        </div>
+                        <div class="invoice-overview-detail__copy">
+                            <span>{{ tt('Statement Period') }}</span>
+                            <strong>{{ formatDate(period.start) }}</strong>
+                            <small>{{ tt('Until') }} {{ formatDate(period.end) }}</small>
+                        </div>
                     </div>
 
-                    <span class="invoice-label">
-                        {{ tt('Due Date') }}
-                    </span>
-
-                    <strong class="invoice-card-block__value">
-                        {{ formatDate(period.due) }}
-                    </strong>
-
-                    <small>
-                        {{ selectedAccount.name }}
-                    </small>
-                </article>
-            </div>
+                    <div class="invoice-overview-detail invoice-overview-detail--due">
+                        <div class="invoice-overview-detail__icon">
+                            <v-icon :icon="mdiCalendarCheckOutline" size="19" />
+                        </div>
+                        <div class="invoice-overview-detail__copy">
+                            <span>{{ tt('Due Date') }}</span>
+                            <strong>{{ formatDate(period.due) }}</strong>
+                            <small>{{ selectedAccount.name }}</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             <section
                 v-show="activeTab === 'invoice'"
@@ -178,36 +187,86 @@
             >
                 <div class="invoice-list-section__header">
                     <div>
-
                         <h2>{{ tt('Despesas') }}</h2>
+                        <span class="invoice-entry-count">
+                            {{ displayedTransactions.length }}
+                            / {{ transactions.length }}
+                            {{ tt('Transactions') }}
+                        </span>
                     </div>
 
-                    <span class="invoice-entry-count">
-                        {{ transactions.length }}
-                        {{ tt('Transactions') }}
-                    </span>
+                    <v-text-field
+                        v-model="searchKeyword"
+                        class="invoice-search"
+                        density="compact"
+                        variant="outlined"
+                        hide-details
+                        clearable
+                        :disabled="loading"
+                        :prepend-inner-icon="mdiMagnify"
+                        :placeholder="tt('Search invoice purchases')"
+                    />
                 </div>
 
                 <div
-                    v-if="transactions.length"
+                    v-if="displayedTransactions.length"
                     class="invoice-table-wrapper"
                 >
                     <v-table class="invoice-table">
                         <thead>
                             <tr>
-                                <th>{{ tt('Date') }}</th>
-                                <th>{{ tt('Description') }}</th>
-                                <th>{{ tt('Category') }}</th>
-                                <th>{{ tt('Type') }}</th>
+                                <th>
+                                    <invoice-column-menu
+                                        :label="tt('Date')"
+                                        column="date"
+                                        v-model:sort-by="sortBy"
+                                        v-model:sort-direction="sortDirection"
+                                    />
+                                </th>
+                                <th>
+                                    <invoice-column-menu
+                                        :label="tt('Description')"
+                                        column="description"
+                                        v-model:sort-by="sortBy"
+                                        v-model:sort-direction="sortDirection"
+                                    />
+                                </th>
+                                <th>
+                                    <invoice-column-menu
+                                        :label="selectedCategory || tt('Category')"
+                                        column="category"
+                                        :categories="availableCategories"
+                                        v-model:category="selectedCategory"
+                                        v-model:sort-by="sortBy"
+                                        v-model:sort-direction="sortDirection"
+                                    />
+                                </th>
+                                <th>
+                                    <invoice-column-menu
+                                        :label="selectedTypeLabel"
+                                        column="type"
+                                        v-model:type-filter="selectedType"
+                                        v-model:sort-by="sortBy"
+                                        v-model:sort-direction="sortDirection"
+                                    />
+                                </th>
                                 <th class="text-end">
-                                    {{ tt('Amount') }}
+                                    <invoice-column-menu
+                                        class="invoice-column-menu--amount"
+                                        :label="tt('Amount')"
+                                        column="amount"
+                                        v-model:min-amount="minimumAmount"
+                                        v-model:max-amount="maximumAmount"
+                                        v-model:sort-by="sortBy"
+                                        v-model:sort-direction="sortDirection"
+                                    />
                                 </th>
                             </tr>
                         </thead>
 
                         <tbody>
                             <tr
-                                v-for="transaction in transactions"
+                                v-for="transaction in displayedTransactions"
                                 :key="transaction.id"
                                 class="invoice-transaction-row"
                                 tabindex="0"
@@ -272,7 +331,7 @@
                 <v-empty-state
                     v-else-if="loaded && !loading"
                     class="invoice-empty"
-                    :title="tt('No expenses in this invoice')"
+                    :title="hasActiveListFilters ? tt('No purchases match the filters') : tt('No expenses in this invoice')"
                 />
             </section>
 
@@ -444,13 +503,16 @@
             ref="subscriptionEditDialog"
             :type="TransactionEditPageType.Template"
         />
+
+        <pay-credit-card-invoice-dialog ref="payInvoiceDialog" @paid="loadInvoice" />
+        <credit-card-auto-payment-dialog ref="autoPaymentDialog" @updated="loadInvoice" />
     </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 import { useTheme } from 'vuetify';
-import { mdiCreditCardClockOutline, mdiCalendarRange, mdiCalendarCheckOutline, mdiChevronLeft, mdiChevronRight, mdiCreditCardOutline, mdiWalletOutline, mdiTrendingUp } from '@mdi/js';
+import { mdiCreditCardClockOutline, mdiCalendarRange, mdiCalendarCheckOutline, mdiChevronLeft, mdiChevronRight, mdiCreditCardOutline, mdiWalletOutline, mdiTrendingUp, mdiMagnify, mdiDotsVertical, mdiCalendarSync } from '@mdi/js';
 import { AccountCategory } from '@/core/account.ts';
 import { TransactionType } from '@/core/transaction.ts';
 import type { Account } from '@/models/account.ts';
@@ -458,15 +520,21 @@ import { Transaction } from '@/models/transaction.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useI18n } from '@/locales/helpers.ts';
 import { parseBigDecimal } from '@/lib/numeral.ts';
-import { loadCreditCardInvoiceItems, type CreditCardInvoiceItem } from '@/lib/credit_card_invoice.ts';
+import { getCreditCardInvoicePeriod, loadCreditCardInvoiceItems, type CreditCardInvoiceItem } from '@/lib/credit_card_invoice.ts';
+import { getCreditCardInvoiceCycle } from '@/lib/credit_card_invoice_cycle.ts';
 import { getYearMonthDayDateTime, parseDateTimeFromUnixTime, parseDateTimeFromUnixTimeWithTimezoneOffset, getBillingCycleFirstUnixTimeBySpecifiedUnixTime, getBillingCycleLastUnixTimeBySpecifiedUnixTime, getUnixTimeAfterUnixTime } from '@/lib/datetime.ts';
 import MonthPicker from '@/components/common/MonthPicker.vue';
+import InvoiceColumnMenu, { type InvoiceSortColumn, type InvoiceSortDirection, type InvoiceTypeFilter } from '@/views/desktop/accounts/InvoiceColumnMenu.vue';
 import TransactionEditDialog from '@/views/desktop/transactions/list/dialogs/EditDialog.vue';
+import PayCreditCardInvoiceDialog from '@/views/desktop/accounts/dialogs/PayCreditCardInvoiceDialog.vue';
+import CreditCardAutoPaymentDialog from '@/views/desktop/accounts/dialogs/CreditCardAutoPaymentDialog.vue';
 import { TransactionEditPageType } from '@/views/base/transactions/TransactionEditPageBase.ts';
 import { TemplateType } from '@/core/template.ts';
 import services from '@/lib/services.ts';
 
 type TransactionEditDialogType = InstanceType<typeof TransactionEditDialog>;
+type PayCreditCardInvoiceDialogType = InstanceType<typeof PayCreditCardInvoiceDialog>;
+type CreditCardAutoPaymentDialogType = InstanceType<typeof CreditCardAutoPaymentDialog>;
 
 const props = defineProps<{ initAccountId?: string }>();
 const { tt, formatAmountToLocalizedNumeralsWithCurrency, formatDateTimeToLongDate, formatDateTimeToGregorianLikeLongYearMonth } = useI18n();
@@ -479,11 +547,20 @@ type InvoiceTab = 'invoice' | 'limit';
 
 const activeTab = ref<InvoiceTab>('invoice');
 const transactions = ref<CreditCardInvoiceItem[]>([]);
+const paidAmount = ref(0);
+const searchKeyword = ref<string | null>('');
+const sortBy = ref<InvoiceSortColumn>('date');
+const sortDirection = ref<InvoiceSortDirection>('desc');
+const selectedCategory = ref('');
+const selectedType = ref<InvoiceTypeFilter>('all');
+const minimumAmount = ref<number | null>(null);
+const maximumAmount = ref<number | null>(null);
 const previousInvoiceTotal = ref<number>(0);
 const nextInvoiceTotal = ref<number>(0);
 const loadingAdjacentInvoices = ref<boolean>(false);
 const loadingCreditLimit = ref<boolean>(false);
 const currentLimitInvoiceAmount = ref<number>(0);
+const currentLimitPaidAmount = ref<number>(0);
 const futureInstallmentAmount = ref<number>(0);
 const loading = ref(false);
 const loaded = ref(false);
@@ -491,13 +568,67 @@ const initialized = ref(false);
 const monthMenuVisible = ref(false);
 const transactionEditDialog = useTemplateRef<TransactionEditDialogType>('transactionEditDialog');
 const subscriptionEditDialog = useTemplateRef<TransactionEditDialogType>('subscriptionEditDialog');
+const payInvoiceDialog = useTemplateRef<PayCreditCardInvoiceDialogType>('payInvoiceDialog');
+const autoPaymentDialog = useTemplateRef<CreditCardAutoPaymentDialogType>('autoPaymentDialog');
 let loadSequence = 0;
 
 const creditCards = computed(() => accountsStore.allPlainAccounts.filter(account => account.category === AccountCategory.CreditCard.type && !!account.creditCardStatementDate));
 const selectedAccount = computed<Account | undefined>(() => creditCards.value.find(account => account.id === accountId.value));
 const canLoad = computed(() => !!selectedAccount.value && /^\d{4}-\d{2}$/.test(selectedMonth.value));
-const period = computed(() => getInvoicePeriod(selectedAccount.value, selectedMonth.value));
+const period = computed(() => getCreditCardInvoicePeriod(selectedAccount.value, selectedMonth.value));
 const total = computed(() => transactions.value.reduce((sum, transaction) => sum + transaction.sourceAmount, 0));
+const invoiceTotal = computed(() => total.value);
+const remainingAmount = computed(() => Math.max(invoiceTotal.value - paidAmount.value, 0));
+const invoicePaid = computed(() => invoiceTotal.value > 0 && remainingAmount.value <= 0);
+const invoicePartiallyPaid = computed(() => paidAmount.value > 0 && remainingAmount.value > 0);
+const availableCategories = computed(() => Array.from(new Set(
+    transactions.value.map(transaction => transaction.categoryName).filter(Boolean)
+)).sort((a, b) => a.localeCompare(b)));
+const selectedTypeLabel = computed(() => {
+    if (selectedType.value === 'installment') return tt('Installment');
+    if (selectedType.value === 'subscription') return tt('Subscription');
+    if (selectedType.value === 'expense') return tt('Expense');
+    return tt('Type');
+});
+const hasActiveListFilters = computed(() =>
+    !!searchKeyword.value?.trim() ||
+    !!selectedCategory.value ||
+    selectedType.value !== 'all' ||
+    minimumAmount.value !== null ||
+    maximumAmount.value !== null
+);
+const displayedTransactions = computed(() => {
+    const keyword = normalizeSearchText(searchKeyword.value);
+    const items = transactions.value.filter(transaction => {
+        if (selectedCategory.value && transaction.categoryName !== selectedCategory.value) return false;
+        if (selectedType.value !== 'all' && getInvoiceItemType(transaction) !== selectedType.value) return false;
+        if (minimumAmount.value !== null && transaction.sourceAmount < minimumAmount.value) return false;
+        if (maximumAmount.value !== null && transaction.sourceAmount > maximumAmount.value) return false;
+
+        if (keyword) {
+            const searchableText = [
+                transaction.comment,
+                transaction.categoryName,
+                getInvoiceItemTypeLabel(transaction),
+                formatTransactionDate(transaction.time, transaction.utcOffset),
+                formatTransactionAmount(transaction.sourceAmount)
+            ].join(' ');
+            if (!normalizeSearchText(searchableText).includes(keyword)) return false;
+        }
+
+        return true;
+    });
+
+    return items.sort((first, second) => {
+        let result: number;
+        if (sortBy.value === 'date') result = first.time - second.time;
+        else if (sortBy.value === 'amount') result = first.sourceAmount - second.sourceAmount;
+        else if (sortBy.value === 'category') result = first.categoryName.localeCompare(second.categoryName);
+        else if (sortBy.value === 'type') result = getInvoiceItemTypeLabel(first).localeCompare(getInvoiceItemTypeLabel(second));
+        else result = first.comment.localeCompare(second.comment);
+        return sortDirection.value === 'asc' ? result : -result;
+    });
+});
 const formattedTotal = computed(() => formatTransactionAmount(total.value));
 const formattedPreviousInvoiceTotal = computed<string>(() =>
     formatTransactionAmount(previousInvoiceTotal.value)
@@ -512,7 +643,8 @@ const totalCreditLimit = computed<number>(() =>
 );
 
 const usedCreditLimit = computed<number>(() =>
-    Math.max(0, currentLimitInvoiceAmount.value + futureInstallmentAmount.value)
+    Math.max(0, currentLimitInvoiceAmount.value - currentLimitPaidAmount.value) +
+    Math.max(0, futureInstallmentAmount.value)
 );
 
 const availableCreditLimit = computed<number>(() =>
@@ -551,26 +683,21 @@ const currentMonthLabel = computed(() => formatMonthLabel(now.getFullYear(), now
 */
 const isCurrentMonth = computed(() => selectedMonth.value === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
 
-function clampedDate(year: number, month: number, day: number, endOfDay = false): Date {
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    return new Date(year, month, Math.min(day, lastDay), endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0);
-}
-
-function getInvoicePeriod(account: Account | undefined, yearMonth: string): { start: Date, end: Date, due: Date } {
-    const [year, monthValue] = yearMonth.split('-').map(Number);
-    const month = (monthValue || 1) - 1;
-    const closingDay = account?.creditCardStatementDate || 1;
-    const dueDay = account?.creditCardDueDate || closingDay;
-    const previousClosing = clampedDate(year!, month - 1, closingDay, true);
-    const start = new Date(previousClosing.getFullYear(), previousClosing.getMonth(), previousClosing.getDate() + 1);
-    const end = clampedDate(year!, month, closingDay, true);
-    const dueMonth = dueDay <= closingDay ? month + 1 : month;
-    return { start, end, due: clampedDate(year!, dueMonth, dueDay) };
-}
-
 function formatDate(date: Date): string { return formatDateTimeToLongDate(parseDateTimeFromUnixTime(Math.floor(date.getTime() / 1000))); }
 function formatTransactionDate(time: number, utcOffset: number): string { return formatDateTimeToLongDate(parseDateTimeFromUnixTimeWithTimezoneOffset(time, utcOffset)); }
 function formatTransactionAmount(amount: number): string { return formatAmountToLocalizedNumeralsWithCurrency(parseBigDecimal(String(amount)), selectedAccount.value?.currency); }
+function normalizeSearchText(value: string | null): string { return (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim(); }
+function getInvoiceItemType(transaction: CreditCardInvoiceItem): Exclude<InvoiceTypeFilter, 'all'> {
+    if (transaction.installmentCount > 1) return 'installment';
+    if (transaction.subscription) return 'subscription';
+    return 'expense';
+}
+function getInvoiceItemTypeLabel(transaction: CreditCardInvoiceItem): string {
+    const type = getInvoiceItemType(transaction);
+    if (type === 'installment') return tt('Installment');
+    if (type === 'subscription') return tt('Subscription');
+    return tt('Expense');
+}
 function formatMonthLabel(year: number, month: number): string { return formatDateTimeToGregorianLikeLongYearMonth(getYearMonthDayDateTime(year, month, 1)); }
 function adjacentMonthLabel(offset: number): string { const [year, month] = selectedMonth.value.split('-').map(Number); const target = new Date(year!, month! - 1 + offset, 1); return formatMonthLabel(target.getFullYear(), target.getMonth() + 1); }
 function changeMonth(offset: number): void {
@@ -579,6 +706,20 @@ function changeMonth(offset: number): void {
     selectedMonth.value = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}`;
 }
 function goToCurrentMonth(): void { selectedMonth.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; }
+function openPayInvoiceDialog(): void {
+    if (!selectedAccount.value || invoicePaid.value) return;
+    payInvoiceDialog.value?.open({ accountId: selectedAccount.value.id, yearMonth: selectedMonth.value, invoiceLabel: selectedMonthLabel.value });
+}
+function openAutoPaymentDialog(): void { if (selectedAccount.value) void autoPaymentDialog.value?.open(selectedAccount.value.id); }
+
+async function loadInvoicePayment(sequence: number, account: Account, invoiceCycle: string): Promise<void> {
+    try {
+        const response = await services.getCreditCardInvoicePayment(account.id, invoiceCycle);
+        if (sequence === loadSequence) paidAmount.value = response.data.result?.paidAmount || 0;
+    } catch {
+        if (sequence === loadSequence) paidAmount.value = 0;
+    }
+}
 
 function editTransaction(transaction: CreditCardInvoiceItem): void {
     if (transaction.projected && transaction.templateId) {
@@ -621,7 +762,7 @@ async function loadInvoiceTotal(
     account: Account,
     yearMonth: string
 ): Promise<number> {
-    const targetPeriod = getInvoicePeriod(
+    const targetPeriod = getCreditCardInvoicePeriod(
         account,
         yearMonth
     );
@@ -693,6 +834,7 @@ async function loadCreditLimitUsage(sequence: number): Promise<void> {
     const account = selectedAccount.value;
 
     currentLimitInvoiceAmount.value = 0;
+    currentLimitPaidAmount.value = 0;
     futureInstallmentAmount.value = 0;
 
     if (!account?.creditCardStatementDate) {
@@ -720,7 +862,11 @@ async function loadCreditLimitUsage(sequence: number): Promise<void> {
     );
 
     try {
-        const [invoiceItems, futureTransactionsResponse] = await Promise.all([
+        const currentInvoiceCycle = getCreditCardInvoiceCycle({
+            start: new Date(invoiceStartTime * 1000),
+            end: new Date(invoiceEndTime * 1000)
+        });
+        const [invoiceItems, futureTransactionsResponse, invoicePaymentResponse] = await Promise.all([
             loadCreditCardInvoiceItems(
                 account,
                 new Date(invoiceStartTime * 1000),
@@ -730,7 +876,8 @@ async function loadCreditLimitUsage(sequence: number): Promise<void> {
                 startTime: invoiceEndTime + 1,
                 endTime: futureEndTime,
                 accountIds: account.id
-            })
+            }),
+            services.getCreditCardInvoicePayment(account.id, currentInvoiceCycle).catch(() => undefined)
         ]);
 
         if (sequence !== loadSequence) {
@@ -740,6 +887,8 @@ async function loadCreditLimitUsage(sequence: number): Promise<void> {
         currentLimitInvoiceAmount.value = invoiceItems
             .filter(item => !item.projected)
             .reduce((sum, item) => sum + item.sourceAmount, 0);
+
+        currentLimitPaidAmount.value = invoicePaymentResponse?.data.result?.paidAmount || 0;
 
         futureInstallmentAmount.value = Transaction.ofMulti(
             futureTransactionsResponse.data.result || []
@@ -793,6 +942,10 @@ async function loadInvoice(): Promise<void> {
         }
 
         transactions.value = currentItems;
+        void loadInvoicePayment(sequence, account, getCreditCardInvoiceCycle(period.value));
+        if (selectedCategory.value && !currentItems.some(item => item.categoryName === selectedCategory.value)) {
+            selectedCategory.value = '';
+        }
         loaded.value = true;
     } finally {
         if (sequence === loadSequence) {
@@ -805,6 +958,7 @@ watch([accountId, selectedMonth], () => {
     if (!initialized.value) return;
     loaded.value = false;
     transactions.value = [];
+    paidAmount.value = 0;
     void loadInvoice();
 });
 onMounted(async () => {
@@ -913,8 +1067,23 @@ onMounted(async () => {
     flex: 0 0 auto;
     grid-template-columns:
         minmax(210px, 1fr)
-        minmax(210px, 1fr);
+        minmax(210px, 1fr)
+        48px;
     gap: 10px;
+}
+
+.invoice-toolbar-icon-button {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    align-self: center;
+    justify-self: end;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+}
+
+.invoice-toolbar-icon-button:hover {
+    background: rgb(var(--v-theme-on-hover-background)) !important;
 }
 
 .month-calendar {
@@ -1019,43 +1188,40 @@ onMounted(async () => {
 
 /* Summary */
 
-.invoice-summary-grid {
+.invoice-overview-card {
     display: grid;
-    grid-template-columns:
-        minmax(0, 1.55fr)
-        minmax(0, 1fr)
-        minmax(0, 1fr);
-    gap: 14px;
-
+    grid-template-columns: minmax(0, 1.45fr) minmax(360px, 1fr);
     margin-bottom: 14px;
-}
-
-.invoice-card-block {
-    display: flex;
-    min-width: 0;
-    min-height: 172px;
-    flex-direction: column;
-
-    padding: 22px;
-
     border: 1px solid rgb(var(--v-theme-muted-border));
-    border-radius: 10px;
-
+    border-radius: 12px;
     background: rgb(var(--v-theme-surface));
+    overflow: hidden;
 }
 
-.invoice-card-block--main {
-    min-height: 172px;
+.invoice-overview-card__main {
+    min-width: 0;
+    padding: 22px 24px 20px;
 }
 
-.invoice-card-block__heading {
+.invoice-overview-card__header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
 }
 
-.invoice-card-block__icon {
+.invoice-overview-card__eyebrow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.invoice-overview-card__icon,
+.invoice-overview-detail__icon {
     display: grid;
     width: 36px;
     min-width: 36px;
@@ -1069,10 +1235,6 @@ onMounted(async () => {
     background: rgb(var(--v-theme-secondary));
 }
 
-.invoice-card-block__icon--due {
-    color: rgb(var(--v-theme-expense));
-}
-
 .invoice-label {
     display: block;
 
@@ -1082,46 +1244,115 @@ onMounted(async () => {
     font-weight: 500;
 }
 
-.invoice-total-value {
+.invoice-overview-card__total {
     display: block;
     margin-top: 10px;
     color: rgb(var(--v-theme-on-surface));
-    font-size: clamp(2rem, 4vw, 3rem);
+    font-size: clamp(2.25rem, 3.4vw, 3rem);
     font-weight: 500;
     letter-spacing: -0.02em;
     line-height: 1;
 }
 
-.invoice-main-meta {
+.invoice-overview-card__payment-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    max-width: 440px;
+    margin-top: 20px;
+}
+
+.invoice-overview-card__payment-summary > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.invoice-overview-card__payment-summary span {
+    color: rgb(var(--v-theme-tertiary));
+    font-size: 0.72rem;
+}
+
+.invoice-overview-card__payment-summary strong {
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.invoice-overview-card__payment-summary > div:last-child strong {
+    color: rgb(var(--v-theme-primary));
+}
+
+.invoice-overview-card__footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-top: auto;
-    padding-top: 12px;
+    margin-top: 20px;
+    padding-top: 14px;
     border-top: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.invoice-overview-card__account {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
     color: rgb(var(--v-theme-tertiary));
     font-size: 0.80rem;
 }
 
-.invoice-card-block > .invoice-label {
-    margin-top: auto;
-}
-
-.invoice-card-block__value {
-    margin-top: 7px;
+.invoice-overview-card__account strong {
     overflow: hidden;
     color: rgb(var(--v-theme-on-surface));
-    font-size: 1rem;
-    font-weight: 600;
+    font-weight: 550;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.invoice-card-block small {
-    margin-top: 5px;
+.invoice-overview-card__details {
+    display: grid;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    border-left: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.invoice-overview-detail {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 16px;
+    padding: 22px 24px;
+}
+
+.invoice-overview-detail + .invoice-overview-detail {
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.invoice-overview-detail--due .invoice-overview-detail__icon {
+    color: rgb(var(--v-theme-expense));
+}
+
+.invoice-overview-detail__copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.invoice-overview-detail__copy span,
+.invoice-overview-detail__copy small {
     color: rgb(var(--v-theme-tertiary));
     font-size: 0.80rem;
+}
+
+.invoice-overview-detail__copy strong {
+    margin-top: 4px;
+    color: rgb(var(--v-theme-on-surface));
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.invoice-overview-detail__copy small {
+    margin-top: 3px;
 }
 
 /* List */
@@ -1145,7 +1376,7 @@ onMounted(async () => {
 }
 
 .invoice-list-section__header h2 {
-    margin: 5px 0 0;
+    margin: 0 0 4px;
 
     color: rgb(var(--v-theme-on-surface));
 
@@ -1155,12 +1386,18 @@ onMounted(async () => {
 }
 
 .invoice-entry-count {
+    display: block;
     flex: 0 0 auto;
 
     color: rgb(var(--v-theme-tertiary));
 
     font-size: 0.68rem;
     font-weight: 500;
+}
+
+.invoice-search {
+    width: min(360px, 45%);
+    flex: 0 1 360px;
 }
 
 .invoice-table-wrapper {
@@ -1189,6 +1426,10 @@ onMounted(async () => {
     font-weight: 600 !important;
     letter-spacing: 0.035em;
     text-transform: uppercase;
+}
+
+.invoice-table :deep(th:last-child .invoice-column-menu) {
+    margin-left: auto;
 }
 
 .invoice-table :deep(td) {
@@ -1454,6 +1695,16 @@ onMounted(async () => {
  * ======================================================= */
 
 @media (max-width: 600px) {
+    .invoice-list-section__header {
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+
+    .invoice-search {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
     .invoice-workspace {
         padding-bottom: 0;
     }
@@ -1788,12 +2039,8 @@ onMounted(async () => {
         padding-top: 28px;
     }
 
-    .invoice-summary-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .invoice-card-block--main {
-        grid-column: 1 / -1;
+    .invoice-overview-card {
+        grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr);
     }
 }
 
@@ -1802,12 +2049,20 @@ onMounted(async () => {
         grid-template-columns: 1fr;
     }
 
-    .invoice-summary-grid {
+    .invoice-overview-card {
         grid-template-columns: 1fr;
     }
 
-    .invoice-card-block--main {
-        grid-column: auto;
+    .invoice-overview-card__details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: none;
+        border-top: 1px solid rgb(var(--v-theme-muted-border));
+        border-left: 0;
+    }
+
+    .invoice-overview-detail + .invoice-overview-detail {
+        border-top: 0;
+        border-left: 1px solid rgb(var(--v-theme-muted-border));
     }
 }
 
@@ -1841,9 +2096,30 @@ onMounted(async () => {
         padding-bottom: 28px;
     }
 
-    .invoice-card-block {
-        min-height: 146px;
+    .invoice-overview-card__main {
+        padding: 20px 18px 18px;
+    }
+
+    .invoice-overview-card__details {
+        grid-template-columns: 1fr;
+    }
+
+    .invoice-overview-detail {
         padding: 18px;
+    }
+
+    .invoice-overview-detail + .invoice-overview-detail {
+        border-top: 1px solid rgb(var(--v-theme-muted-border));
+        border-left: 0;
+    }
+
+    .invoice-overview-card__footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .invoice-overview-card__footer .v-btn {
+        width: 100%;
     }
 
     .invoice-list-section__header {
@@ -1855,10 +2131,6 @@ onMounted(async () => {
         margin-top: 2px;
     }
 
-    .invoice-main-meta {
-        align-items: flex-start;
-        flex-direction: column;
-    }
 }
 
 /*

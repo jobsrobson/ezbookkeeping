@@ -1,5 +1,7 @@
 import uaParser from 'ua-parser-js';
 
+import { DEDICATED_MOBILE_VERSION_ENABLED } from '@/consts/platform.ts';
+
 function isMobileDevice(): boolean {
     if (!navigator.userAgent) {
         return false;
@@ -28,7 +30,7 @@ function navigate(type: string): void {
     }
 }
 
-if (isMobileDevice()) {
+if (DEDICATED_MOBILE_VERSION_ENABLED && isMobileDevice()) {
     navigate('mobile');
 } else {
     navigate('desktop');

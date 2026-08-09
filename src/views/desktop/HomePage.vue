@@ -467,6 +467,7 @@ import {
 import { BIG_DECIMAL_ZERO, parseBigDecimal } from '@/lib/numeral.ts';
 import services from '@/lib/services.ts';
 import { loadCreditCardInvoiceItems } from '@/lib/credit_card_invoice.ts';
+import { getCreditCardInvoiceCycle } from '@/lib/credit_card_invoice_cycle.ts';
 import {
     getUnixTimeBeforeUnixTime,
     getUnixTimeAfterUnixTime,
@@ -542,6 +543,7 @@ const loadingOverview = ref<boolean>(true);
 const loadingCreditLimit = ref<boolean>(false);
 const selectedCreditCardId = ref<string>('');
 const currentInvoiceAmount = ref<number>(0);
+const currentInvoicePaidAmount = ref<number>(0);
 const futureInstallmentAmount = ref<number>(0);
 let creditLimitLoadSequence = 0;
 
@@ -566,7 +568,8 @@ const selectedCreditCard = computed<Account | undefined>(() =>
 const usedCreditLimit = computed<number>(() =>
     Math.max(
         0,
-        currentInvoiceAmount.value +
+        currentInvoiceAmount.value -
+            currentInvoicePaidAmount.value +
             futureInstallmentAmount.value
     )
 );
@@ -617,6 +620,7 @@ async function loadCreditLimitUsage(): Promise<void> {
     const sequence = ++creditLimitLoadSequence;
 
     currentInvoiceAmount.value = 0;
+    currentInvoicePaidAmount.value = 0;
     futureInstallmentAmount.value = 0;
 
     if (!account?.creditCardStatementDate) {
@@ -658,9 +662,14 @@ async function loadCreditLimitUsage(): Promise<void> {
     );
 
     try {
+        const currentInvoiceCycle = getCreditCardInvoiceCycle({
+            start: invoiceStart,
+            end: invoiceEnd
+        });
         const [
             invoiceItems,
-            futureTransactionsResponse
+            futureTransactionsResponse,
+            invoicePaymentResponse
         ] = await Promise.all([
             loadCreditCardInvoiceItems(
                 account,
@@ -672,7 +681,13 @@ async function loadCreditLimitUsage(): Promise<void> {
                 startTime: invoiceEndTime + 1,
                 endTime: futureEndTime,
                 accountIds: account.id
-            })
+            }),
+            services
+                .getCreditCardInvoicePayment(
+                    account.id,
+                    currentInvoiceCycle
+                )
+                .catch(() => undefined)
         ]);
 
         if (sequence !== creditLimitLoadSequence) {
@@ -686,6 +701,9 @@ async function loadCreditLimitUsage(): Promise<void> {
                     total + item.sourceAmount,
                 0
             );
+
+        currentInvoicePaidAmount.value =
+            invoicePaymentResponse?.data.result?.paidAmount || 0;
 
         futureInstallmentAmount.value =
             Transaction.ofMulti(
@@ -724,6 +742,21 @@ watch(creditCards, cards => {
 watch(selectedCreditCardId, () => {
     void loadCreditLimitUsage();
 });
+
+watch(
+    [
+        () => accountsStore.accountListStateInvalid,
+        () => overviewStore.transactionOverviewStateInvalid
+    ],
+    ([accountListStateInvalid, transactionOverviewStateInvalid]) => {
+        if (
+            !loadingOverview.value &&
+            (accountListStateInvalid || transactionOverviewStateInvalid)
+        ) {
+            reload(false);
+        }
+    }
+);
 
 function getPeriodIncome(key: string): string {
     const item = (transactionOverview.value as any)?.[key];

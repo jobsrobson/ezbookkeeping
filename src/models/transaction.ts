@@ -35,6 +35,7 @@ export class Transaction implements TransactionInfoResponse {
     public installmentSummary?: TransactionInstallmentSummary;
     public subscription: boolean;
     public subscriptionTemplateId: string;
+    public creditCardInvoiceCycle: string;
 
     private _pictures?: TransactionPicture[];
     private _geoLocation?: TransactionGeoLocation;
@@ -48,7 +49,7 @@ export class Transaction implements TransactionInfoResponse {
     private _gregorianCalendarDayOfMonth?: number = undefined; // only for displaying transaction in transaction list
     private _displayDayOfWeek?: WeekDay = undefined; // only for displaying transaction in transaction list
 
-    protected constructor(id: string, timeSequenceId: string, type: number, categoryId: string, time: number, timeZone: string | undefined, utcOffset: number, sourceAccountId: string, destinationAccountId: string, sourceAmount: number, destinationAmount: number, hideAmount: boolean, tagIds: string[], comment: string, editable: boolean, installmentGroupId: string = '', installmentNumber: number = 0, installmentCount: number = 0, installmentSummary?: TransactionInstallmentSummary, subscription: boolean = false, subscriptionTemplateId: string = '') {
+    protected constructor(id: string, timeSequenceId: string, type: number, categoryId: string, time: number, timeZone: string | undefined, utcOffset: number, sourceAccountId: string, destinationAccountId: string, sourceAmount: number, destinationAmount: number, hideAmount: boolean, tagIds: string[], comment: string, editable: boolean, installmentGroupId: string = '', installmentNumber: number = 0, installmentCount: number = 0, installmentSummary?: TransactionInstallmentSummary, subscription: boolean = false, subscriptionTemplateId: string = '', creditCardInvoiceCycle: string = '') {
         this.id = id;
         this.timeSequenceId = timeSequenceId;
         this.type = type;
@@ -69,6 +70,7 @@ export class Transaction implements TransactionInfoResponse {
         this.installmentSummary = installmentSummary;
         this.subscription = subscription;
         this.subscriptionTemplateId = subscriptionTemplateId;
+        this.creditCardInvoiceCycle = creditCardInvoiceCycle;
         this.setCategoryId(categoryId);
     }
 
@@ -258,7 +260,8 @@ export class Transaction implements TransactionInfoResponse {
             geoLocation: this.getNormalizedGeoLocation(),
             clientSessionId: clientSessionId,
             installmentCount: this.installmentCount,
-            subscription: this.subscription
+            subscription: this.subscription,
+            creditCardInvoiceCycle: this.creditCardInvoiceCycle || undefined
         };
     }
 
@@ -350,7 +353,8 @@ export class Transaction implements TransactionInfoResponse {
             transactionResponse.installmentCount,
             transactionResponse.installmentSummary,
             transactionResponse.subscription,
-            transactionResponse.subscriptionTemplateId || ''
+            transactionResponse.subscriptionTemplateId || '',
+            transactionResponse.creditCardInvoiceCycle || ''
         );
 
         if (transactionResponse.category) {
@@ -566,6 +570,7 @@ export interface TransactionCreateRequest {
     readonly clientSessionId: string;
     readonly installmentCount?: number;
     readonly subscription?: boolean;
+    readonly creditCardInvoiceCycle?: string;
 }
 
 export interface TransactionModifyRequest {
@@ -718,6 +723,25 @@ export interface TransactionInfoResponse {
     readonly installmentSummary?: TransactionInstallmentSummary;
     readonly subscription?: boolean;
     readonly subscriptionTemplateId?: string;
+    readonly creditCardInvoiceCycle?: string;
+}
+
+export interface CreditCardInvoicePaymentResponse {
+    readonly paidAmount: number;
+}
+
+export interface CreditCardAutoPaymentResponse {
+    readonly enabled: boolean;
+    readonly creditCardAccountId: string;
+    readonly sourceAccountId: string;
+    readonly dueDay: number;
+}
+
+export interface CreditCardAutoPaymentUpdateRequest {
+    readonly enabled: boolean;
+    readonly creditCardAccountId: string;
+    readonly sourceAccountId: string;
+    readonly transferCategoryId: string;
 }
 
 export interface TransactionStatisticRequest {

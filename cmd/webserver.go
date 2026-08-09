@@ -394,6 +394,9 @@ func startWebServer(c *core.CliContext) error {
 
 			// Transactions
 			apiV1Route.GET("/transactions/count.json", bindApi(api.Transactions.TransactionCountHandler, config))
+			apiV1Route.GET("/transactions/credit_card_invoice_payment.json", bindApi(api.Transactions.CreditCardInvoicePaymentHandler, config))
+			apiV1Route.GET("/transactions/credit_card_auto_payment.json", bindApi(api.Transactions.CreditCardAutoPaymentGetHandler, config))
+			apiV1Route.POST("/transactions/credit_card_auto_payment.json", bindApi(api.Transactions.CreditCardAutoPaymentUpdateHandler, config))
 			apiV1Route.GET("/transactions/list.json", bindApi(api.Transactions.TransactionListHandler, config))
 			apiV1Route.GET("/transactions/list/by_month.json", bindApi(api.Transactions.TransactionMonthListHandler, config))
 			apiV1Route.GET("/transactions/list/all.json", bindApi(api.Transactions.TransactionListAllHandler, config))

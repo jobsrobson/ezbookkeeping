@@ -125,31 +125,33 @@ const (
 
 // Transaction represents transaction data stored in database
 type Transaction struct {
-	TransactionId          int64             `xorm:"PK"`
-	Uid                    int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
-	Deleted                bool              `xorm:"INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
-	Type                   TransactionDbType `xorm:"INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
-	CategoryId             int64             `xorm:"INDEX(IDX_transaction_uid_deleted_category_id_time) NOT NULL"`
-	AccountId              int64             `xorm:"INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
-	TransactionTime        int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) NOT NULL"`
-	TimezoneUtcOffset      int16             `xorm:"NOT NULL"`
-	Amount                 int64             `xorm:"NOT NULL"`
-	RelatedId              int64             `xorm:"NOT NULL"`
-	RelatedAccountId       int64             `xorm:"NOT NULL"`
-	RelatedAccountAmount   int64             `xorm:"NOT NULL"`
-	HideAmount             bool              `xorm:"NOT NULL"`
-	Comment                string            `xorm:"VARCHAR(255) NOT NULL"`
-	GeoLongitude           float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
-	GeoLatitude            float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
-	CreatedIp              string            `xorm:"VARCHAR(39)"`
-	ScheduledCreated       bool
-	InstallmentGroupId     int64 `xorm:"INDEX(IDX_transaction_uid_deleted_installment_group_id)"`
-	InstallmentNumber      int16
-	InstallmentCount       int16
-	SubscriptionTemplateId int64 `xorm:"INDEX"`
-	CreatedUnixTime        int64
-	UpdatedUnixTime        int64
-	DeletedUnixTime        int64
+	TransactionId                int64             `xorm:"PK"`
+	Uid                          int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
+	Deleted                      bool              `xorm:"INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_time_longitude_latitude) NOT NULL"`
+	Type                         TransactionDbType `xorm:"INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
+	CategoryId                   int64             `xorm:"INDEX(IDX_transaction_uid_deleted_category_id_time) NOT NULL"`
+	AccountId                    int64             `xorm:"INDEX(IDX_transaction_uid_deleted_account_id_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) NOT NULL"`
+	TransactionTime              int64             `xorm:"UNIQUE(UQE_transaction_uid_time) INDEX(IDX_transaction_uid_deleted_time) INDEX(IDX_transaction_uid_deleted_type_time) INDEX(IDX_transaction_uid_deleted_type_account_id_time) INDEX(IDX_transaction_uid_deleted_category_id_time) INDEX(IDX_transaction_uid_deleted_account_id_time) NOT NULL"`
+	TimezoneUtcOffset            int16             `xorm:"NOT NULL"`
+	Amount                       int64             `xorm:"NOT NULL"`
+	RelatedId                    int64             `xorm:"NOT NULL"`
+	RelatedAccountId             int64             `xorm:"NOT NULL"`
+	RelatedAccountAmount         int64             `xorm:"NOT NULL"`
+	HideAmount                   bool              `xorm:"NOT NULL"`
+	Comment                      string            `xorm:"VARCHAR(255) NOT NULL"`
+	GeoLongitude                 float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
+	GeoLatitude                  float64           `xorm:"INDEX(IDX_transaction_uid_deleted_time_longitude_latitude)"`
+	CreatedIp                    string            `xorm:"VARCHAR(39)"`
+	ScheduledCreated             bool
+	InstallmentGroupId           int64 `xorm:"INDEX(IDX_transaction_uid_deleted_installment_group_id)"`
+	InstallmentNumber            int16
+	InstallmentCount             int16
+	SubscriptionTemplateId       int64  `xorm:"INDEX"`
+	CreditCardInvoiceCycle       string `xorm:"-"`
+	UpdateCreditCardInvoiceCycle bool   `xorm:"-"`
+	CreatedUnixTime              int64
+	UpdatedUnixTime              int64
+	DeletedUnixTime              int64
 }
 
 // TransactionWithAccountBalance represents a transaction item with account balance
@@ -167,22 +169,23 @@ type TransactionGeoLocationRequest struct {
 
 // TransactionCreateRequest represents all parameters of transaction creation request
 type TransactionCreateRequest struct {
-	Type                 TransactionType                `json:"type" binding:"required"`
-	CategoryId           int64                          `json:"categoryId,string"`
-	Time                 int64                          `json:"time" binding:"required,min=1"`
-	UtcOffset            int16                          `json:"utcOffset" binding:"min=-720,max=840"`
-	SourceAccountId      int64                          `json:"sourceAccountId,string" binding:"required,min=1"`
-	DestinationAccountId int64                          `json:"destinationAccountId,string" binding:"min=0"`
-	SourceAmount         int64                          `json:"sourceAmount" binding:"validTransactionAmount"`
-	DestinationAmount    int64                          `json:"destinationAmount" binding:"validTransactionAmount"`
-	HideAmount           bool                           `json:"hideAmount"`
-	TagIds               []string                       `json:"tagIds"`
-	PictureIds           []string                       `json:"pictureIds"`
-	Comment              string                         `json:"comment" binding:"max=255"`
-	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
-	ClientSessionId      string                         `json:"clientSessionId"`
-	InstallmentCount     int16                          `json:"installmentCount" binding:"min=0,max=120"`
-	Subscription         bool                           `json:"subscription"`
+	Type                   TransactionType                `json:"type" binding:"required"`
+	CategoryId             int64                          `json:"categoryId,string"`
+	Time                   int64                          `json:"time" binding:"required,min=1"`
+	UtcOffset              int16                          `json:"utcOffset" binding:"min=-720,max=840"`
+	SourceAccountId        int64                          `json:"sourceAccountId,string" binding:"required,min=1"`
+	DestinationAccountId   int64                          `json:"destinationAccountId,string" binding:"min=0"`
+	SourceAmount           int64                          `json:"sourceAmount" binding:"validTransactionAmount"`
+	DestinationAmount      int64                          `json:"destinationAmount" binding:"validTransactionAmount"`
+	HideAmount             bool                           `json:"hideAmount"`
+	TagIds                 []string                       `json:"tagIds"`
+	PictureIds             []string                       `json:"pictureIds"`
+	Comment                string                         `json:"comment" binding:"max=255"`
+	GeoLocation            *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
+	ClientSessionId        string                         `json:"clientSessionId"`
+	InstallmentCount       int16                          `json:"installmentCount" binding:"min=0,max=120"`
+	Subscription           bool                           `json:"subscription"`
+	CreditCardInvoiceCycle string                         `json:"creditCardInvoiceCycle" binding:"omitempty,len=21"`
 }
 
 // TransactionModifyRequest represents all parameters of transaction modification request
@@ -433,6 +436,7 @@ type TransactionInfoResponse struct {
 	InstallmentSummary     *TransactionInstallmentSummaryResponse   `json:"installmentSummary,omitempty"`
 	Subscription           bool                                     `json:"subscription,omitempty"`
 	SubscriptionTemplateId int64                                    `json:"subscriptionTemplateId,string,omitempty"`
+	CreditCardInvoiceCycle string                                   `json:"creditCardInvoiceCycle,omitempty"`
 }
 
 // TransactionInstallmentItemResponse represents one installment in a purchase plan.
@@ -682,7 +686,26 @@ func (t *Transaction) ToTransactionInfoResponse(tagIds []int64, editable bool) *
 		InstallmentCount:       t.InstallmentCount,
 		Subscription:           t.SubscriptionTemplateId > 0,
 		SubscriptionTemplateId: t.SubscriptionTemplateId,
+		CreditCardInvoiceCycle: t.CreditCardInvoiceCycle,
 	}
+}
+
+// CreditCardInvoicePaymentMetadata maps the optional invoice link without changing normal transaction queries.
+type CreditCardInvoicePaymentMetadata struct {
+	TransactionId          int64  `xorm:"PK"`
+	CreditCardInvoiceCycle string `xorm:"VARCHAR(21) INDEX"`
+}
+
+// TableName returns the existing transaction table used by the optional payment metadata.
+func (CreditCardInvoicePaymentMetadata) TableName() string { return "transaction" }
+
+type CreditCardInvoicePaymentRequest struct {
+	AccountId    int64  `form:"account_id,string" binding:"required,min=1"`
+	InvoiceCycle string `form:"invoice_cycle" binding:"required,len=21"`
+}
+
+type CreditCardInvoicePaymentResponse struct {
+	PaidAmount int64 `json:"paidAmount"`
 }
 
 // GetTransactionAmountsRequestItems returns request items by query parameters

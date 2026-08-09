@@ -3521,4 +3521,9 @@ init(props);
     }
 }
 
+:deep(.transaction-gallery-container) {
+    padding: 16px 24px 24px !important;
+}
+
+
 </style>

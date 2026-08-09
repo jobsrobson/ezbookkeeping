@@ -119,33 +119,29 @@
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
                                                   v-model="transaction.sourceAmount"/>
                                 </v-col>
-                                <template v-if="isCreditCardExpense">
-                                    <v-col class="transaction-toggle-field" cols="12" md="6" v-if="mode === TransactionEditPageMode.Add">
-                                        <v-switch :label="tt('Installment Purchase')"
-                                                  :disabled="loading || submitting || recognizing"
-                                                  :model-value="transaction.installmentCount > 1"
-                                                  @update:model-value="transaction.installmentCount = $event ? 2 : 0; transaction.subscription = false" />
-                                    </v-col>
-                                    <v-col class="transaction-field" cols="12" md="6" :data-field-label="tt('Number of Installments')" v-if="mode === TransactionEditPageMode.Add && transaction.installmentCount > 1">
-                                        <v-text-field type="number"
-                                                      persistent-placeholder
-                                                      :min="2" :max="120"
-                                                      :label="tt('Number of Installments')"
-                                                      :disabled="loading || submitting || recognizing"
-                                                      v-model.number="transaction.installmentCount" />
-                                    </v-col>
-                                    <v-col class="transaction-toggle-field" cols="12" md="6" v-if="mode === TransactionEditPageMode.Add">
-                                        <v-switch :label="tt('Subscription')"
-                                                  :disabled="loading || submitting || recognizing"
-                                                  v-model="transaction.subscription"
-                                                  @update:model-value="transaction.installmentCount = 0" />
-                                    </v-col>
-                                </template>
-                                <v-col cols="12" v-if="mode === TransactionEditPageMode.View && transaction.subscription">
-                                    <v-alert type="info" variant="tonal" :title="tt('Subscription')">
-                                        {{ tt('This expense repeats monthly with the same amount and billing day.') }}
-                                    </v-alert>
-                                </v-col>
+<v-col
+    cols="12"
+    v-if="mode === TransactionEditPageMode.View && transaction.subscription"
+>
+    <div class="transaction-subscription-info">
+        <div class="transaction-subscription-info__icon">
+            <v-icon
+                :icon="mdiCalendarSyncOutline"
+                size="18"
+            />
+        </div>
+
+        <div class="transaction-subscription-info__content">
+            <div class="transaction-subscription-info__title">
+                {{ tt('Subscription') }}
+            </div>
+
+            <div class="transaction-subscription-info__description">
+                {{ tt('This expense repeats monthly with the same amount and billing day.') }}
+            </div>
+        </div>
+    </div>
+</v-col>
 
                                 <!-- Installment summary section -->
                                 <v-col
@@ -278,6 +274,17 @@
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
                                                   v-model="transaction.destinationAmount"/>
                                 </v-col>
+                                <v-col class="transaction-field" cols="12" md="12" :data-field-label="transactionDescriptionTitle">
+                                    <v-text-field
+                                        type="text"
+                                        persistent-placeholder
+                                        :readonly="mode === TransactionEditPageMode.View"
+                                        :disabled="loading || submitting || recognizing"
+                                        :label="transactionDescriptionTitle"
+                                        :placeholder="tt('Your transaction description')"
+                                        v-model="transaction.comment"
+                                    />
+                                </v-col>
                                 <v-col class="transaction-field" cols="12" md="12" :data-field-label="tt('Category')" v-if="transaction.type === TransactionType.Expense">
                                     <v-tooltip :disabled="hasVisibleExpenseCategories" :text="hasVisibleExpenseCategories ? '' : tt('No secondary expense categories are available')">
                                         <template v-slot:activator="{ props }">
@@ -375,6 +382,98 @@
                                         </template>
                                     </v-tooltip>
                                 </v-col>
+
+                                <!-- Credit card purchase options -->
+                                <v-col
+                                    class="transaction-credit-card-options-column"
+                                    cols="12"
+                                    v-if="mode === TransactionEditPageMode.Add && isCreditCardExpense"
+                                >
+                                    <section class="transaction-credit-card-options">
+                                        <div class="transaction-credit-card-options__header">
+                                            <div>
+                                                <span class="transaction-credit-card-options__eyebrow">
+                                                    {{ tt('Credit Card') }}
+                                                </span>
+                                                <h3>{{ tt('Purchase Options') }}</h3>
+                                            </div>
+
+                                            <span class="transaction-credit-card-options__hint">
+                                                {{ tt('Choose how this purchase should be handled') }}
+                                            </span>
+                                        </div>
+
+                                        <div class="transaction-credit-card-options__grid">
+                                            <div
+                                                class="transaction-credit-card-option"
+                                                :class="{ 'transaction-credit-card-option--active': transaction.installmentCount !== 0 }"
+                                            >
+                                                <div class="transaction-credit-card-option__content">
+                                                    <strong>{{ tt('Installment Purchase') }}</strong>
+                                                    <span>
+                                                        {{ tt('Split this purchase into monthly installments') }}
+                                                    </span>
+                                                </div>
+
+                                                <v-switch
+                                                    class="transaction-credit-card-option__switch"
+                                                    color="primary"
+                                                    density="compact"
+                                                    hide-details
+                                                    :disabled="loading || submitting || recognizing"
+                                                    :model-value="transaction.installmentCount !== 0"
+                                                    @update:model-value="transaction.installmentCount = $event ? 2 : 0; transaction.subscription = false"
+                                                />
+                                            </div>
+
+                                            <div
+                                                class="transaction-credit-card-option"
+                                                :class="{ 'transaction-credit-card-option--active': transaction.subscription }"
+                                            >
+                                                <div class="transaction-credit-card-option__content">
+                                                    <strong>{{ tt('Subscription') }}</strong>
+                                                    <span>
+                                                        {{ tt('Repeat this expense monthly with the same amount and billing day') }}
+                                                    </span>
+                                                </div>
+
+                                                <v-switch
+                                                    v-model="transaction.subscription"
+                                                    class="transaction-credit-card-option__switch"
+                                                    color="primary"
+                                                    density="compact"
+                                                    hide-details
+                                                    :disabled="loading || submitting || recognizing"
+                                                    @update:model-value="transaction.installmentCount = 0"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="transaction-credit-card-installments"
+                                            v-if="transaction.installmentCount !== 0"
+                                        >
+                                            <div class="transaction-credit-card-installments__text">
+                                                <strong>{{ tt('Number of Installments') }}</strong>
+                                                <span>
+                                                    {{ tt('Define how many monthly payments will be created') }}
+                                                </span>
+                                            </div>
+
+                                            <v-text-field
+                                                class="transaction-credit-card-installments__input"
+                                                type="number"
+                                                persistent-placeholder
+                                                hide-details
+                                                :min="2"
+                                                :max="120"
+                                                :disabled="loading || submitting || recognizing"
+                                                @blur="normalizeInstallmentCount"
+                                                v-model.number="transaction.installmentCount"
+                                            />
+                                        </div>
+                                    </section>
+                                </v-col>
                                 <v-col class="transaction-field" cols="12" md="6" :data-field-label="tt('Destination Account')" v-if="transaction.type === TransactionType.Transfer">
                                     <v-tooltip :disabled="!!allVisibleAccounts.length" :text="allVisibleAccounts.length ? '' : tt('No available account')">
                                         <template v-slot:activator="{ props }">
@@ -402,6 +501,8 @@
                                 </v-col>
                                 <v-col class="transaction-field" cols="12" md="6" :data-field-label="tt('Transaction Time')" v-if="type === TransactionEditPageType.Transaction">
                                     <date-time-select
+                                        class="transaction-time-picker"
+                                        menu-content-class="transaction-time-picker-menu"
                                         :readonly="mode === TransactionEditPageMode.View"
                                         :disabled="loading || submitting || recognizing || (mode === TransactionEditPageMode.Edit && transaction.type === TransactionType.ModifyBalance)"
                                         :label="tt('Transaction Time')"
@@ -491,18 +592,7 @@
                                         @tag:saving="onSavingTag"
                                     />
                                 </v-col>
-                                <v-col class="transaction-field" cols="12" md="12" :data-field-label="transactionDescriptionTitle">
-                                    <v-textarea
-                                        type="text"
-                                        persistent-placeholder
-                                        rows="3"
-                                        :readonly="mode === TransactionEditPageMode.View"
-                                        :disabled="loading || submitting || recognizing"
-                                        :label="transactionDescriptionTitle"
-                                        :placeholder="tt('Your transaction description (optional)')"
-                                        v-model="transaction.comment"
-                                    />
-                                </v-col>
+
                             </v-row>
                         </v-form>
                     </v-window-item>
@@ -756,6 +846,7 @@ import {
     mdiMenuDown,
     mdiImagePlusOutline,
     mdiTrashCanOutline,
+    mdiCalendarSyncOutline,
     mdiFullscreen
 } from '@mdi/js';
 
@@ -886,12 +977,30 @@ const isCreditCardExpense = computed<boolean>(() => {
     return transaction.value.type === TransactionType.Expense && account?.category === AccountCategory.CreditCard.type;
 });
 
+watch(isCreditCardExpense, (isCreditCard) => {
+    if (!isCreditCard && mode.value === TransactionEditPageMode.Add) {
+        transaction.value.installmentCount = 0;
+        transaction.value.subscription = false;
+    }
+});
+
 function displayInstallmentAmount(amount: number): string {
     return getDisplayAmount(parseBigDecimal(amount.toString(10)), false, sourceAccountCurrency.value);
 }
 
 function displayInstallmentDate(unixTime: number): string {
     return new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(new Date(unixTime * 1000));
+}
+
+function normalizeInstallmentCount(): void {
+    const installmentCount = Number(transaction.value.installmentCount);
+
+    if (!Number.isFinite(installmentCount) || installmentCount < 2) {
+        transaction.value.installmentCount = 2;
+        return;
+    }
+
+    transaction.value.installmentCount = Math.min(Math.trunc(installmentCount), 120);
 }
 
 const isTransactionModified = computed<boolean>(() => {
@@ -1873,23 +1982,193 @@ defineExpose({
     line-height: 1.35;
 }
 
-/* Switches */
+/* Credit card purchase options */
 
-.transaction-toggle-field .v-switch {
-    min-height: 38px;
-    padding: 2px 9px;
-
-    border: 1px solid rgb(var(--v-theme-muted-border));
-    border-radius: 6px;
-
-    background: rgb(var(--v-theme-surface));
+.transaction-credit-card-options-column {
+    padding-top: 2px;
 }
 
-.transaction-toggle-field .v-switch .v-label {
+.transaction-credit-card-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    width: 100%;
+    padding: 16px;
+
+    background: rgb(var(--v-theme-surface));
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 10px;
+}
+
+.transaction-credit-card-options__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.transaction-credit-card-options__header > div {
+    min-width: 0;
+}
+
+.transaction-credit-card-options__eyebrow {
+    display: block;
+    margin-bottom: 2px;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.68rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.transaction-credit-card-options__header h3 {
+    margin: 0;
+
     color: rgb(var(--v-theme-on-surface));
 
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.transaction-credit-card-options__hint {
+    max-width: 280px;
+
+    color: rgb(var(--v-theme-tertiary));
+
     font-size: 0.72rem;
-    font-weight: 500;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.transaction-credit-card-options__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.transaction-credit-card-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    min-width: 0;
+    min-height: 72px;
+    padding: 12px 14px;
+
+    background: rgb(var(--v-theme-background));
+    border: 1px solid rgb(var(--v-theme-muted-border));
+    border-radius: 8px;
+
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.transaction-credit-card-option--active {
+    background: rgba(var(--v-theme-primary), 0.06);
+    border-color: rgba(var(--v-theme-primary), 0.35);
+}
+
+.transaction-credit-card-option__content {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.transaction-credit-card-option__content strong {
+    color: rgb(var(--v-theme-on-surface));
+
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.transaction-credit-card-option__content span {
+    margin-top: 3px;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.transaction-credit-card-option__switch {
+    flex: 0 0 auto;
+}
+
+.transaction-credit-card-installments {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding-top: 14px;
+
+    border-top: 1px solid rgb(var(--v-theme-muted-border));
+}
+
+.transaction-credit-card-installments__text {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.transaction-credit-card-installments__text strong {
+    color: rgb(var(--v-theme-on-surface));
+
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.transaction-credit-card-installments__text span {
+    margin-top: 2px;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.transaction-credit-card-installments__input {
+    flex: 0 0 120px;
+    width: 120px;
+}
+
+@media (max-width: 700px) {
+    .transaction-credit-card-options__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .transaction-credit-card-options__hint {
+        max-width: none;
+        text-align: left;
+    }
+
+    .transaction-credit-card-options__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .transaction-credit-card-installments {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .transaction-credit-card-installments__input {
+        flex: 1 1 auto;
+        width: 100%;
+    }
 }
 
 /* Alerts / cards */
@@ -2042,6 +2321,10 @@ defineExpose({
         var(--v-high-emphasis-opacity)
     ) !important;
     opacity: unset;
+}
+
+.transaction-time-picker-menu .dp--menu {
+    --dp-background-color: rgb(var(--v-theme-background));
 }
 
 /* Responsive */
@@ -3630,6 +3913,64 @@ defineExpose({
         background:
             rgb(var(--v-theme-on-surface)) !important;
     }
+}
+
+.transaction-subscription-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: calc(100% - 12px);
+    margin-inline: 6px;
+    padding: 12px 14px;
+
+    background: rgba(var(--v-theme-primary), 0.08);
+
+    border: 1px solid rgba(var(--v-theme-primary), 0.18);
+    border-radius: 10px;
+
+    box-sizing: border-box;
+}
+
+.transaction-subscription-info__icon {
+    display: grid;
+    flex: 0 0 32px;
+
+    width: 32px;
+    height: 32px;
+
+    place-items: center;
+
+    color: rgb(var(--v-theme-on-primary));
+
+    background: rgba(var(--v-theme-primary), 0.12);
+
+    border-radius: 8px;
+}
+
+.transaction-subscription-info__content {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.transaction-subscription-info__title {
+    color: rgb(var(--v-theme-on-surface));
+
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.transaction-subscription-info__description {
+    margin-top: 3px;
+
+    color: rgb(var(--v-theme-tertiary));
+
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.45;
 }
 
 </style>

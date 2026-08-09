@@ -131,6 +131,8 @@ body,
     filter: none !important;
 }
 
+
+
 :root .v-theme--dark {
     --default-icon-color: #fff;
     --ebk-dropdown-shadow: 0 12px 32px rgba(0, 0, 0, 0.34), 0 3px 10px rgba(0, 0, 0, 0.2);
@@ -947,4 +949,30 @@ html[dir="rtl"] .dp--main .dp--btn.dp--arrow-btn-nav {
 
 .v-pagination__item--is-active:hover {
      background: rgba(var(--v-theme-default), 0.2) !important;
+}
+
+
+/* CALENDAR */
+
+.dp--active {
+    background: rgba(var(--v-theme-primary), 1);
+    color: rgb(var(--v-theme-on-primary)) !important;
+    border-radius: 6px !important;
+}
+
+
+/* BOTÃO PRIMÁRIO DESATIVADO */
+.v-btn.v-btn--disabled.bg-primary {
+    opacity: 0.4;
+    background-color: rgb(var(--v-theme-primary-muted)) !important;
+    color: rgb(var(--v-theme-on-primary-muted)) !important;
+}
+
+.v-card > .v-card-text.transaction-gallery-container {
+    padding: 24px 24px 24px !important;
+}
+
+
+v-selection-control__input {
+    color: rgb(var(--v-theme-secondary)) !important;
 }

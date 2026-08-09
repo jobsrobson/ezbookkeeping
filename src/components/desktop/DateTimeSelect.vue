@@ -5,7 +5,7 @@
         :disabled="disabled"
         :clearable="!emptyValue ? clearable : false"
         :label="label"
-        :menu-props="{ contentClass: 'date-time-select-menu' }"
+        :menu-props="{ contentClass: ['date-time-select-menu', menuContentClass] }"
         v-model="dateTime"
         @paste="onPaste"
     >
@@ -113,6 +113,7 @@ const props = defineProps<{
     readonly?: boolean;
     clearable?: boolean;
     label?: string;
+    menuContentClass?: string;
 }>();
 
 const emit = defineEmits<{

@@ -19,6 +19,29 @@ export interface CreditCardInvoiceItem {
     readonly templateId?: string;
 }
 
+export interface CreditCardInvoicePeriod {
+    readonly start: Date;
+    readonly end: Date;
+    readonly due: Date;
+}
+
+function clampedDate(year: number, month: number, day: number, endOfDay = false): Date {
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDay), endOfDay ? 23 : 0, endOfDay ? 59 : 0, endOfDay ? 59 : 0);
+}
+
+export function getCreditCardInvoicePeriod(account: Account | undefined, yearMonth: string): CreditCardInvoicePeriod {
+    const [year, monthValue] = yearMonth.split('-').map(Number);
+    const month = (monthValue || 1) - 1;
+    const closingDay = account?.creditCardStatementDate || 1;
+    const dueDay = account?.creditCardDueDate || closingDay;
+    const previousClosing = clampedDate(year!, month - 1, closingDay, true);
+    const start = new Date(previousClosing.getFullYear(), previousClosing.getMonth(), previousClosing.getDate() + 1);
+    const end = clampedDate(year!, month, closingDay, true);
+    const dueMonth = dueDay <= closingDay ? month + 1 : month;
+    return { start, end, due: clampedDate(year!, dueMonth, dueDay) };
+}
+
 export async function loadCreditCardInvoiceItems(account: Account, start: Date, end: Date): Promise<CreditCardInvoiceItem[]> {
     const [transactionsResponse, templatesResponse] = await Promise.all([
         services.getAllTransactions({

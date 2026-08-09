@@ -11,8 +11,8 @@
         </f7-navbar>
 
         <f7-block class="about-mobile-hero">
-            <img class="about-mobile-logo about-mobile-logo--light" src="/img/bookkeeping-logo-light.svg" alt="Bookkeeping"/>
-            <img class="about-mobile-logo about-mobile-logo--dark" src="/img/bookkeeping-logo-dark.svg" alt="Bookkeeping"/>
+            <img class="about-mobile-logo about-mobile-logo--light" src="/img/bookkeeping-logo-light.png" alt="Bookkeeping"/>
+            <img class="about-mobile-logo about-mobile-logo--dark" src="/img/bookkeeping-logo-dark.png" alt="Bookkeeping"/>
             <span class="about-mobile-kicker">Independent fork</span>
             <h1>Bookkeeping</h1>
             <p>An independent fork focused on a refined, practical bookkeeping experience.</p>

@@ -79,6 +79,9 @@ import type {
     TransactionListInMonthByPageRequest,
     TransactionAllListRequest,
     TransactionInfoResponse,
+    CreditCardInvoicePaymentResponse,
+    CreditCardAutoPaymentResponse,
+    CreditCardAutoPaymentUpdateRequest,
     TransactionInfoPageWrapperResponse,
     TransactionInfoPageWrapperResponse2,
     TransactionReconciliationStatementRequest,
@@ -536,6 +539,15 @@ export default {
     },
     getAllTransactions: (req: TransactionAllListRequest): ApiResponsePromise<TransactionInfoResponse[]> => {
         return axios.get<ApiResponse<TransactionInfoResponse[]>>(`v1/transactions/list/all.json?trim_account=true&with_pictures=${!!req.withPictures}&trim_category=false&trim_tag=true&start_time=${req.startTime}&end_time=${req.endTime}&account_ids=${req.accountIds || ''}`);
+    },
+    getCreditCardInvoicePayment: (accountId: string, invoiceCycle: string): ApiResponsePromise<CreditCardInvoicePaymentResponse> => {
+        return axios.get<ApiResponse<CreditCardInvoicePaymentResponse>>(`v1/transactions/credit_card_invoice_payment.json?account_id=${accountId}&invoice_cycle=${encodeURIComponent(invoiceCycle)}&_=${Date.now()}`);
+    },
+    getCreditCardAutoPayment: (accountId: string): ApiResponsePromise<CreditCardAutoPaymentResponse> => {
+        return axios.get<ApiResponse<CreditCardAutoPaymentResponse>>(`v1/transactions/credit_card_auto_payment.json?account_id=${accountId}&_=${Date.now()}`);
+    },
+    updateCreditCardAutoPayment: (req: CreditCardAutoPaymentUpdateRequest): ApiResponsePromise<CreditCardAutoPaymentResponse> => {
+        return axios.post<ApiResponse<CreditCardAutoPaymentResponse>>('v1/transactions/credit_card_auto_payment.json', req);
     },
     getReconciliationStatements: (req: TransactionReconciliationStatementRequest): ApiResponsePromise<TransactionReconciliationStatementResponse> => {
         return axios.get<ApiResponse<TransactionReconciliationStatementResponse>>(`v1/transactions/reconciliation_statements.json?account_id=${req.accountId}&start_time=${req.startTime}&end_time=${req.endTime}`);

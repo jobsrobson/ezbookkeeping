@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"xorm.io/builder"
@@ -25,6 +26,8 @@ const pageCountForLoadTransactionAmounts = 1000
 type TransactionService struct {
 	ServiceUsingDB
 	ServiceUsingUuid
+	invoicePaymentSchemaMutex sync.Mutex
+	invoicePaymentSchemaReady bool
 }
 
 // Initialize a transaction service singleton instance
@@ -578,6 +581,37 @@ func (s *TransactionService) GetTransactionCount(c core.Context, uid int64, maxT
 // CreateTransaction saves a new transaction to database
 func (s *TransactionService) CreateTransaction(c core.Context, transaction *models.Transaction, tagIds []int64, pictureIds []int64) error {
 	return s.createTransaction(c, transaction, tagIds, pictureIds, nil)
+}
+
+func (s *TransactionService) EnsureCreditCardInvoicePaymentSchema() error {
+	s.invoicePaymentSchemaMutex.Lock()
+	defer s.invoicePaymentSchemaMutex.Unlock()
+	if s.invoicePaymentSchemaReady {
+		return nil
+	}
+	if err := s.ServiceUsingDB.container.UserDataStore.SyncStructs(new(models.CreditCardInvoicePaymentMetadata)); err != nil {
+		return err
+	}
+	s.invoicePaymentSchemaReady = true
+	return nil
+}
+
+func (s *TransactionService) GetCreditCardInvoicePaidAmount(c core.Context, uid int64, accountId int64, invoiceCycle string) (int64, error) {
+	result := struct {
+		PaidAmount int64 `xorm:"paid_amount"`
+	}{}
+	_, err := s.UserDataDB(uid).NewSession(c).
+		Table(new(models.Transaction)).
+		Select("COALESCE(SUM(related_account_amount), 0) AS paid_amount").
+		Where("uid=? AND deleted=? AND type=? AND related_account_id=? AND credit_card_invoice_cycle=?", uid, false, models.TRANSACTION_DB_TYPE_TRANSFER_OUT, accountId, invoiceCycle).
+		Get(&result)
+	return result.PaidAmount, err
+}
+
+func (s *TransactionService) GetCreditCardInvoiceCycle(c core.Context, uid int64, transactionId int64) (string, error) {
+	metadata := &models.CreditCardInvoicePaymentMetadata{}
+	_, err := s.UserDataDB(uid).NewSession(c).ID(transactionId).Get(metadata)
+	return metadata.CreditCardInvoiceCycle, err
 }
 
 // CreateTransactionWithSubscription saves a transaction and its monthly subscription schedule atomically.
@@ -1619,6 +1653,18 @@ func (s *TransactionService) ModifyTransaction(c core.Context, transaction *mode
 			}
 		} else if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_IN {
 			return errs.ErrTransactionTypeInvalid
+		}
+
+		if transaction.UpdateCreditCardInvoiceCycle {
+			metadata := &models.CreditCardInvoicePaymentMetadata{CreditCardInvoiceCycle: transaction.CreditCardInvoiceCycle}
+			if _, err = sess.ID(transaction.TransactionId).Cols("credit_card_invoice_cycle").Update(metadata); err != nil {
+				return err
+			}
+			if transaction.RelatedId > 0 {
+				if _, err = sess.ID(transaction.RelatedId).Cols("credit_card_invoice_cycle").Update(metadata); err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
@@ -2930,6 +2976,20 @@ func (s *TransactionService) doCreateTransaction(c core.Context, database *datas
 		} else if createdRows < 1 {
 			log.Errorf(c, "[transactions.doCreateTransaction] failed to add related transaction")
 			return errs.ErrDatabaseOperationFailed
+		}
+	}
+
+	if transaction.CreditCardInvoiceCycle != "" {
+		metadata := &models.CreditCardInvoicePaymentMetadata{CreditCardInvoiceCycle: transaction.CreditCardInvoiceCycle}
+		updatedRows, updateErr := sess.ID(transaction.TransactionId).Cols("credit_card_invoice_cycle").Update(metadata)
+		if updateErr != nil || updatedRows < 1 {
+			return errs.ErrDatabaseOperationFailed
+		}
+		if relatedTransaction != nil {
+			updatedRows, updateErr = sess.ID(relatedTransaction.TransactionId).Cols("credit_card_invoice_cycle").Update(metadata)
+			if updateErr != nil || updatedRows < 1 {
+				return errs.ErrDatabaseOperationFailed
+			}
 		}
 	}
 

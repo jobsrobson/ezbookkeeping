@@ -3,9 +3,9 @@
         <router-link to="/">
             <div class="auth-logo d-flex align-start">
                 <img alt="Bookkeeping" class="login-brand-logo"
-                     src="/img/bookkeeping-logo-light.svg" v-if="!isDarkMode"/>
+                     src="/img/bookkeeping-logo-light.png" v-if="!isDarkMode"/>
                 <img alt="Bookkeeping" class="login-brand-logo"
-                     src="/img/bookkeeping-logo-dark.svg" v-else/>
+                     src="/img/bookkeeping-logo-dark.png" v-else/>
             </div>
         </router-link>
         <v-row no-gutters class="auth-wrapper">

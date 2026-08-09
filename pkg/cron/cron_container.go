@@ -77,6 +77,8 @@ func (c *CronJobSchedulerContainer) SyncRunJobNow(jobName string) error {
 }
 
 func (c *CronJobSchedulerContainer) registerAllJobs(ctx core.Context, config *settings.Config) {
+	Container.registerIntervalJob(ctx, ProcessCreditCardAutoPaymentJob)
+
 	if config.EnableRemoveExpiredTokens {
 		Container.registerIntervalJob(ctx, RemoveExpiredTokensJob)
 	}

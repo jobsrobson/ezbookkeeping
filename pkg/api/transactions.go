@@ -114,6 +114,90 @@ func (a *TransactionsApi) TransactionCountHandler(c *core.WebContext) (any, *err
 	return countResp, nil
 }
 
+func (a *TransactionsApi) CreditCardInvoicePaymentHandler(c *core.WebContext) (any, *errs.Error) {
+	var req models.CreditCardInvoicePaymentRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+	if !isValidCreditCardInvoiceCycle(req.InvoiceCycle) {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
+	}
+	account, err := a.accounts.GetAccountByAccountId(c, c.GetCurrentUid(), req.AccountId)
+	if err != nil || account == nil || account.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD {
+		return nil, errs.Or(err, errs.ErrAccountTypeInvalid)
+	}
+	if err = a.transactions.EnsureCreditCardInvoicePaymentSchema(); err != nil {
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+	paidAmount, err := a.transactions.GetCreditCardInvoicePaidAmount(c, c.GetCurrentUid(), req.AccountId, req.InvoiceCycle)
+	if err != nil {
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+	return &models.CreditCardInvoicePaymentResponse{PaidAmount: paidAmount}, nil
+}
+
+func (a *TransactionsApi) CreditCardAutoPaymentGetHandler(c *core.WebContext) (any, *errs.Error) {
+	var req models.CreditCardAutoPaymentGetRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+	uid := c.GetCurrentUid()
+	card, err := a.accounts.GetAccountByAccountId(c, uid, req.AccountId)
+	if err != nil || card == nil || card.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD {
+		return nil, errs.Or(err, errs.ErrAccountTypeInvalid)
+	}
+	item, err := services.CreditCardAutoPayments.Get(c, uid, req.AccountId)
+	if err != nil {
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+	resp := &models.CreditCardAutoPaymentResponse{CreditCardAccountId: utils.Int64ToString(req.AccountId)}
+	if card.Extend != nil && card.Extend.CreditCardDueDate != nil {
+		resp.DueDay = *card.Extend.CreditCardDueDate
+	}
+	if item != nil {
+		resp.Enabled, resp.SourceAccountId = item.Enabled, utils.Int64ToString(item.SourceAccountId)
+	}
+	return resp, nil
+}
+
+func (a *TransactionsApi) CreditCardAutoPaymentUpdateHandler(c *core.WebContext) (any, *errs.Error) {
+	var req models.CreditCardAutoPaymentUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+	uid := c.GetCurrentUid()
+	card, err := a.accounts.GetAccountByAccountId(c, uid, req.CreditCardAccountId)
+	if err != nil || card == nil || card.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD || card.Extend == nil || card.Extend.CreditCardDueDate == nil {
+		return nil, errs.Or(err, errs.ErrAccountTypeInvalid)
+	}
+	if req.Enabled {
+		source, sourceErr := a.accounts.GetAccountByAccountId(c, uid, req.SourceAccountId)
+		if sourceErr != nil || source == nil || source.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD || source.Currency != card.Currency || req.TransferCategoryId < 1 {
+			return nil, errs.Or(sourceErr, errs.ErrAccountTypeInvalid)
+		}
+	}
+	clientTimezone, timezoneErr := c.GetClientTimezone()
+	if timezoneErr != nil {
+		return nil, errs.ErrClientTimezoneOffsetInvalid
+	}
+	_, timezoneOffset := time.Now().In(clientTimezone).Zone()
+	item := &models.CreditCardAutoPayment{CreditCardAccountId: req.CreditCardAccountId, Uid: uid, SourceAccountId: req.SourceAccountId, TransferCategoryId: req.TransferCategoryId, Timezone: clientTimezone.String(), TimezoneUtcOffset: int16(timezoneOffset / 60), Enabled: req.Enabled}
+	if err = services.CreditCardAutoPayments.Update(c, item); err != nil {
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+	return &models.CreditCardAutoPaymentResponse{Enabled: req.Enabled, CreditCardAccountId: utils.Int64ToString(req.CreditCardAccountId), SourceAccountId: utils.Int64ToString(req.SourceAccountId), DueDay: *card.Extend.CreditCardDueDate}, nil
+}
+
+func isValidCreditCardInvoiceCycle(invoiceCycle string) bool {
+	parts := strings.Split(invoiceCycle, "/")
+	if len(parts) != 2 {
+		return false
+	}
+	start, startErr := time.Parse("2006-01-02", parts[0])
+	end, endErr := time.Parse("2006-01-02", parts[1])
+	return startErr == nil && endErr == nil && !end.Before(start)
+}
+
 // TransactionListHandler returns transaction list of current user
 func (a *TransactionsApi) TransactionListHandler(c *core.WebContext) (any, *errs.Error) {
 	var transactionListReq models.TransactionListByMaxTimeRequest
@@ -1104,6 +1188,10 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 		log.Warnf(c, "[transactions.TransactionCreateHandler] non-transfer transaction destination amount cannot be set")
 		return nil, errs.ErrTransactionDestinationAmountCannotBeSet
 	}
+	if transactionCreateReq.CreditCardInvoiceCycle != "" &&
+		(transactionCreateReq.Type != models.TRANSACTION_TYPE_TRANSFER || !isValidCreditCardInvoiceCycle(transactionCreateReq.CreditCardInvoiceCycle)) {
+		return nil, errs.ErrIncompleteOrIncorrectSubmission
+	}
 
 	uid := c.GetCurrentUid()
 	user, err := a.users.GetUserById(c, uid)
@@ -1146,6 +1234,16 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 		sourceAccount := allUsedAccounts[transaction.AccountId]
 		if transactionCreateReq.Type != models.TRANSACTION_TYPE_EXPENSE || sourceAccount == nil || sourceAccount.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD || !a.CurrentConfig().EnableScheduledTransaction {
 			return nil, errs.ErrIncompleteOrIncorrectSubmission
+		}
+	}
+	if transactionCreateReq.CreditCardInvoiceCycle != "" {
+		sourceAccount := allUsedAccounts[transaction.AccountId]
+		destinationAccount := allUsedAccounts[transaction.RelatedAccountId]
+		if sourceAccount == nil || sourceAccount.Category == models.ACCOUNT_CATEGORY_CREDIT_CARD || destinationAccount == nil || destinationAccount.Category != models.ACCOUNT_CATEGORY_CREDIT_CARD {
+			return nil, errs.ErrIncompleteOrIncorrectSubmission
+		}
+		if err = a.transactions.EnsureCreditCardInvoicePaymentSchema(); err != nil {
+			return nil, errs.Or(err, errs.ErrOperationFailed)
 		}
 	}
 
@@ -1389,6 +1487,22 @@ func (a *TransactionsApi) TransactionModifyHandler(c *core.WebContext) (any, *er
 	if newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
 		newTransaction.RelatedAccountId = transactionModifyReq.DestinationAccountId
 		newTransaction.RelatedAccountAmount = transactionModifyReq.DestinationAmount
+	}
+
+	if transaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT {
+		if err = a.transactions.EnsureCreditCardInvoicePaymentSchema(); err != nil {
+			return nil, errs.Or(err, errs.ErrOperationFailed)
+		}
+		invoiceCycle, cycleErr := a.transactions.GetCreditCardInvoiceCycle(c, uid, transaction.TransactionId)
+		if cycleErr != nil {
+			return nil, errs.Or(cycleErr, errs.ErrOperationFailed)
+		}
+		if invoiceCycle != "" {
+			newTransaction.UpdateCreditCardInvoiceCycle = true
+			if newTransaction.Type == models.TRANSACTION_DB_TYPE_TRANSFER_OUT && transaction.RelatedAccountId == transactionModifyReq.DestinationAccountId {
+				newTransaction.CreditCardInvoiceCycle = invoiceCycle
+			}
+		}
 	}
 
 	if transactionModifyReq.GeoLocation != nil {
@@ -3122,16 +3236,17 @@ func (a *TransactionsApi) createNewTransactionModel(uid int64, transactionCreate
 	}
 
 	transaction := &models.Transaction{
-		Uid:               uid,
-		Type:              transactionDbType,
-		CategoryId:        transactionCreateReq.CategoryId,
-		TransactionTime:   utils.GetMinTransactionTimeFromUnixTime(transactionCreateReq.Time),
-		TimezoneUtcOffset: transactionCreateReq.UtcOffset,
-		AccountId:         transactionCreateReq.SourceAccountId,
-		Amount:            transactionCreateReq.SourceAmount,
-		HideAmount:        transactionCreateReq.HideAmount,
-		Comment:           transactionCreateReq.Comment,
-		CreatedIp:         clientIp,
+		Uid:                    uid,
+		Type:                   transactionDbType,
+		CategoryId:             transactionCreateReq.CategoryId,
+		TransactionTime:        utils.GetMinTransactionTimeFromUnixTime(transactionCreateReq.Time),
+		TimezoneUtcOffset:      transactionCreateReq.UtcOffset,
+		AccountId:              transactionCreateReq.SourceAccountId,
+		Amount:                 transactionCreateReq.SourceAmount,
+		HideAmount:             transactionCreateReq.HideAmount,
+		Comment:                transactionCreateReq.Comment,
+		CreditCardInvoiceCycle: transactionCreateReq.CreditCardInvoiceCycle,
+		CreatedIp:              clientIp,
 	}
 
 	if transactionCreateReq.Type == models.TRANSACTION_TYPE_TRANSFER {

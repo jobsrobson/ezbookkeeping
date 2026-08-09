@@ -30,3 +30,13 @@ var CreateScheduledTransactionJob = &CronJob{
 		return services.Transactions.CreateScheduledTransactions(c, time.Now().Unix(), c.GetInterval())
 	},
 }
+
+// ProcessCreditCardAutoPaymentJob pays due credit-card invoices independently of generic scheduled transactions.
+var ProcessCreditCardAutoPaymentJob = &CronJob{
+	Name:        "ProcessCreditCardAutoPayment",
+	Description: "Process due automatic credit card invoice payments",
+	Period:      CronJobEvery15MinutesPeriod{Second: 30},
+	Run: func(c *core.CronContext) error {
+		return services.CreditCardAutoPayments.ProcessDue(c, time.Now().Unix())
+	},
+}

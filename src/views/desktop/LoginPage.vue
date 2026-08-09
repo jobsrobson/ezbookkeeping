@@ -3,9 +3,9 @@
         <router-link to="/">
             <div class="auth-logo d-flex align-start">
                 <img alt="Bookkeeping" class="login-brand-logo"
-                     src="/img/bookkeeping-logo-light.svg" v-if="!isDarkMode"/>
+                     src="/img/bookkeeping-logo-light.png" v-if="!isDarkMode"/>
                 <img alt="Bookkeeping" class="login-brand-logo"
-                     src="/img/bookkeeping-logo-dark.svg" v-else/>
+                     src="/img/bookkeeping-logo-dark.png" v-else/>
             </div>
         </router-link>
         <v-row no-gutters class="auth-wrapper">
@@ -95,9 +95,16 @@
                                     <v-col cols="12" class="py-0 mt-1 mb-4">
                                         <div class="d-flex align-center justify-space-between flex-wrap">
                                             <a href="javascript:void(0);"
+                                               v-if="DEDICATED_MOBILE_VERSION_ENABLED"
                                                :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
                                                @click="showMobileQrCode = true">
                                                 <span class="nav-item-title">{{ tt('Use on Mobile Device') }}</span>
+                                            </a>
+                                            <a href="javascript:void(0);"
+                                               v-if="isPwaInstallAvailable"
+                                               :class="{ 'disabled': loggingInByPassword || loggingInByOAuth2 || verifying }"
+                                               @click="installApplication">
+                                                <span class="nav-item-title">{{ tt('Install Application') }}</span>
                                             </a>
                                             <v-spacer/>
                                             <router-link class="text-primary" to="/forgetpassword"
@@ -168,7 +175,7 @@
             </v-col>
         </v-row>
 
-        <switch-to-mobile-dialog v-model:show="showMobileQrCode" />
+        <switch-to-mobile-dialog v-if="DEDICATED_MOBILE_VERSION_ENABLED" v-model:show="showMobileQrCode" />
         <snack-bar ref="snackbar" />
     </div>
 </template>
@@ -188,8 +195,10 @@ import { useRootStore } from '@/stores/index.ts';
 
 import { ThemeType } from '@/core/theme.ts';
 import { KnownErrorCode } from '@/consts/api.ts';
+import { DEDICATED_MOBILE_VERSION_ENABLED } from '@/consts/platform.ts';
 
 import { generateRandomUUID } from '@/lib/misc.ts';
+import { installPwa, isPwaInstallAvailable } from '@/lib/pwa.ts';
 import {
     isUserRegistrationEnabled,
     isUserForgetPasswordEnabled,
@@ -240,6 +249,12 @@ const show2faInput = ref<boolean>(false);
 const showMobileQrCode = ref<boolean>(false);
 
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
+
+function installApplication(): void {
+    installPwa().catch(error => {
+        snackbar.value?.showError(error);
+    });
+}
 
 function login(): void {
     if (!username.value) {
