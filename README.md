@@ -1,159 +1,305 @@
-# Bookkeeping
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
-[![Latest Release](https://img.shields.io/github/release/mayswind/ezbookkeeping.svg?style=flat)](https://github.com/mayswind/ezbookkeeping/releases)
-[![Latest Build](https://img.shields.io/github/actions/workflow/status/mayswind/ezbookkeeping/build-snapshot.yml?branch=main)](https://github.com/mayswind/ezbookkeeping/actions)
-[![Latest Docker Image Size](https://img.shields.io/docker/image-size/mayswind/ezbookkeeping.svg?style=flat)](https://hub.docker.com/r/mayswind/ezbookkeeping)
-[![Docker Pulls](https://img.shields.io/docker/pulls/mayswind/ezbookkeeping)](https://hub.docker.com/r/mayswind/ezbookkeeping)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mayswind/ezbookkeeping)
+<p align="center">
+  <img src="public/bookkeeping-logo.png" alt="Bookkeeping custom logo">
+</p>
+<p align="center">
+  <img src="public/bookkeeping-home.png" alt="Bookkeeping Home" width="60%">
+</p>
 
-[![Recommend By HelloGitHub](https://api.hellogithub.com/v1/widgets/recommend.svg?rid=ded5af09da574ec1811ddb154f1b2093&claim_uid=LT7EZxeBukCnh0K)](https://hellogithub.com/en/repository/mayswind/ezbookkeeping)
-[![Trending](https://trendshift.io/api/badge/repositories/12917)](https://trendshift.io/repositories/12917)
 
-## Introduction
-Bookkeeping is a lightweight, self-hosted personal finance app with a user-friendly interface and powerful bookkeeping features. It helps you record daily transactions, import data from various sources, and quickly search and filter your bills. You can analyze historical data using built-in charts or perform custom queries with your own chart dimensions to better understand spending patterns and financial trends. Bookkeeping is easy to deploy, and you can start it with just one single Docker command. Designed to be resource-efficient, it runs smoothly on devices such as Raspberry Pi, NAS, and MicroServers.
+<br>
 
-Bookkeeping offers tailored interfaces for both mobile and desktop devices. With support for PWA (Progressive Web Apps), you can even [add it to your mobile home screen](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/add_to_home_screen.gif) and use it like a native app.
+A fork of [ezBookkeeping](https://github.com/mayswind/ezbookkeeping), focused on an improved desktop experience and extended personal finance management features.
 
-Live Demo: [https://ezbookkeeping-demo.mayswind.net](https://ezbookkeeping-demo.mayswind.net)
+This fork builds upon the excellent foundation provided by ezBookkeeping while introducing a redesigned UI/UX and additional features for managing **credit cards, installments, subscriptions, invoices, and annual financial planning**.
 
-## Features
-- **Open Source & Self-Hosted**
-    - Built for privacy and control
-- **Lightweight & Fast**
-    - Minimal resource usage, runs smoothly even on low-resource devices
-- **Easy Installation**
-    - Docker support
-    - Supports SQLite, MySQL, PostgreSQL
-    - Cross-platform (Windows, macOS, Linux)
-    - Works on x86, amd64, ARM architectures
-- **User-Friendly Interface**
-    - UI optimized for both mobile and desktop
-    - PWA support for native-like mobile experience
-    - Dark mode
-- **AI-Powered Features**
-    - Receipt image recognition
-    - MCP (Model Context Protocol) support for AI integration
-    - Agent Skill and API command-line script tools support for AI integration
-- **Powerful Bookkeeping**
-    - Two-level accounts and categories
-    - Image attachments for transactions
-    - Location tracking with maps
-    - Scheduled transactions
-    - Advanced filtering, search, visualization and analysis
-- **Localization & Internationalization**
-    - Multi-language and multi-currency support
-    - Multiple exchange rate sources with automatic updates
-    - Multi-timezone support
-    - Custom formats for dates, numbers and currencies
-- **Security**
-    - Two-factor authentication (2FA)
-    - OIDC external authentication
-    - Login rate limiting
-    - Application lock (PIN code / WebAuthn)
-- **Data Import & Export**
-    - Supports CSV, OFX, QFX, QIF, IIF, Camt.052, Camt.053, MT940, GnuCash, Firefly III, Beancount and more
+> **Upstream project:** [mayswind/ezbookkeeping](https://github.com/mayswind/ezbookkeeping)
 
-For a full list of features, visit the [Full Feature List](https://ezbookkeeping.mayswind.net/features/).
+<br>
 
-## Screenshots
-### Desktop Version
-[![Bookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/desktop/en.png)
+## About This Fork
 
-### Mobile Version
-[![Bookkeeping](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)](https://raw.githubusercontent.com/wiki/mayswind/ezbookkeeping/img/mobile/en.png)
+Bookkeeping is a lightweight, self-hosted personal finance application designed to provide a clearer and more complete overview of everyday finances.
+
+While retaining the core bookkeeping capabilities of ezBookkeeping, this fork expands the application with features commonly needed for personal financial management, particularly **credit card expenses and future financial commitments**.
+
+The main additions include:
+
+* Redesigned and enhanced UI/UX
+* New financial overview dashboard
+* Credit card invoice management
+* Installment purchase tracking
+* Recurring subscription management
+* Annual financial planning
+* Improved visualization of expenses, income, balances and upcoming commitments
+
+The project remains fully self-hosted and can run on lightweight hardware, home servers, NAS devices and ARM-based systems.
+
+<br>
+
+## New Features
+
+### Redesigned Home
+
+The home page has been redesigned to provide a more useful financial overview at a glance.
+
+The new interface provides quick access to:
+
+* Account balances
+* Income and expenses
+* Cash flow
+* Credit card usage
+* Upcoming payments
+* Recent transactions
+* Financial reports
+* Annual planning
+
+The redesigned interface focuses on information density, readability and faster navigation while maintaining a clean desktop experience.
+
+### Credit Card Management
+
+This fork introduces expanded support for credit cards as part of the financial workflow.
+
+Credit card accounts can be used to track:
+
+* Current spending
+* Available credit
+* Credit limit
+* Invoice periods
+* Invoice totals
+* Future installments
+* Invoice payments
+
+This makes credit card expenses visible as financial commitments instead of treating them only as ordinary transactions.
+
+### Credit Card Invoices
+
+<p align="center">
+  <img src="public/bookkeeping-fatura.png" alt="Bookkeeping Credit Card Management" width="40%">
+</p>
+
+Credit card transactions are organized into invoice cycles, making it easier to understand exactly how much will need to be paid during each billing period.
+
+Invoices provide a consolidated view of:
+
+* Transactions belonging to the billing cycle
+* Invoice total
+* Installment purchases
+* Recurring expenses
+* Payment status
+
+Invoices can also be marked as paid through a dedicated payment workflow.
+
+When paying an invoice, Bookkeeping creates the corresponding transfer between the selected payment account and the credit card account, keeping account balances and transaction history consistent.
+
+### Installment Purchases
+
+<p align="center">
+  <img src="public/bookkeeping-parcelamento.png" alt="Bookkeeping Installments" width="40%">
+</p>
+
+Purchases can be split into multiple installments.
+
+Bookkeeping automatically tracks the installments and their impact on future credit card invoices, providing a more realistic view of committed credit.
+
+This allows you to distinguish between:
+
+* Amount already billed
+* Current invoice spending
+* Future installments
+* Total credit currently committed
+
+Installment purchases therefore remain visible beyond the current month instead of disappearing from the financial overview after the original transaction.
+
+### Subscriptions
+
+<p align="center">
+  <img src="public/bookkeeping-assinatura.png" alt="Bookkeeping Subscriptions" width="40%">
+</p>
+
+Recurring subscriptions can be tracked separately from ordinary transactions.
+
+This provides a clearer picture of recurring financial commitments such as:
+
+* Streaming services
+* Cloud services
+* Software subscriptions
+* Memberships
+* Other recurring expenses
+
+Subscriptions can be considered independently from installment purchases when calculating future credit card commitments.
+
+### Annual Planning
+
+<p align="center">
+  <img src="public/bookkeeping-anual.png" alt="Bookkeeping Planning" width="40%">
+</p>
+
+The Annual Planning view provides a broader perspective of your finances across the entire year.
+
+Instead of analyzing finances exclusively month by month, the annual view makes it easier to understand:
+
+* Monthly income
+* Monthly expenses
+* Net monthly results
+* Spending trends
+* Recurring commitments
+* Future expenses
+* Overall yearly financial performance
+
+This is particularly useful for identifying long-term spending patterns and anticipating months with higher financial commitments.
+
+<br>
+
+## Original ezBookkeeping Features
+
+All core ezBookkeeping functionality remains available, including:
+
+* Open source and self-hosted deployment
+* Lightweight resource usage
+* SQLite, MySQL and PostgreSQL support
+* Docker deployment
+* x86, AMD64 and ARM support
+* Desktop and mobile interfaces
+* Progressive Web App (PWA) support
+* Dark mode
+* Two-level accounts and categories
+* Transaction attachments
+* Scheduled transactions
+* Advanced filtering and search
+* Reports and data visualization
+* Multi-language support
+* Multi-currency support
+* Automatic exchange rates
+* Multiple time zones
+* Two-factor authentication
+* OIDC authentication
+* Application lock
+* CSV, OFX, QFX, QIF, IIF and other import formats
+
+For the complete upstream feature set, see the [official ezBookkeeping documentation](https://ezbookkeeping.mayswind.net/features/).
+
+<br>
 
 ## Installation
-### Run with Docker
-Visit [Docker Hub](https://hub.docker.com/r/mayswind/ezbookkeeping) to see all images and tags.
 
-**Latest Release:**
+### Docker
 
-    $ docker run -p8080:8080 mayswind/ezbookkeeping
+Docker is the recommended way to run Bookkeeping (currently available only for ARM64 devices):
 
-**Latest Daily Build:**
+```bash
+docker run -d \
+  --name bookkeeping \
+  -p 8080:8080 \
+  ghcr.io/jobsrobson/ezbookkeeping-plus:2.0.0-arm64
+```
 
-    $ docker run -p8080:8080 mayswind/ezbookkeeping:latest-snapshot
+Bookkeeping will be available at:
 
-### Install from Binary
-Download the latest release: [https://github.com/mayswind/ezbookkeeping/releases](https://github.com/mayswind/ezbookkeeping/releases)
+```text
+http://localhost:8080
+```
 
-**Linux / macOS**
-
-    $ ./ezbookkeeping server run
-
-**Windows**
-
-    > .\ezbookkeeping.exe server run
-
-By default, Bookkeeping listens on port 8080. You can then visit `http://{YOUR_HOST_ADDRESS}:8080/` .
+Persistent volumes should be configured for production deployments according to your environment.
 
 ### Build from Source
-Make sure you have [Golang](https://golang.org/), [GCC](https://gcc.gnu.org/), [Node.js](https://nodejs.org/) and [NPM](https://www.npmjs.com/) installed. Then download the source code, and follow these steps:
 
-**Linux / macOS**
+The project requires:
 
-    $ ./build.sh package -o ezbookkeeping.tar.gz
+* Go
+* GCC
+* Node.js
+* NPM
+* Docker (optional)
 
-All the files will be packaged in `ezbookkeeping.tar.gz`.
+Clone the repository:
 
-**Windows**
+```bash
+git clone https://github.com/jobsrobson/ezbookkeeping.git
+cd ezbookkeeping
+```
 
-    > .\build.bat package -o ezbookkeeping.zip
+Build the application:
 
-or
+```bash
+./build.sh package -o ezbookkeeping.tar.gz
+```
 
-    PS > .\build.ps1 package -Output ezbookkeeping.zip
+You can also build a Docker image:
 
-All the files will be packaged in `ezbookkeeping.zip`.
+```bash
+./build.sh docker
+```
 
-You can also build a Docker image. Make sure you have [Docker](https://www.docker.com/) installed, then follow these steps:
+<br>
 
-**Linux**
+## Technology
 
-    $ ./build.sh docker
+Bookkeeping retains the architecture of the upstream ezBookkeeping project.
+
+The application consists of a web frontend and a Go backend and supports multiple database engines, including:
+
+* SQLite
+* MySQL
+* PostgreSQL
+
+It can be deployed on traditional Linux servers, containers, NAS devices and lightweight ARM systems.
+
+<br>
+
+## Upstream Project
+
+This project is a fork of **ezBookkeeping**, created and maintained by [mayswind](https://github.com/mayswind).
+
+Original project:
+
+[github.com/mayswind/ezbookkeeping](https://github.com/mayswind/ezbookkeeping)
+
+Official documentation:
+
+[ezbookkeeping.mayswind.net](https://ezbookkeeping.mayswind.net)
+
+The upstream project provides the core bookkeeping engine, transaction management, accounts, reports, localization, authentication and many other features on which this fork is based.
+
+<br>
+
+## Fork Goals
+
+The goal of this fork is not to replace the upstream project, but to extend it toward a more comprehensive personal finance workflow.
+
+Development is primarily focused on:
+
+1. Improving desktop UI/UX
+2. Making credit card spending easier to understand
+3. Properly representing installment purchases
+4. Tracking recurring financial commitments
+5. Providing better visibility into future expenses
+6. Expanding financial planning beyond the current month
+7. Maintaining the lightweight and self-hosted nature of ezBookkeeping
+
+<br>
 
 ## Contributing
-We welcome contributions of all kinds.
 
-If you find a bug, please [submit an issue](https://github.com/mayswind/ezbookkeeping/issues) on GitHub.
+This fork is primarily developed around its extended personal finance features.
 
-If you would like to contribute code, you can fork the repository and open a pull request.
+Bug reports, improvements and suggestions are welcome through GitHub Issues and Pull Requests.
 
-Improvements to documentation, feature suggestions, and other forms of feedback are also appreciated.
+For issues related to functionality inherited directly from ezBookkeeping, please verify whether the issue also exists in the upstream project before reporting it here.
 
-You can view existing contributors on the [Contributor Graph](https://github.com/mayswind/ezbookkeeping/graphs/contributors).
+<br>
 
-## Translating
-Help make Bookkeeping accessible to users around the world. We welcome help to improve existing translations or add new ones. If you would like to contribute a translation, please refer to the [translation guide](https://ezbookkeeping.mayswind.net/translating).
+## Credits
 
-Currently available translations:
+Bookkeeping is based on [ezBookkeeping](https://github.com/mayswind/ezbookkeeping), an open-source personal finance application created by **mayswind** and its contributors.
 
-| Tag | Language | Progress | Contributors |
-| --- | --- | --- | --- |
-| de | Deutsch | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fde.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/de.json) | [@chrgm](https://github.com/chrgm), [@1270o1](https://github.com/1270o1), [@martinschilliger](https://github.com/martinschilliger) |
-| en | English | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fen.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/en.json) | / |
-| es | Español | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fes.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/es.json) | [@Miguelonlonlon](https://github.com/Miguelonlonlon), [@abrugues](https://github.com/abrugues), [@AndresTeller](https://github.com/AndresTeller), [@diegofercri](https://github.com/diegofercri) |
-| fr | Français | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Ffr.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/fr.json) | [@brieucdlf](https://github.com/brieucdlf) |
-| it | Italiano | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fit.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/it.json) | [@waron97](https://github.com/waron97) |
-| ja | 日本語 | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fja.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/ja.json) | [@tkymmm](https://github.com/tkymmm), [@Mink16](https://github.com/Mink16), [@x0x0b](https://github.com/x0x0b) |
-| kn | ಕನ್ನಡ | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fkn.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/kn.json) | [@Darshanbm05](https://github.com/Darshanbm05) |
-| ko | 한국어 | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fko.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/ko.json) | [@overworks](https://github.com/overworks) |
-| nl | Nederlands | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fnl.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/nl.json) | [@automagics](https://github.com/automagics) |
-| pt-BR | Português (Brasil) | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fpt-BR.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/pt-BR.json) | [@thecodergus](https://github.com/thecodergus), [@balaios](https://github.com/balaios) |
-| ro | Română | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fro.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/ro.json) | [@gg64nou](https://github.com/gg64nou) |
-| ru | Русский | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fru.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/ru.json) | [@artegoser](https://github.com/artegoser), [@dshemin](https://github.com/dshemin) |
-| sl | Slovenščina | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fsl.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/sl.json) | [@thehijacker](https://github.com/thehijacker) |
-| ta | தமிழ் | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fta.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/ta.json) | [@hhharsha36](https://github.com/hhharsha36) |
-| th | ไทย | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fth.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/th.json) | [@natthavat28](https://github.com/natthavat28) |
-| tr | Türkçe | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Ftr.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/tr.json) | [@aydnykn](https://github.com/aydnykn), [@snizamaddinov](https://github.com/snizamaddinov) |
-| uk | Українська | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fuk.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/uk.json) | [@nktlitvinenko](https://github.com/nktlitvinenko), [@grid-pilot](https://github.com/grid-pilot), [@infinit1ve](https://github.com/infinit1ve) |
-| vi | Tiếng Việt | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fvi.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/vi.json) | [@f97](https://github.com/f97) |
-| zh-Hans | 中文 (简体) | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fzh-Hans.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/zh-Hans.json) | / |
-| zh-Hant | 中文 (繁體) | [![Translation Progress](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmayswind%2FBookkeeping-i18n-badge%2Fmain%2Fbadges%2Fzh-Hant.json)](https://github.com/mayswind/Bookkeeping-i18n-badge/blob/main/untranslated/zh-Hant.json) | / |
+A significant portion of the application's architecture and core functionality originates from the upstream project.
 
-## Documentation
-1. [English](https://ezbookkeeping.mayswind.net)
-1. [中文 (简体)](https://ezbookkeeping.mayswind.net/zh_Hans)
+Thanks to all ezBookkeeping contributors for building and maintaining the foundation that made this fork possible.
+
+<br>
 
 ## License
-[MIT](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
+
+This project follows the license of the upstream ezBookkeeping project.
+
+[MIT License](https://github.com/mayswind/ezbookkeeping/blob/master/LICENSE)
